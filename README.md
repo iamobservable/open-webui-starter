@@ -11,6 +11,8 @@ about configurations on the [Open WebUI Docs](https://docs.openwebui.com/) or th
 The Open WebUI Starter project is a entry into using the open-source project 
 Open WebUI. Open WebUI integrates with various Large Language Models (LLMs) and provides a private, user-friendly, and local interface for interacting with computer intelligence.
 
+Here is a link to [follow project development](https://github.com/users/iamobservable/projects/1) if you so desire.
+
 ## Table of Contents
 1. [Dependencies](#dependencies)
 2. [Tooling and Applications](#tooling-and-applications)
