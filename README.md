@@ -405,7 +405,7 @@ executed via the command line.
 Generates a JSON document with the markdown text included. Changes to the config.json document, located in the same directory, can change how Docling responds. More information on how to configure Docling can be found in the [Advance usage section](https://github.com/docling-project/docling-serve/blob/main/docs/usage.md) of the [Docling Serve documentation](https://github.com/docling-project/docling-serve/blob/main/docs/README.md).
 
 ```sh
-./pdf-to-markdown.sh
+./examples/docling/pdf-to-markdown.sh
 ```
 
 
@@ -423,7 +423,7 @@ the [EdgeTTS codebase and configuration](https://github.com/travisvn/openai-edge
 Generate Spanish speach from a speaker with a Spanish accent.
 
 ```sh
-./alonso-es-hola.sh
+./examples/edgetts/alonso-es-hola.sh
 ```
 
 **Speech in English**
@@ -431,7 +431,7 @@ Generate Spanish speach from a speaker with a Spanish accent.
 Generates English speach from a speaker with an English accent.
 
 ```sh
-./wayland-intro.sh
+./examples/edgetts/wayland-intro.sh
 ```
 
 
@@ -442,7 +442,7 @@ Generates English speach from a speaker with an English accent.
 Generates meta data from a provided url. More information can be found via the [Metadata Resource documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-MetadataResource)
 
 ```sh
-./pdf-meta.sh
+./examples/tika/pdf-meta.sh
 ```
 
 **PDF document (url) to HTML**
@@ -450,7 +450,7 @@ Generates meta data from a provided url. More information can be found via the [
 Generates HTML from a provided url. More information can be found via the [Tika Resource Documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-GettheTextofaDocument)
 
 ```sh
-./pdf-to-html.sh
+./examples/tika/pdf-to-html.sh
 ```
 
 **PDF document (url) to plain text**
@@ -458,7 +458,7 @@ Generates HTML from a provided url. More information can be found via the [Tika 
 Generates plain text from a provided url. More information can be found via the [Tika Resource Documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-GettheTextofaDocument)
 
 ```sh
-./pdf-to-text.sh
+./examples/tika/pdf-to-text.sh
 ```
 
 
