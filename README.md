@@ -13,9 +13,11 @@ Open WebUI. Open WebUI integrates with various Large Language Models (LLMs) and 
 
 ## Table of Contents
 1. [Dependencies](#dependencies)
-1. [Tooling and Applications](#tooling-and-applications)
-2. [Installation](#installation)
-3. [Contribution](#contribution)
+2. [Tooling and Applications](#tooling-and-applications)
+3. [Installation](#installation)
+4. [Additional Setup](#additional-setup)
+5. [Service Examples](#service-examples)
+6. [Contribution](#contribution)
 
 ## Dependencies
 
@@ -38,6 +40,7 @@ This starter project includes the following tooling and applications.
 - **[Redis](https://redis.io/)**: An open source-available, in-memory storage, used as a distributed, in-memory key–value database, cache and message broker, with optional durability
 - **[Searxng](https://docs.searxng.org/)**: Free internet metasearch engine for open webui tool integration
 - **[Sqlite](https://www.sqlite.org/index.html)**: A C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine
+- **[Tika](https://tika.apache.org/)**: A toolkit that detects and extracts metadata and text from over a thousand different file types
 - **[Watchtower](https://github.com/containrrr/watchtower)**: Automated Docker container for updating container images automatically
 
 ```mermaid
@@ -138,6 +141,14 @@ graph
         --> ollama
 
         subgraph Document Services
+            docling[Docling]
+        end
+
+        openwebui -- "docling:5001"
+            Document Parsing
+        --> docling
+
+        subgraph Document Services
             tika[Tika]
         end
 
@@ -216,6 +227,8 @@ cp env/ollama.example env/ollama.env
 cp env/openwebui.example env/openwebui.env
 cp env/redis.example env/redis.env
 cp env/searxng.example env/searxng.env
+cp env/tika.example env/tika.env
+cp env/watchtower.example env/watchtower.env
 ```
 
 *The environment files can contain sensitive information such as API keys 
@@ -233,13 +246,13 @@ Update the [env/searxng.env](http://github.com/iamobservable/open-webui-starter/
 
 Make this change to your auth environment file [env/auth.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/auth.example#L2). The link provided will lead you to the github repository to read about it.
 
-Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L37).
+Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L39).
 
 **Make sure the environment files match**:. This allows jwt token authentication to work with the main Open WebUI (/), swagger (/docs), redis (/redis), and searxng (/searxng)
 
 ### Add your domain name as WEBUI_URL to your environment files
 
-Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L38).
+Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L40).
 
 ### Setup Cloudflare
 
@@ -307,6 +320,40 @@ Once the containers are started, and your model downloaded, you are ready to acc
 
 ## Additional Setup
 
+### Watchtower and Notifications
+
+A Watchtower container provides a convenient way to check in on your container 
+versions to see if updates have been released. Once updates are found, Watchtower 
+will pull the latest container image(s), stop the currently running container and 
+start a new container based on the new image. **And it is all automatic, look no hands!**
+
+After completing its process, 
+Watchtower can send notifications to you. More can be found on notifications via 
+the [Watchtower website](https://containrrr.dev/watchtower/notifications/).
+
+For the sake of simplicity, this document will cover the instructions for setting 
+up notifications via Discord. If you desire to be more detailed in your configuration, 
+the [arguments section](https://containrrr.dev/watchtower/arguments/) describes 
+additional settings available for the watchtower setup.
+
+1. Edit your [env/watchtower.env](https://github.com/iamobservable/open-webui-starter/blob/main/env/watchtower.example#L2) with your discord link. [More information](https://containrrr.dev/shoutrrr/v0.8/services/discord/) is provided on how to create your discord link (token@webhookid).
+2. Restart your watchtower container
+
+```bash
+docker compose down watchtower && docker compose up watchtower -d
+```
+
+### Migrating from Sqlite to Postgresql
+
+**Please note, the starter project does not use Sqlite for storage. Postgresql has been configured by default.**
+
+For installations where the 
+environment was already setup to use Sqlite, please refer to 
+[Taylor Wilsdon](https://github.com/taylorwilsdon)'s github repository 
+[open-webui-postgres-migration](https://github.com/taylorwilsdon/open-webui-postgres-migration). 
+In it, he provides a migration tool for converting between the two databases.
+
+
 ### Adding models to ComfyUI
 
 The starter makes use of the docker image [yanwk/comfyui-boot:cu124-slim](https://github.com/YanWenKun/ComfyUI-Docker/tree/main/cu124-slim) for building the ComfyUI container.  This image has a special file [download-models.txt](https://github.com/iamobservable/open-webui-starter/blob/main/conf/comfyui/runner-scripts/download-models.txt.example). The file is responsible for configuring model downloads during the initial startup. It has a structure that allows you to provide a download image, directory path (dir), and a file name (out) in a list based row format. The models are listed with their name, link and file size.
@@ -341,75 +388,77 @@ The starter follows the [Open WebUI docs](https://docs.openwebui.com/tutorials/i
 If you want to add additional models to your container, update the [conf/comfyui/runner-scripts/download-models.txt](https://github.com/iamobservable/open-webui-starter/blob/main/conf/comfyui/runner-scripts/download-models.txt.example) file located in your project directory.
 
 
-### Watchtower and Notifications
 
-A Watchtower container provides a convenient way to check in on your container 
-versions to see if updates have been released. Once updates are found, Watchtower 
-will pull the latest container image(s), stop the currently running container and 
-start a new container based on the new image. After completing its process, 
-Watchtower can send notifications to you. More can be found on notifications via 
-the [Watchtower website](https://containrrr.dev/watchtower/notifications/).
+## Service Examples
 
-For the sake of simplicity, this document will cover the instructions for setting 
-up notifications via Discord. If you desire to be more detailed in your configuration, 
-the [arguments section](https://containrrr.dev/watchtower/arguments/) describes 
-additional settings available for the watchtower setup.
+This section is to show how services setup within docker compose can be used 
+directly or programmatically without the Open WebUI interface. The examples directory, 
+located in the main project directory, includes directories 
+named after services. Examples have been created as *.sh scripts that can be 
+executed via the command line.
 
-1. Edit your [env/watchtower.env](https://github.com/iamobservable/open-webui-starter/blob/main/env/watchtower.example#L2) with your discord link. [More information](https://containrrr.dev/shoutrrr/v0.8/services/discord/) is provided on how to create your discord link (token@webhookid).
-2. Restart your watchtower container
 
-```bash
-docker compose down watchtower && docker compose up watchtower -d
+### Docling
+
+**PDF document to markdown**
+
+Generates a JSON document with the markdown text included. Changes to the config.json document, located in the same directory, can change how Docling responds. More information on how to configure Docling can be found in the [Advance usage section](https://github.com/docling-project/docling-serve/blob/main/docs/usage.md) of the [Docling Serve documentation](https://github.com/docling-project/docling-serve/blob/main/docs/README.md).
+
+```sh
+./pdf-to-markdown.sh
 ```
 
-### Legacy migration for Sqlite to Postgresql
 
-***Please note, this project does not use Sqlite for storage. Postgresql is 
-configured by default. For installations where the environment was already 
-setup to use Sqlite. If you want to move to Postgresql, you can follow along 
-below. There is also another solution, created by [Taylor Wilsdon](https://github.com/taylorwilsdon), 
-that can be found on his github repository [open-webui-postgres-migration](https://github.com/taylorwilsdon/open-webui-postgres-migration) 
-that looks pretty nice.
+### Edgetts
 
-***Tested using node v22.12.0***
+EdgeTTS is a service integration that uses Microsoft's online text-to-speech 
+service. Keep in mind, if you want to be completely local, this service is not 
+for you.
 
-Depending on your setup, you may need to expose your postgresql (db) container 
-port before proceeding. By default, this project's db container is not exposing 
-a port. 
+*More information about [available voice samples](https://tts.travisvn.com/) 
+the [EdgeTTS codebase and configuration](https://github.com/travisvn/openai-edge-tts)*.
 
-***example***
+**Speech in Spanish**
 
-```yaml
-services:
-  db:
-image: pgvector/pgvector:pg15
-    ports:
-      - 5432:5432
+Generate Spanish speach from a speaker with a Spanish accent.
+
+```sh
+./alonso-es-hola.sh
 ```
 
-1. Change to the migrator folder and install node packages
+**Speech in English**
 
-```bash
-cd migrator
-npm install
+Generates English speach from a speaker with an English accent.
+
+```sh
+./wayland-intro.sh
 ```
 
-2. Execute migrate.js file with node. Adjust the following command with your 
-specific configuration locations, user, password, and database names.
 
-```bash
-node migrate.js ../data/openwebui/webui.db "postgresql://postgres:postgres@localhost/openwebui"
+### Tika
+
+**Information about the PDF document**
+
+Generates meta data from a provided url. More information can be found via the [Metadata Resource documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-MetadataResource)
+
+```sh
+./pdf-meta.sh
 ```
 
-3. Update your [env/openwebui.env](https://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L11) file to add the following line. This configuration expects that you are using the default DATABASE_URL.
+**PDF document (url) to HTML**
 
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost/openwebui"
+Generates HTML from a provided url. More information can be found via the [Tika Resource Documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-GettheTextofaDocument)
+
+```sh
+./pdf-to-html.sh
 ```
 
-4. Remove and restart your postgresql container
-```bash
-docker compose down db && docker compose up db -d
+**PDF document (url) to plain text**
+
+Generates plain text from a provided url. More information can be found via the [Tika Resource Documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-GettheTextofaDocument)
+
+```sh
+./pdf-to-text.sh
 ```
 
 
@@ -417,5 +466,5 @@ docker compose down db && docker compose up db -d
 
 Contributions to the Open WebUI Starter project are welcome. If you'd like to 
 contribute, please fork this repository and submit a pull request with any 
-changes or additions.
+suggested changes or additions.
 

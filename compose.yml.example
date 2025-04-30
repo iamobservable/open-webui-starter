@@ -61,8 +61,8 @@ services:
       test: curl --fail http://localhost:5001/health || exit 1
       timeout: 5s
     image: quay.io/docling-project/docling-serve:latest
-#    ports:
-#      - 5001:5001
+    ports:
+      - 5001:5001
     restart: unless-stopped
 
   edgetts:
@@ -83,8 +83,8 @@ services:
       test: "curl --fail http://localhost:5050/voices -H 'Authorization: Bearer your_api_key_here' || exit 1"
       timeout: 5s
     image: travisvn/openai-edge-tts:latest
-#    ports:
-#      - 5050:5050
+    ports:
+      - 5050:5050
     restart: unless-stopped
 
   nginx:
