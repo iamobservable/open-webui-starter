@@ -31,7 +31,7 @@ Here is a link to follow 🔗[project development](https://github.com/users/iamo
 
 ## Tooling and Applications
 
-This starter project includes the following tooling and applications. A [Service Architecture Diagram](https://github.com/iamobservable/open-webui-starter/blob/main/docs/service-architecture-diagram.md){:target="_blank"} is also available that describes how the components of are connected.
+This starter project includes the following tooling and applications. A [Service Architecture Diagram](https://github.com/iamobservable/open-webui-starter/blob/main/docs/service-architecture-diagram.md) is also available that describes how the components of are connected.
 
 - **[Cloudflare](https://www.cloudflare.com/)**: Platform providing anonymous proxying and SSL certificates
 - **[ComfyUI](https://www.comfy.org/)**: Platform for generating node based images
