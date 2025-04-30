@@ -41,6 +41,12 @@ services:
     depends_on:
       - watchtower
     env_file: env/db.env
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 20s
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      timeout: 5s
     image: pgvector/pgvector:pg15
     restart: unless-stopped
     volumes:
@@ -48,14 +54,15 @@ services:
 
   docling:
     env_file: env/docling.env
-    deploy: &gpu-deploy
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 10s
+      test: curl --fail http://localhost:5001/health || exit 1
+      timeout: 5s
     image: quay.io/docling-project/docling-serve:latest
+    ports:
+      - 5001:5001
     restart: unless-stopped
 
   edgetts:
@@ -66,24 +73,30 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: 1
+              count: all
               capabilities: [gpu]
     env_file: env/edgetts.env
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 5s
+      test: "curl --fail http://localhost:5050/voices -H 'Authorization: Bearer your_api_key_here' || exit 1"
+      timeout: 5s
     image: travisvn/openai-edge-tts:latest
     ports:
       - 5050:5050
     restart: unless-stopped
 
-  # kokoro:
-  #   deploy: *gpu-deploy
-  #   image: ghcr.io/remsky/kokoro-fastapi-gpu:latest
-  #   ports:
-  #     - 8880:8880
-
   nginx:
     depends_on:
       - cloudflared
       - watchtower
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 5s
+      test: curl --fail http://localhost/ || exit 1
+      timeout: 3s
     image: nginx:latest
     ports:
       - 80:80
@@ -97,6 +110,12 @@ services:
       - watchtower
     deploy: *gpu-deploy
     env_file: env/ollama.env
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 10s
+      test: curl --fail http://localhost:11434/api/version || exit 1
+      timeout: 3s
     image: ollama/ollama:latest
     ports:
       - 11434:11434
@@ -113,11 +132,16 @@ services:
       - nginx
       - ollama
       - searxng
+      - tika
       - watchtower
     deploy: *gpu-deploy
     env_file: env/openwebui.env
-    extra_hosts:
-      - host.docker.internal:host-gateway
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 10s
+      test: curl --fail http://localhost:8080/health || exit 1
+      timeout: 3s
     image: ghcr.io/open-webui/open-webui:cuda
     restart: unless-stopped
     volumes:
@@ -127,6 +151,12 @@ services:
     depends_on:
       - watchtower
     env_file: env/redis.env
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 20s
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      timeout: 3s
     image: redis/redis-stack:latest
     restart: unless-stopped
     volumes:
@@ -144,6 +174,12 @@ services:
     depends_on:
       - redis
       - watchtower
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 10s
+      test: curl --fail http://localhost:8080/ || exit 1
+      timeout: 3s
     image: searxng/searxng:latest
     logging:
       driver: "json-file"
@@ -154,6 +190,19 @@ services:
     volumes:
       - ./conf/searxng/settings.yml:/etc/searxng/settings.yml:rw
       - ./conf/searxng/uwsgi.ini:/etc/searxng/uwsgi.ini:rw
+
+  tika:
+    env_file: env/tika.env
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 5s
+      test: curl --fail http://localhost:9998/tika || exit 1
+      timeout: 5s
+    image: apache/tika:latest-full
+    ports:
+      - 9998:9998
+    restart: unless-stopped
 
   watchtower:
     command: --cleanup --debug --interval 300
