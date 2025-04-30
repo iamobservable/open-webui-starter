@@ -391,11 +391,9 @@ If you want to add additional models to your container, update the [conf/comfyui
 
 ## Service Examples
 
-This section is to show how services setup within docker compose can be used 
-directly or programmatically without the Open WebUI interface. The examples directory, 
-located in the main project directory, includes directories 
-named after services. Examples have been created as *.sh scripts that can be 
-executed via the command line.
+This section is to show how services within docker compose infra can be used 
+directly or programmatically without the Open WebUI interface. The examples 
+have been created as *.sh scripts that can be executed via the command line.
 
 
 ### Docling
@@ -405,7 +403,20 @@ executed via the command line.
 Generates a JSON document with the markdown text included. Changes to the config.json document, located in the same directory, can change how Docling responds. More information on how to configure Docling can be found in the [Advance usage section](https://github.com/docling-project/docling-serve/blob/main/docs/usage.md) of the [Docling Serve documentation](https://github.com/docling-project/docling-serve/blob/main/docs/README.md).
 
 ```sh
-./examples/docling/pdf-to-markdown.sh
+curl -X POST "http://localhost:5001/v1alpha/convert/source" \
+    -H "accept: application/json" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "options": {
+        "do_picture_description": false,
+        "image_export_mode": "embedded",
+        "images_scale": 2.0,
+        "include_images": false,
+        "return_as_file": false,
+        "to_formats": ["md"]
+      },
+      "http_sources": [{ "url": "https://arxiv.org/pdf/2408.09869" }]
+    }'
 ```
 
 
@@ -423,7 +434,17 @@ the [EdgeTTS codebase and configuration](https://github.com/travisvn/openai-edge
 Generate Spanish speach from a speaker with a Spanish accent.
 
 ```sh
-./examples/edgetts/alonso-es-hola.sh
+curl -X POST "http://localhost:5050/v1/audio/speech" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer your_api_key_here" \
+    -d '{
+      "input": "Hola! Mi nombre es Alonso",
+      "response_format": "mp3",
+      "speed": 1,
+      "stream": true,
+      "voice": "es-US-AlonsoNeural",
+      "model": "tts-1-hd"
+    }' > alonso-es-hola.mp3
 ```
 
 **Speech in English**
@@ -431,7 +452,17 @@ Generate Spanish speach from a speaker with a Spanish accent.
 Generates English speach from a speaker with an English accent.
 
 ```sh
-./examples/edgetts/wayland-intro.sh
+curl -X POST "http://localhost:5050/v1/audio/speech" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer your_api_key_here" \
+    -d '{
+      "input": "Hi, my name is Wayland. This is an audio example.",
+      "response_format": "mp3",
+      "speed": 1,
+      "stream": true,
+      "voice": "en-US-AndrewMultilingualNeural",
+      "model": "tts-1-hd"
+    }' > wayland-intro.mp3
 ```
 
 
@@ -442,7 +473,9 @@ Generates English speach from a speaker with an English accent.
 Generates meta data from a provided url. More information can be found via the [Metadata Resource documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-MetadataResource)
 
 ```sh
-./examples/tika/pdf-meta.sh
+curl https://arxiv.org/abs/2408.09869v5 > 2408.09869v5.pdf
+curl http://localhost:9998/meta \
+    -H "Accept: application/json" -T 2408.09869v5.pdf 
 ```
 
 **PDF document (url) to HTML**
@@ -450,7 +483,9 @@ Generates meta data from a provided url. More information can be found via the [
 Generates HTML from a provided url. More information can be found via the [Tika Resource Documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-GettheTextofaDocument)
 
 ```sh
-./examples/tika/pdf-to-html.sh
+curl https://arxiv.org/abs/2408.09869v5 > 2408.09869v5.pdf
+curl http://localhost:9998/tika \
+    -H "Accept: text/html" -T 2408.09869v5.pdf 
 ```
 
 **PDF document (url) to plain text**
@@ -458,7 +493,9 @@ Generates HTML from a provided url. More information can be found via the [Tika 
 Generates plain text from a provided url. More information can be found via the [Tika Resource Documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-GettheTextofaDocument)
 
 ```sh
-./examples/tika/pdf-to-text.sh
+curl https://arxiv.org/abs/2408.09869v5 > 2408.09869v5.pdf
+curl http://localhost:9998/tika \
+    -H "Accept: text/plain" -T 2408.09869v5.pdf 
 ```
 
 
