@@ -1,8 +1,0 @@
-{
-  "input": "Hi, my name is Wayland. This is an audio example.",
-  "response_format": "mp3",
-  "speed": 1,
-  "stream": true,
-  "voice": "en-US-AndrewMultilingualNeural",
-  "model": "tts-1-hd"
-}
