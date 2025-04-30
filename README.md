@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
 # Open WebUI Starter
 =====================
 
@@ -6,12 +8,12 @@ setting up [Open WebUI](https://openwebui.com/). More information can be found
 about configurations on the [Open WebUI Docs](https://docs.openwebui.com/) or the [Gitub repository](https://github.com/open-webui/open-webui).
 
 
-## Project Overview
+## 👷Project Overview
 
 The Open WebUI Starter project is a entry into using the open-source project 
 Open WebUI. Open WebUI integrates with various Large Language Models (LLMs) and provides a private, user-friendly, and local interface for interacting with computer intelligence.
 
-Here is a link to [follow project development](https://github.com/users/iamobservable/projects/1) if you so desire.
+Here is a link to follow 🔗[project development](https://github.com/users/iamobservable/projects/1) if you so desire.
 
 ## Table of Contents
 1. [Dependencies](#dependencies)
@@ -29,7 +31,7 @@ Here is a link to [follow project development](https://github.com/users/iamobser
 
 ## Tooling and Applications
 
-This starter project includes the following tooling and applications.
+This starter project includes the following tooling and applications. A [Service Architecture Diagram](https://github.com/iamobservable/open-webui-starter/blob/main/docs/service-architecture-diagram.md) is also available that describes how the components of are connected.
 
 - **[Cloudflare](https://www.cloudflare.com/)**: Platform providing anonymous proxying and SSL certificates
 - **[ComfyUI](https://www.comfy.org/)**: Platform for generating node based images
@@ -44,157 +46,6 @@ This starter project includes the following tooling and applications.
 - **[Sqlite](https://www.sqlite.org/index.html)**: A C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine
 - **[Tika](https://tika.apache.org/)**: A toolkit that detects and extracts metadata and text from over a thousand different file types
 - **[Watchtower](https://github.com/containrrr/watchtower)**: Automated Docker container for updating container images automatically
-
-```mermaid
-graph
-    subgraph Visitor
-        browser[Browser]
-    end
-
-    subgraph Cloudflare
-        customdomain[Domain Services]
-        zerotrusttunnel[Zero Trust Services]
-    end
-
-    %% Cloudflare
-    browser -- 
-        HTTP/SSL Termination
-        and
-        Domain Routing
-    --> customdomain --
-        Route domain
-        traffic
-    --> zerotrusttunnel
-
-    subgraph Docker
-        cloudflared[Cloudflared]
-
-        zerotrusttunnel --
-            Ingress Tunnel
-            to Cluster
-        --> cloudflared
-
-        subgraph Web Services
-            nginx[Nginx]
-            openwebui[Open WebUI]
-        end
-
-        cloudflared -- "nginx:80"
-            HTTP Requests
-        --> nginx
-
-        nginx -- "example.com/"
-            Route HTTP requests
-            to OWUI uvicorn instance
-        --> openwebui
-
-        nginx -- "example.com/redis"
-            Redis Insight
-            Interface
-        --> redis
-
-        nginx -- "example.com/searxng"
-            Authenticated Anonymous
-            Search Interface
-        --> searxng
-
-        subgraph Image Services
-            comfyui[ComfyUI]
-        end
-
-        openwebui -- "comfyui:8188"
-            Image Web
-            Search Requests
-        --> comfyui
-
-        subgraph Authentication Services
-            auth[Authentication]
-        end
-
-        nginx -- "auth:9090"
-            Validate Authentication
-            Bearer JWT
-        --> auth
-
-        subgraph Speech Services
-            edgetts[EdgeTTS]
-        end
-
-        openwebui -- "edgetts:5050"
-            Speech Synthesis
-            for Web Interface
-        --> edgetts
-
-        subgraph Search Services
-            searxng[SearXNG]
-        end
-
-        openwebui -- "searxng:8080"
-            Anonymous searching
-            platform for web interface
-        --> searxng
-
-        subgraph LLM Services
-            ollama[Ollama]
-        end
-
-        openwebui -- ""ollama:11434
-            logic requests
-        --> ollama
-
-        subgraph Document Services
-            docling[Docling]
-        end
-
-        openwebui -- "docling:5001"
-            Document Parsing
-        --> docling
-
-        subgraph Document Services
-            tika[Tika]
-        end
-
-        openwebui -- "tika:9998"
-            Document Parsing
-        --> tika
-
-        subgraph Persistence Service
-            db[PostgreSQL/PGVector]
-            redis[Redis]
-        end
-
-        openwebui --
-            Configuration,
-            Vector (RAG), and
-            General Storage
-        --> db
-
-        searxng --
-            Persistence Storage
-        --> redis
-
-        subgraph Utility Services
-            watchtower[Watchtower
-                _automatically manages
-                container updates_
-            ]
-            pipelines[Pipelines
-                _allows additional
-                automation_
-            ]
-        end
-    end
-
-    subgraph Microsoft Microsoft Edge
-        microsofonlinesservice[Microsoft Text-To-Speech Service]
-    end
-
-    edgetts --
-        Client Requests
-        to External Service
-        Provider
-    --> microsofonlinesservice
-```
 
 
 ## Installation
