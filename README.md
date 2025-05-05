@@ -284,7 +284,7 @@ the [EdgeTTS codebase and configuration](https://github.com/travisvn/openai-edge
 
 **Speech in Spanish**
 
-Generate Spanish speach from a speaker with a Spanish accent.
+Generate Spanish speech from a speaker with a Spanish accent.
 
 ```sh
 curl -X POST "http://localhost:5050/v1/audio/speech" \
@@ -302,7 +302,7 @@ curl -X POST "http://localhost:5050/v1/audio/speech" \
 
 **Speech in English**
 
-Generates English speach from a speaker with an English accent.
+Generates English speech from a speaker with an English accent.
 
 ```sh
 curl -X POST "http://localhost:5050/v1/audio/speech" \
