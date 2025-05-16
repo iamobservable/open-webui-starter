@@ -197,7 +197,7 @@ anything should be restricted, make sure to do so ahead of time.
 - http://mcposerver:8000/time
 - http://mcposerver:8000/postgres
 
-<img src="./images/owui-settings-tools-general.png" alt="OWUI Tool Settings" align="center" width="1000">
+<img src="./images/owui-settings-tools-general-dialog.png" alt="OWUI Tool Settings" align="center" width="1000">
 
 #### Initial configuration
 
