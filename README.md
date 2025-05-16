@@ -67,7 +67,7 @@ cp conf/cloudflared/config.example conf/cloudflared/config.yml
 cp conf/mcposerver/config.example conf/mcposerver/config.json
 cp conf/nginx/nginx.example conf/nginx/nginx.conf
 cp conf/nginx/conf.d/default.example conf/nginx/conf.d/default.conf
-cp cong/searxng/settings.yml.example conf/searxng/settings.yml
+cp conf/searxng/settings.yml.example conf/searxng/settings.yml
 cp conf/searxng/uwsgi.ini.example conf/searxng/uwsgi.ini
 
 cp env/auth.example env/auth.env
