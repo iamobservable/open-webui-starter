@@ -53,15 +53,6 @@ graph
             Search Interface
         --> searxng
 
-        subgraph Image Services
-            comfyui[ComfyUI]
-        end
-
-        openwebui -- "comfyui:8188"
-            Image Web
-            Search Requests
-        --> comfyui
-
         subgraph Authentication Services
             auth[Authentication]
         end
@@ -112,6 +103,15 @@ graph
         openwebui -- "tika:9998"
             Document Parsing
         --> tika
+
+        subgraph MCP Services
+            mcposerver[mcposerver]
+        end
+
+        openwebui -- "mcposerver:8000"
+            tools, resources, prompts
+            samplings, roots
+        --> mcposerver
 
         subgraph Persistence Service
             db[PostgreSQL/PGVector]

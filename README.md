@@ -34,9 +34,9 @@ Here is a link to follow 🔗[project development](https://github.com/users/iamo
 This starter project includes the following tooling and applications. A [Service Architecture Diagram](https://github.com/iamobservable/open-webui-starter/blob/main/docs/service-architecture-diagram.md) is also available that describes how the components of are connected.
 
 - **[Cloudflare](https://www.cloudflare.com/)**: Platform providing anonymous proxying and SSL certificates
-- **[ComfyUI](https://www.comfy.org/)**: Platform for generating node based images
 - **[Docling](https://github.com/docling-project/docling-serve)**: Simplifies document processing, parsing diverse formats — including advanced PDF understanding — and providing seamless integrations with the gen AI ecosystem. (created by IBM)
 - **[Edge TTS](https://github.com/rany2/edge-tts)**: Python module that using Microsoft Edge's online text-to-speech service
+- **[MCP Server](https://modelcontextprotocol.io/introduction)**: Open protocol that standardizes how applications provide context to LLMs.
 - **[Nginx](https://nginx.org/)**: Web server, reverse proxy, load balancer, mail proxy, and HTTP cache
 - **[Ollama](https://ollama.com/)**: Local service API serving open source large language models
 - **[Open WebUI](https://openwebui.com/)**: Open WebUI is an extensible, feature-rich, and user-friendly self-hosted AI platform designed to operate entirely offline
@@ -64,7 +64,7 @@ git clone https://github.com/iamobservable/open-webui-starter.git
 cp compose.yml.example compose.yml
 
 cp conf/cloudflared/config.example conf/cloudflared/config.yml
-cp conf/comfyui/runner-scripts/download-models.txt.example conf/comfyui/runner-scripts/download-models.txt
+cp conf/mcposerver/config.example conf/mcposerver/config.json
 cp conf/nginx/nginx.example conf/nginx/nginx.conf
 cp conf/nginx/conf.d/default.example conf/nginx/conf.d/default.conf
 cp cong/searxng/settings.yml.example conf/searxng/settings.yml
@@ -72,11 +72,11 @@ cp conf/searxng/uwsgi.ini.example conf/searxng/uwsgi.ini
 
 cp env/auth.example env/auth.env
 cp env/cloudflared.example env/cloudflared.env
-cp env/comfyui.example env/comfyui.env
 cp env/db.example env/db.env
 cp env/docling.example env/docling.env
 cp env/edgetts.example env/edgetts.env
 cp env/ollama.example env/ollama.env
+cp env/mcposerver.example env/mcposerver.env
 cp env/openwebui.example env/openwebui.env
 cp env/redis.example env/redis.env
 cp env/searxng.example env/searxng.env
@@ -99,13 +99,13 @@ Update the [env/searxng.env](http://github.com/iamobservable/open-webui-starter/
 
 Make this change to your auth environment file [env/auth.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/auth.example#L2). The link provided will lead you to the github repository to read about it.
 
-Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L39).
+Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L38).
 
 **Make sure the environment files match**:. This allows jwt token authentication to work with the main Open WebUI (/), swagger (/docs), redis (/redis), and searxng (/searxng)
 
 ### Add your domain name as WEBUI_URL to your environment files
 
-Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L40).
+Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L39).
 
 ### Setup Cloudflare
 
@@ -173,6 +173,48 @@ Once the containers are started, and your model downloaded, you are ready to acc
 
 ## Additional Setup
 
+### MCP Servers
+
+Model Context Protocol (MCP) is a configurable set of tools, resources, prompts, samplings, and roots. They provide 
+a structured way to expose local functionality to the LLM. Examples are providing access to the local file system, 
+searching the internet, interacting with git or github, and much more.
+
+#### Manual entry (MUST COMPLETE)
+
+The configuration for tools currently requires a manual step to complete. This is due my own lack of understanding of how 
+the environment variable TOOL_SERVER_CONNECTIONS is used in [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L34). 
+If anyone has a good understanding, and has been able to see it work in practice, please share a [pull request](https://github.com/iamobservable/open-webui-starter/pulls) or 
+message me [directly on Discord](https://discordapp.com/users/observable).
+
+For now, to use the two default tools, it is required to add them manually. **They will NOT** automatically load using the environment variable TOOL_SERVER_CONNECTIONS, enen 
+though it is added. Add the following two urls using the Admin Settings -> Tools -> General interface.
+
+- http://mcposerver:8000/time
+- http://mcposerver:8000/postgres
+
+<img src="./images/owui-settings-tools-general.png" alt="OWUI Tool Settings" align="center" width="1000">
+
+#### Initial configuration
+
+Configurations for MCP services can be found in the [conf/mcposerver/config.json](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example) file. Links below in the table describe the initially configuration.
+
+***Note - the time tool is configured using uvx instead of directly with the python binary, as the repository describes*** 
+
+You may expand on the tools available to your interface. A few examples are listed below.
+
+| Tool                                                                               | Description                                                               | Configuration |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------- |
+| [time](https://github.com/modelcontextprotocol/servers/tree/main/src/time)         | Provides current time values for [configured timezone](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example#L5)                      | [config/mcposerver/config.json](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example#L3) |
+| [postgres](https://github.com/modelcontextprotocol/servers/tree/main/src/postgres) | Provides sql querying for the configured database (defaults to openwebui) | [config/mcposerver/config.json](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example#L7) |
+
+#### MCP Server Discovery
+
+If you are looking for tools to add, the following three MCP Server sources are a great place to look. It may even inspire you to create your own over time!
+
+- [Model Context Protocol servers](https://github.com/modelcontextprotocol/servers?tab=readme-ov-file#model-context-protocol-servers)
+- [Awesome MCP Servers](https://mcpservers.org/)
+- [Smithery](https://smithery.ai/)
+
 ### Watchtower and Notifications
 
 A Watchtower container provides a convenient way to check in on your container 
@@ -205,41 +247,6 @@ environment was already setup to use Sqlite, please refer to
 [Taylor Wilsdon](https://github.com/taylorwilsdon)'s github repository 
 [open-webui-postgres-migration](https://github.com/taylorwilsdon/open-webui-postgres-migration). 
 In it, he provides a migration tool for converting between the two databases.
-
-
-### Adding models to ComfyUI
-
-The starter makes use of the docker image [yanwk/comfyui-boot:cu124-slim](https://github.com/YanWenKun/ComfyUI-Docker/tree/main/cu124-slim) for building the ComfyUI container.  This image has a special file [download-models.txt](https://github.com/iamobservable/open-webui-starter/blob/main/conf/comfyui/runner-scripts/download-models.txt.example). The file is responsible for configuring model downloads during the initial startup. It has a structure that allows you to provide a download image, directory path (dir), and a file name (out) in a list based row format. The models are listed with their name, link and file size.
-
-**Format definition**
-
-```
-<model-download-url>
-  dir=<directory-path>
-  out=<output-file-name>
-```
-
-The base docker image includes the following models:
-
-- [taesd_decoder](https://raw.githubusercontent.com/madebyollin/taesd/main/taesd_decoder.pth) (4.8MB)
-- [taesdxl_decoder](https://raw.githubusercontent.com/madebyollin/taesd/main/taesdxl_decoder.pth) (4.8MB)
-- [taesd3_decoder](https://raw.githubusercontent.com/madebyollin/taesd/main/taesd3_decoder.pth) (4.8MB)
-- [taef1_decoder](https://raw.githubusercontent.com/madebyollin/taesd/main/taef1_decoder.pth) (4.8MB)
-
-The starter follows the [Open WebUI docs](https://docs.openwebui.com/tutorials/images/#setting-up-flux1-models) on model setup and adds the models provided.
-
-*As a reminder, you will not need to download any of the models listed above on your own. By starting the containers, the ComfyUI container will download these models automatically!*
-
-- [ae.safetensors](https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors) (327.4MB)
-- [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors) (240.3MB)
-- [t5xxl_fp8_e4m3fn.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn.safetensors) (4.8GB)
-- [flux1-schnell-fp8.safetensors](https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-schnell-fp8.safetensors) (17.2GB)
-- [flux1-dev-fp8.safetensors](https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-dev-fp8.safetensors) (17.2GB)
-
-***The models will take a considerable amount of time to download, depending on your internet connection, and will not be immediately ready to use when you first start your containers.***
-
-If you want to add additional models to your container, update the [conf/comfyui/runner-scripts/download-models.txt](https://github.com/iamobservable/open-webui-starter/blob/main/conf/comfyui/runner-scripts/download-models.txt.example) file located in your project directory.
-
 
 
 ## Service Examples
@@ -354,7 +361,7 @@ curl http://localhost:9998/tika \
 
 ## Contribution
 
-Contributions to the Open WebUI Starter project are welcome. If you'd like to 
-contribute, please fork this repository and submit a pull request with any 
+Contributions to the Open WebUI Starter project are welcome and encouraged! If you'd like to 
+contribute, please fork this repository and submit a [pull request](https://github.com/iamobservable/open-webui-starter/pulls) with any 
 suggested changes or additions.
 

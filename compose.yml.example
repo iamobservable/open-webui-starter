@@ -68,13 +68,6 @@ services:
   edgetts:
     depends_on:
       - watchtower
-    deploy: &gpu-deploy
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     env_file: env/edgetts.env
     healthcheck:
       interval: 30s
@@ -86,6 +79,16 @@ services:
     ports:
       - 5050:5050
     restart: unless-stopped
+
+  mcposerver:
+    command: ["--config", "/app/conf/config.json"]
+    depends_on:
+      - watchtower
+    env_file: env/mcposerver.env
+    image: ghcr.io/open-webui/mcpo:latest
+    restart: unless-stopped
+    volumes:
+      - ./conf/mcposerver:/app/conf:ro
 
   nginx:
     depends_on:
@@ -129,6 +132,7 @@ services:
       - docling
       - db
       - edgetts
+      - mcposerver
       - nginx
       - ollama
       - searxng
