@@ -187,7 +187,12 @@ If anyone has a good understanding, and has been able to see it work in practice
 message me [directly on Discord](https://discordapp.com/users/observable).
 
 For now, to use the two default tools, it is required to add them manually. **They will NOT** automatically load using the environment variable TOOL_SERVER_CONNECTIONS, enen 
-though it is added. Add the following two urls using the Admin Settings -> Tools -> General interface.
+though it is added. Add the following two urls using the Settings -> Tools -> General interface. This can also be set in the Admin Settings as well.
+
+**Note - the default postgres tool is configured to access your Open WebUI postgres database. While this is read-only, the tool server that is defined allows any user with 
+the credentials added to the [env/mcposerver.env](http://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example#L12) to access the database tables. If 
+anything should be restricted, make sure to do so ahead of time.
+
 
 - http://mcposerver:8000/time
 - http://mcposerver:8000/postgres
