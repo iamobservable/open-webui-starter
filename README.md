@@ -61,38 +61,54 @@ To install the Open WebUI Starter project, follow these steps:
 
 ```sh
 git clone https://github.com/iamobservable/open-webui-starter.git
+cd open-webui-starter
 ```
 
-### Create the docker compose and environment files
 
-```sh
-cp compose.yml.example compose.yml
+<!-- ### Create the docker compose and environment files -->
+<!---->
+<!-- ```sh -->
+<!-- cp compose.yml.example compose.yml -->
+<!---->
+<!-- cp conf/cloudflare/config.example conf/cloudflare/config.yml -->
+<!-- cp conf/mcposerver/config.example conf/mcposerver/config.json -->
+<!-- cp conf/nginx/nginx.example conf/nginx/nginx.conf -->
+<!-- cp conf/nginx/conf.d/default.example conf/nginx/conf.d/default.conf -->
+<!-- cp conf/searxng/settings.yml.example conf/searxng/settings.yml -->
+<!-- cp conf/searxng/uwsgi.ini.example conf/searxng/uwsgi.ini -->
+<!---->
+<!-- cp env/auth.example env/auth.env -->
+<!-- cp env/cloudflared.example env/cloudflared.env -->
+<!-- cp env/db.example env/db.env -->
+<!-- cp env/docling.example env/docling.env -->
+<!-- cp env/edgetts.example env/edgetts.env -->
+<!-- cp env/ollama.example env/ollama.env -->
+<!-- cp env/mcposerver.example env/mcposerver.env -->
+<!-- cp env/openwebui.example env/openwebui.env -->
+<!-- cp env/redis.example env/redis.env -->
+<!-- cp env/searxng.example env/searxng.env -->
+<!-- cp env/tika.example env/tika.env -->
+<!-- cp env/watchtower.example env/watchtower.env -->
+<!-- ``` -->
 
-cp conf/cloudflare/config.example conf/cloudflare/config.yml
-cp conf/mcposerver/config.example conf/mcposerver/config.json
-cp conf/nginx/nginx.example conf/nginx/nginx.conf
-cp conf/nginx/conf.d/default.example conf/nginx/conf.d/default.conf
-cp conf/searxng/settings.yml.example conf/searxng/settings.yml
-cp conf/searxng/uwsgi.ini.example conf/searxng/uwsgi.ini
+<!-- *The environment files can contain sensitive information such as API keys  -->
+<!-- and passwords. Do not check them into source control.* -->
 
-cp env/auth.example env/auth.env
-cp env/cloudflared.example env/cloudflared.env
-cp env/db.example env/db.env
-cp env/docling.example env/docling.env
-cp env/edgetts.example env/edgetts.env
-cp env/ollama.example env/ollama.env
-cp env/mcposerver.example env/mcposerver.env
-cp env/openwebui.example env/openwebui.env
-cp env/redis.example env/redis.env
-cp env/searxng.example env/searxng.env
-cp env/tika.example env/tika.env
-cp env/watchtower.example env/watchtower.env
-```
+<!-- ### Add a unique SEARXNG_SECRET -->
+<!---->
+<!-- Make this change to your searxng environment file [env/searxng.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/searxng.example#L3). The link provided will lead you to the github repository to read about it. -->
 
-*The environment files can contain sensitive information such as API keys 
-and passwords. Do not check them into source control.*
+<!-- ### Update and uncomment SEARXNG_BASE_URL -->
+<!---->
+<!-- Update the [env/searxng.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/searxng.example#L4) with the domain name you will be using and uncomment the line by removing the # from the beginning. The link provided will lead you to the github repository to read about it. -->
 
-### Add a unique SEARXNG_SECRET
+<!-- ### Add a unique WEBUI_SECRET_KEY to your environment files -->
+<!---->
+<!-- Make this change to your auth environment file [env/auth.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/auth.example#L2). The link provided will lead you to the github repository to read about it. -->
+<!---->
+<!-- Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L38). -->
+<!---->
+<!-- **Make sure the environment files match**:. This allows jwt token authentication to work with the main Open WebUI (/), swagger (/docs), redis (/redis), and searxng (/searxng) -->
 
 Make this change to your searxng environment file [env/searxng.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/searxng.example#L3). The link provided will lead you to the github repository to read about it.
 
@@ -143,40 +159,62 @@ This allows Cloudflare to send visitors to your connected environment (home or o
 <img src="./images/cloudflare-tunnel.png" alt="Cloudflare Tunnel" align="center" width="1000">
 
 
-### Assign your tunnel id
+<!-- ### Assign your tunnel id -->
+<!---->
+<!-- Update your [conf/cloudflared/config.yml line #1](https://github.com/iamobservable/open-webui-starter/blob/main/conf/cloudflare/config.example#L1) and [conf/cloudflared/config.yml line #2](https://github.com/iamobservable/open-webui-starter/blob/main/conf/cloudflare/config.example#L2) with your tunnel id. It can be found located in one of the two red rectangles on the image above. -->
 
-Update your [conf/cloudflared/config.yml line #1](https://github.com/iamobservable/open-webui-starter/blob/main/conf/cloudflare/config.example#L1) and [conf/cloudflared/config.yml line #2](https://github.com/iamobservable/open-webui-starter/blob/main/conf/cloudflare/config.example#L2) with your tunnel id. It can be found located in one of the two red rectangles on the image above.
-
-### Assign your tunnel token
-
-Update the [env/cloudflared.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/cloudflared.example#L1) file with your token. It can be found in the red rectangle on the image below.
+<!-- ### Assign your tunnel token -->
+<!---->
+<!-- Update the [env/cloudflared.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/cloudflared.example#L1) file with your token. It can be found in the red rectangle on the image below. -->
 
 <img src="./images/cloudflare-connector.png" alt="Cloudflare Connector" align="center" width="1000">
 
-### Add your domain name
+<!-- ### Add your domain name -->
+<!---->
+<!-- Update the [conf/nginx/conf.d/default.conf](https://github.com/iamobservable/open-webui-starter/blob/main/conf/nginx/conf.d/default.example#L24) file with your domain name. The link provided will show you the specific line in the file to change. -->
 
-Update the [conf/nginx/conf.d/default.conf](https://github.com/iamobservable/open-webui-starter/blob/main/conf/nginx/conf.d/default.example#L24) file with your domain name. The link provided will show you the specific line in the file to change.
+<!-- ### Start your docker container environment from a terminal -->
+<!---->
+<!-- You are ready to start up the containers. Let's do it! -->
+<!---->
+<!-- ```sh -->
+<!-- docker compose up -d -->
+<!-- ``` -->
 
-### Start your docker container environment from a terminal
+<!-- ### Download your first Ollama model from a terminal -->
+<!---->
+<!-- You are ready to download an LLM for Ollama. Llama3.2:3b is listed below, but feel free to change this to any model you feel is right. [More on Ollama models](https://ollama.com/search) -->
+<!---->
+<!-- ```sh -->
+<!-- docker compose exec ollama bash -->
+<!---->
+<!-- ollama pull llama3.2:3b -->
+<!-- ``` -->
 
-You are ready to start up the containers. Let's do it!
 
+### Copy Operating System Script Version To Root Directory And Run Script
+
+**linux**
 ```sh
-docker compose up -d
+cp template/script/linux.sh generate-stack.sh
+generate-stack.sh --domain example.com --tunnel-id 1524 --tunnel-token 293uafsjfj3rdf
 ```
 
-### Download your first Ollama model from a terminal
-
-You are ready to download an LLM for Ollama. Llama3.2:3b is listed below, but feel free to change this to any model you feel is right. [More on Ollama models](https://ollama.com/search)
-
+**macos**
 ```sh
-docker compose exec ollama bash
-
-ollama pull llama3.2:3b
+cp template/script/linux.sh generate-stack.sh
+generate-stack.sh --domain example.com --tunnel-id 1524 --tunnel-token 293uafsjfj3rdf
 ```
 
-Once the containers are started, and your model downloaded, you are ready to access the Open WebUI platform. Visit 
-`http://<domain-name>/` in your web browser.
+**windows**
+```sh
+cp template/script/windows.ps1 generate-stack.ps1
+generate-stack.ps1 --domain example.com --tunnel-id 1524 --tunnel-token 293uafsjfj3rdf
+```
+
+
+Once the containers are started, and your model downloaded, your OWUI domain 
+will open in your default browser.
 
 
 
@@ -199,7 +237,7 @@ For now, to use the two default tools, it is required to add them manually. **Th
 though it is added. Add the following two urls using the Settings -> Tools -> General interface. This can also be set in the Admin Settings as well.
 
 *Note - the default postgres tool is configured to access your Open WebUI postgres database. While this is read-only, the tool server that is defined allows any user with 
-the credentials added to the [env/mcposerver.env](http://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example#L12) to access the database tables. If 
+the credentials added to the [conf/mcposerver/config.json](http://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example#L12) to access the database tables. If 
 anything should be restricted, make sure to do so ahead of time.*
 
 
