@@ -1,0 +1,67 @@
+upstream docsUpstream {
+  server openwebui:8080 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+upstream redisUpstream {
+  server redis:8001 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+upstream searxngUpstream {
+  server searxng:8080 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+upstream authUpstream {
+  server auth:9090 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+
+server {
+  listen 80;
+  server_name <domain-name>;
+
+  location ~ ^/(docs|redis|searxng) {
+    auth_request /auth-server/validate;
+    auth_request_set $auth_status $upstream_status;
+
+    error_page 401 = @fallback;
+    error_page 404 = @notfound;
+    add_header X-Auth-Status $auth_status;
+
+    proxy_pass http://$1Upstream;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+
+  location /auth-server/ {
+    internal;
+    proxy_pass http://authUpstream/;
+    proxy_buffers 7 16k;
+    proxy_buffer_size 31k;
+  }
+
+  location / {
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_cache_bypass $http_upgrade;
+
+    client_max_body_size 20M;
+
+    proxy_pass http://docsUpstream;
+  }
+
+  location @fallback {
+    return 302 /auth?redirect=$uri?$query_string;
+  }
+}
