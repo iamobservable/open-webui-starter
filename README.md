@@ -63,7 +63,7 @@ git clone https://github.com/iamobservable/open-webui-starter.git
 ```sh
 cp compose.yml.example compose.yml
 
-cp conf/cloudflare/config.example conf/cloudflared/config.yml
+cp conf/cloudflare/config.example conf/cloudflare/config.yml
 cp conf/mcposerver/config.example conf/mcposerver/config.json
 cp conf/nginx/nginx.example conf/nginx/nginx.conf
 cp conf/nginx/conf.d/default.example conf/nginx/conf.d/default.conf
