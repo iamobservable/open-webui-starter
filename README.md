@@ -10,7 +10,7 @@ about configurations on the [Open WebUI Docs](https://docs.openwebui.com/) or th
 
 ## Join others on Discord
 
-If you run into issues, please join the [Open WebUI Starter project discord channel](https://discord.gg/nFUqM9Dn). We will attempt to help!
+If you run into issues, please join the [Open WebUI Starter project discord channel](https://discord.gg/xD89WPmgut). We will attempt to help!
 
 
 ## 👷Project Overview
