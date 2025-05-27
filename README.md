@@ -8,6 +8,11 @@ setting up [Open WebUI](https://openwebui.com/). More information can be found
 about configurations on the [Open WebUI Docs](https://docs.openwebui.com/) or the [Gitub repository](https://github.com/open-webui/open-webui).
 
 
+## Join others on Discord
+
+If you run into issues, please join the [Open WebUI Starter project discord channel](https://discord.gg/yaER7uvWKD). We will attempt to help!
+
+
 ## 👷Project Overview
 
 The Open WebUI Starter project is a entry into using the open-source project 
