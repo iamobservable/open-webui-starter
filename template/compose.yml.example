@@ -16,7 +16,7 @@ services:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
     volumes:
-      - ./conf/cloudflare/config:/home/nonroot/.cloudflared
+      - ./conf/cloudflared/config:/home/nonroot/.cloudflared
 
   db:
     depends_on:
@@ -31,7 +31,7 @@ services:
     image: pgvector/pgvector:pg15
     restart: unless-stopped
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql/data
 
   docling:
     env_file: env/docling.env
@@ -42,8 +42,6 @@ services:
       test: curl --fail http://localhost:5001/health || exit 1
       timeout: 5s
     image: quay.io/docling-project/docling-serve:latest
-    ports:
-      - 5001:5001
     restart: unless-stopped
 
   edgetts:
@@ -57,8 +55,6 @@ services:
       test: "curl --fail http://localhost:5050/voices -H 'Authorization: Bearer your_api_key_here' || exit 1"
       timeout: 5s
     image: travisvn/openai-edge-tts:latest
-    ports:
-      - 5050:5050
     restart: unless-stopped
 
   mcposerver:
@@ -82,8 +78,6 @@ services:
       test: curl --fail http://localhost/ || exit 1
       timeout: 3s
     image: nginx:latest
-    ports:
-      - 80:80
     restart: unless-stopped
     volumes:
       - ./conf/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
@@ -92,7 +86,13 @@ services:
   ollama:
     depends_on:
       - watchtower
-    deploy: *gpu-deploy
+    deploy: &gpu-deploy
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     env_file: env/ollama.env
     healthcheck:
       interval: 30s
@@ -101,11 +101,12 @@ services:
       test: curl --fail http://localhost:11434/api/version || exit 1
       timeout: 3s
     image: ollama/ollama:latest
-    ports:
-      - 11434:11434
+    post_start:
+      - command: ["sh", "-c", "ollama pull qwen3:0.6b"]
+      - command: ["sh", "-c", "ollama pull nomic-embed-text:latest"]
     restart: unless-stopped
     volumes:
-      - ./data/ollama:/root/.ollama
+      - ollama:/root/.ollama
 
   openwebui:
     depends_on:
@@ -130,7 +131,7 @@ services:
     image: ghcr.io/open-webui/open-webui:cuda
     restart: unless-stopped
     volumes:
-      - ./data/openwebui:/app/backend/data
+      - openwebui:/app/backend/data
 
   redis:
     depends_on:
@@ -144,8 +145,6 @@ services:
       timeout: 3s
     image: redis/redis-stack:latest
     restart: unless-stopped
-    volumes:
-      - ./data/redis:/data
 
   searxng:
     cap_add:
@@ -165,7 +164,7 @@ services:
       start_period: 10s
       test: curl --fail http://localhost:8080/ || exit 1
       timeout: 3s
-    image: searxng/searxng:latest
+    image: searxng/searxng:2025.5.18-5dff826
     logging:
       driver: "json-file"
       options:
@@ -185,8 +184,6 @@ services:
       test: curl --fail http://localhost:9998/tika || exit 1
       timeout: 5s
     image: apache/tika:latest-full
-    ports:
-      - 9998:9998
     restart: unless-stopped
 
   watchtower:
@@ -196,3 +193,9 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+
+
+volumes:
+  ollama:
+  openwebui:
+  postgres:
