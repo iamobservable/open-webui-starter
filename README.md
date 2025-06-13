@@ -100,9 +100,13 @@ Make this change to your searxng environment file [env/searxng.env](http://githu
 
 Update the [env/searxng.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/searxng.example#L4) with the domain name you will be using and uncomment the line by removing the # from the beginning. The link provided will lead you to the github repository to read about it.
 
-### Add a unique WEBUI_SECRET_KEY to your environment files
+### Add a unique JWT_SECRET to your auth environment file
 
 Make this change to your auth environment file [env/auth.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/auth.example#L2). The link provided will lead you to the github repository to read about it.
+
+### Add the WEBUI_SECRET_KEY to your openwebui environment file
+
+The keys SEARXNG_SECRET, JWT_SECRET, and WEB_SECRET_KEY should be the same secret key. The name is different within each service, but they serve the same purpose and the services will not be able to "talk" without the value being the same.
 
 Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L38).
 

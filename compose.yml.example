@@ -1,11 +1,7 @@
 services:
   auth:
-    build:
-      context: ./auth
-      dockerfile: Dockerfile
     env_file: env/auth.env
-    labels:
-      - "com.centurylinklabs.watchtower.enable=false"
+    image: ghcr.io/iamobservable/jwt-auth-validator:0.1.0
     restart: unless-stopped
 
   cloudflared:
