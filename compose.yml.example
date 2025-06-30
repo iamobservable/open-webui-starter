@@ -4,16 +4,6 @@ services:
     image: ghcr.io/iamobservable/jwt-auth-validator:0.1.0
     restart: unless-stopped
 
-  cloudflared:
-    command: tunnel --no-autoupdate run
-    depends_on:
-      - watchtower
-    env_file: env/cloudflared.env
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    volumes:
-      - ./conf/cloudflare/config:/home/nonroot/.cloudflared
-
   db:
     depends_on:
       - watchtower
@@ -27,7 +17,7 @@ services:
     image: pgvector/pgvector:pg15
     restart: unless-stopped
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql/data
 
   docling:
     env_file: env/docling.env
@@ -69,8 +59,8 @@ services:
 
   nginx:
     depends_on:
-      - cloudflared
       - watchtower
+    env_file: env/nginx.env
     healthcheck:
       interval: 30s
       retries: 5
@@ -79,16 +69,21 @@ services:
       timeout: 3s
     image: nginx:latest
     ports:
-      - 80:80
+      - 4000:80
     restart: unless-stopped
     volumes:
-      - ./conf/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
-      - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./conf/nginx/templates:/etc/nginx/templates
 
   ollama:
     depends_on:
       - watchtower
-    deploy: *gpu-deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     env_file: env/ollama.env
     healthcheck:
       interval: 30s
@@ -101,7 +96,7 @@ services:
       - 11434:11434
     restart: unless-stopped
     volumes:
-      - ./data/ollama:/root/.ollama
+      - ollama:/root/.ollama
 
   openwebui:
     depends_on:
@@ -115,7 +110,13 @@ services:
       - searxng
       - tika
       - watchtower
-    deploy: *gpu-deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     env_file: env/openwebui.env
     healthcheck:
       interval: 30s
@@ -126,7 +127,7 @@ services:
     image: ghcr.io/open-webui/open-webui:cuda
     restart: unless-stopped
     volumes:
-      - ./data/openwebui:/app/backend/data
+      - openwebui:/app/backend/data
 
   redis:
     depends_on:
@@ -140,17 +141,8 @@ services:
       timeout: 3s
     image: redis/redis-stack:latest
     restart: unless-stopped
-    volumes:
-      - ./data/redis:/data
 
   searxng:
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
-      - DAC_OVERRIDE
-    cap_drop:
-      - ALL
     env_file: env/searxng.env
     depends_on:
       - redis
@@ -167,10 +159,9 @@ services:
       options:
         max-size: "1m"
         max-file: "1"
+    post_start:
+      - command: "wget https://raw.githubusercontent.com/iamobservable/open-webui-starter/refs/heads/main/conf/searxng/settings.yml.example -O /etc/searxng/settings.yml"
     restart: unless-stopped
-    volumes:
-      - ./conf/searxng/settings.yml:/etc/searxng/settings.yml:rw
-      - ./conf/searxng/uwsgi.ini:/etc/searxng/uwsgi.ini:rw
 
   tika:
     env_file: env/tika.env
@@ -192,3 +183,11 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  ollama:
+    external: false
+  openwebui:
+    external: false
+  postgres:
+    external: false

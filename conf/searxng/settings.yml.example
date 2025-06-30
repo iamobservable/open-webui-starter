@@ -1632,9 +1632,9 @@ engines:
   #   categories: files
   #   disabled: true
 
-  - name: radio browser
-    engine: radio_browser
-    shortcut: rb
+  # - name: radio browser
+  #   engine: radio_browser
+  #   shortcut: rb
 
   - name: reddit
     engine: reddit

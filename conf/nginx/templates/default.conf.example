@@ -21,7 +21,7 @@ upstream authUpstream {
 
 server {
   listen 80;
-  server_name <domain-name>;
+  server_name ${NGINX_HOST};
 
   absolute_redirect off;
 
