@@ -33,4 +33,4 @@ USE_CUDA_DOCKER=true
 VECTOR_DB=pgvector
 WEB_SEARCH_ENGINE=searxng
 WEBUI_SECRET_KEY=CHANGE_BEFORE_GOING_LIVE
-WEBUI_URL=https://<domain-name>
+WEBUI_URL=https://localhost:4000

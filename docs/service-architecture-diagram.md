@@ -6,49 +6,27 @@ graph
         browser[Browser]
     end
 
-    subgraph Cloudflare
-        customdomain[Domain Services]
-        zerotrusttunnel[Zero Trust Services]
-    end
-
-    %% Cloudflare
-    browser -- 
-        HTTP/SSL Termination
-        and
-        Domain Routing
-    --> customdomain --
-        Route domain
-        traffic
-    --> zerotrusttunnel
+    browser --
+        Visit Website on port 4000
+    --> nginx
 
     subgraph Docker
-        cloudflared[Cloudflared]
-
-        zerotrusttunnel --
-            Ingress Tunnel
-            to Cluster
-        --> cloudflared
-
         subgraph Web Services
             nginx[Nginx]
             openwebui[Open WebUI]
         end
 
-        cloudflared -- "nginx:80"
-            HTTP Requests
-        --> nginx
-
-        nginx -- "example.com/"
+        nginx -- "http://localhost:4000/"
             Route HTTP requests
             to OWUI uvicorn instance
         --> openwebui
 
-        nginx -- "example.com/redis"
+        nginx -- "http://localhost:4000/redis"
             Redis Insight
             Interface
         --> redis
 
-        nginx -- "example.com/searxng"
+        nginx -- "http://localhost:4000/searxng"
             Authenticated Anonymous
             Search Interface
         --> searxng

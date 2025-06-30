@@ -1,24 +1,23 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
 # Open WebUI Starter
-=====================
 
-The Open WebUI Starter project is meant to provide a quick template for 
+The Open WebUI (OWUI) Starter project is meant to provide a quick template for 
 setting up [Open WebUI](https://openwebui.com/). More information can be found 
 about configurations on the [Open WebUI Docs](https://docs.openwebui.com/) or the [Gitub repository](https://github.com/open-webui/open-webui).
 
 
 ## 📢Join others on Discord
 
-If you run into issues, please join the [Open WebUI Starter project discord channel](https://discord.gg/xD89WPmgut). We will attempt to help!
+If you run into issues, please join the [Open WebUI Starter project discord channel](https://discord.gg/xD89WPmgut). I'll do what I can to help!
 
 
 ## 👷Project Overview
 
-The Open WebUI Starter project is a entry into using the open-source project 
-Open WebUI. Open WebUI integrates with various Large Language Models (LLMs) and provides a private, user-friendly, and local interface for interacting with computer intelligence.
+The Open WebUI Starter project is an entry point into using the open-source project Open WebUI. The goal is to simplify setup and configuration. Open WebUI 
+integrates with various Large Language Models (LLMs) and provides a private, user-friendly, and local interface for interacting with computer intelligence.
 
-Here is a link to follow 🔗[project development](https://github.com/users/iamobservable/projects/1) if you so desire.
+Here is a link to follow 🔗[project development](https://github.com/users/iamobservable/projects/1).
 
 ## Table of Contents
 1. [Dependencies](#dependencies)
@@ -36,9 +35,8 @@ Here is a link to follow 🔗[project development](https://github.com/users/iamo
 
 ## Tooling and Applications
 
-This starter project includes the following tooling and applications. A [Service Architecture Diagram](https://github.com/iamobservable/open-webui-starter/blob/main/docs/service-architecture-diagram.md) is also available that describes how the components of are connected.
+The starter project includes the following tooling and applications. A [Service Architecture Diagram](https://github.com/iamobservable/open-webui-starter/blob/main/docs/service-architecture-diagram.md) is also available that describes how the components are connected.
 
-- **[Cloudflare](https://www.cloudflare.com/)**: Platform providing anonymous proxying and SSL certificates
 - **[Docling](https://github.com/docling-project/docling-serve)**: Simplifies document processing, parsing diverse formats — including advanced PDF understanding — and providing seamless integrations with the gen AI ecosystem. (created by IBM)
 - **[Edge TTS](https://github.com/rany2/edge-tts)**: Python module that using Microsoft Edge's online text-to-speech service
 - **[MCP Server](https://modelcontextprotocol.io/introduction)**: Open protocol that standardizes how applications provide context to LLMs.
@@ -57,6 +55,12 @@ This starter project includes the following tooling and applications. A [Service
 
 To install the Open WebUI Starter project, follow these steps:
 
+
+### Install Docker
+
+Get started by visiting the [get-started section](https://www.docker.com/get-started/) of the Docker website. The website will describe how to download and install Docker Desktop.
+
+
 ### Clone this repository
 
 ```sh
@@ -68,20 +72,17 @@ git clone https://github.com/iamobservable/open-webui-starter.git
 ```sh
 cp compose.yml.example compose.yml
 
-cp conf/cloudflare/config.example conf/cloudflare/config.yml
 cp conf/mcposerver/config.example conf/mcposerver/config.json
 cp conf/nginx/nginx.example conf/nginx/nginx.conf
 cp conf/nginx/conf.d/default.example conf/nginx/conf.d/default.conf
-cp conf/searxng/settings.yml.example conf/searxng/settings.yml
-cp conf/searxng/uwsgi.ini.example conf/searxng/uwsgi.ini
 
 cp env/auth.example env/auth.env
-cp env/cloudflared.example env/cloudflared.env
 cp env/db.example env/db.env
 cp env/docling.example env/docling.env
 cp env/edgetts.example env/edgetts.env
 cp env/ollama.example env/ollama.env
 cp env/mcposerver.example env/mcposerver.env
+cp env/nginx.example env/nginx.env
 cp env/openwebui.example env/openwebui.env
 cp env/redis.example env/redis.env
 cp env/searxng.example env/searxng.env
@@ -90,84 +91,31 @@ cp env/watchtower.example env/watchtower.env
 ```
 
 *The environment files can contain sensitive information such as API keys 
-and passwords. Do not check them into source control.*
+and passwords. Do not check them into source control. *.env files have been
+added to the project .gitignore for this reason.*
 
-### Add a unique SEARXNG_SECRET
+### Allow Open WebUI to manage authentication across Open WebUI, Redis, and Searxng.
 
-Make this change to your searxng environment file [env/searxng.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/searxng.example#L3). The link provided will lead you to the github repository to read about it.
+Open WebUI uses Java Web Token (JWT) to manage authentication. To configure this, a secret key will need to be set in 3 environment files; the keys SEARXNG_SECRET, JWT_SECRET, and WEB_SECRET_KEY. Update the following files accordingly.
 
-### Update and uncomment SEARXNG_BASE_URL
-
-Update the [env/searxng.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/searxng.example#L4) with the domain name you will be using and uncomment the line by removing the # from the beginning. The link provided will lead you to the github repository to read about it.
-
-### Add a unique JWT_SECRET to your auth environment file
-
-Make this change to your auth environment file [env/auth.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/auth.example#L2). The link provided will lead you to the github repository to read about it.
-
-### Add the WEBUI_SECRET_KEY to your openwebui environment file
-
-The keys SEARXNG_SECRET, JWT_SECRET, and WEB_SECRET_KEY should be the same secret key. The name is different within each service, but they serve the same purpose and the services will not be able to "talk" without the value being the same.
-
-Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L38).
+- *SEARXNG_SECRET* - [env/searxng.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/searxng.example#L2)
+- *JWT_SECRET* - [env/auth.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/auth.example#L2)
+- *WEBUI_SECRET_KEY* - [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L35)
 
 **Make sure the environment files match**:. This allows jwt token authentication to work with the main Open WebUI (/), swagger (/docs), redis (/redis), and searxng (/searxng)
 
-### Add your domain name as WEBUI_URL to your environment files
 
-Make this change to your openwebui environment file [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L39).
+### Start docker container environment from a terminal
 
-### Setup Cloudflare
-
-Cloudflare provides a way to point web browsers to a domain name that connects to your local Open WebUI environment. The platform will also setup and provide a free certificate so you can secure your domain name with SSL.
-
-<img src="./images/alert-original.png" alt="Beware Image" width="15" height="15"> **Beware**
-
-One additional point about moving forward without using a proxying platform like Cloudflare. With the right tools, IP addresses can be mapped to a physical location in the real world. If you connect a domain name to your home IP without the use of a proxying platform, it is possible to [DOX](https://en.wikipedia.org/wiki/Doxing) the location. *It is in your best interest to use a proxy, thus anonymizing the location.*
-
-#### Sign up with a [free account](https://www.cloudflare.com/plans/)
-
-Get started using Cloudflare.
-
-<img src="./images/cloudflare-signup.png" alt="Cloudflare Signup" align="center" width="1000">
-
-#### Add a domain for Cloudflare to manage
-
-This allows Cloudflare to receive visitors when they look up your domain in a browser.
-
-<img src="./images/cloudflare-account.png" alt="Cloudflare Account" align="center" width="1000">
-
-#### Configure a Zero Trust Network tunnel
-
-This allows Cloudflare to send visitors to your connected environment (home or otherwise)
-
-<img src="./images/cloudflare-tunnel.png" alt="Cloudflare Tunnel" align="center" width="1000">
-
-
-### Assign your tunnel id
-
-Update your [conf/cloudflared/config.yml line #1](https://github.com/iamobservable/open-webui-starter/blob/main/conf/cloudflare/config.example#L1) and [conf/cloudflared/config.yml line #2](https://github.com/iamobservable/open-webui-starter/blob/main/conf/cloudflare/config.example#L2) with your tunnel id. It can be found located in one of the two red rectangles on the image above.
-
-### Assign your tunnel token
-
-Update the [env/cloudflared.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/cloudflared.example#L1) file with your token. It can be found in the red rectangle on the image below.
-
-<img src="./images/cloudflare-connector.png" alt="Cloudflare Connector" align="center" width="1000">
-
-### Add your domain name
-
-Update the [conf/nginx/conf.d/default.conf](https://github.com/iamobservable/open-webui-starter/blob/main/conf/nginx/conf.d/default.example#L24) file with your domain name. The link provided will show you the specific line in the file to change.
-
-### Start your docker container environment from a terminal
-
-You are ready to start up the containers. Let's do it!
+The applciation is ready to start. Let's do it!
 
 ```sh
 docker compose up -d
 ```
 
-### Download your first Ollama model from a terminal
+### Download the first Ollama model from a terminal
 
-You are ready to download an LLM for Ollama. Llama3.2:3b is listed below, but feel free to change this to any model you feel is right. [More on Ollama models](https://ollama.com/search)
+Now download an LLM for Ollama. Llama3.2:3b is listed below, but feel free to change this to any model that works best. [More on Ollama models](https://ollama.com/search)
 
 ```sh
 docker compose exec ollama bash
@@ -175,8 +123,8 @@ docker compose exec ollama bash
 ollama pull llama3.2:3b
 ```
 
-Once the containers are started, and your model downloaded, you are ready to access the Open WebUI platform. Visit 
-`http://<domain-name>/` in your web browser.
+Once the containers are started, and any models are downloaded, the Open WebUI platform is ready to be accessed. Visit 
+`http://localhost:4000/` in a web browser.
 
 
 
@@ -198,7 +146,7 @@ message me [directly on Discord](https://discordapp.com/users/observable).
 For now, to use the two default tools, it is required to add them manually. **They will NOT** automatically load using the environment variable TOOL_SERVER_CONNECTIONS, enen 
 though it is added. Add the following two urls using the Settings -> Tools -> General interface. This can also be set in the Admin Settings as well.
 
-*Note - the default postgres tool is configured to access your Open WebUI postgres database. While this is read-only, the tool server that is defined allows any user with 
+*Note - the default postgres tool is configured to access this Open WebUI postgres database. While this is read-only, the tool server that is defined allows any user with 
 the credentials added to the [env/mcposerver.env](http://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example#L12) to access the database tables. If 
 anything should be restricted, make sure to do so ahead of time.*
 
@@ -218,7 +166,7 @@ Configurations for MCP services can be found in the [conf/mcposerver/config.json
 
 ***Note - the time tool is configured using uvx instead of directly with the python binary, as the repository describes*** 
 
-You may expand on the tools available to your interface. A few examples are listed below.
+A few tool examples are listed below.
 
 | Tool                                                                               | Description                                                               | Configuration |
 | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------- |
@@ -227,7 +175,7 @@ You may expand on the tools available to your interface. A few examples are list
 
 #### MCP Server Discovery
 
-If you are looking for tools to add, the following three MCP Server sources are a great place to look. It may even inspire you to create your own over time!
+The following three MCP Server sources are a great place to look for tools to add.
 
 - [Model Context Protocol servers](https://github.com/modelcontextprotocol/servers?tab=readme-ov-file#model-context-protocol-servers)
 - [Awesome MCP Servers](https://mcpservers.org/)
@@ -235,22 +183,21 @@ If you are looking for tools to add, the following three MCP Server sources are 
 
 ### Watchtower and Notifications
 
-A Watchtower container provides a convenient way to check in on your container 
+A Watchtower container provides a convenient way to check in on all container
 versions to see if updates have been released. Once updates are found, Watchtower 
 will pull the latest container image(s), stop the currently running container and 
 start a new container based on the new image. **And it is all automatic, look no hands!**
 
 After completing its process, 
-Watchtower can send notifications to you. More can be found on notifications via 
+Watchtower can send notifications. More can be found on notifications via 
 the [Watchtower website](https://containrrr.dev/watchtower/notifications/).
 
 For the sake of simplicity, this document will cover the instructions for setting 
-up notifications via Discord. If you desire to be more detailed in your configuration, 
-the [arguments section](https://containrrr.dev/watchtower/arguments/) describes 
+up notifications via Discord. The Watchtower [arguments section](https://containrrr.dev/watchtower/arguments/) describes 
 additional settings available for the watchtower setup.
 
-1. Edit your [env/watchtower.env](https://github.com/iamobservable/open-webui-starter/blob/main/env/watchtower.example#L2) with your discord link. [More information](https://containrrr.dev/shoutrrr/v0.8/services/discord/) is provided on how to create your discord link (token@webhookid).
-2. Restart your watchtower container
+1. Edit and uncomment [env/watchtower.env](https://github.com/iamobservable/open-webui-starter/blob/main/env/watchtower.example#L2) with a discord link. [More information](https://containrrr.dev/shoutrrr/v0.8/services/discord/) is provided on how to create a discord link (token@webhookid).
+2. Restart the watchtower container
 
 ```bash
 docker compose down watchtower && docker compose up watchtower -d
@@ -301,8 +248,8 @@ curl -X POST "http://localhost:5001/v1alpha/convert/source" \
 ### Edgetts
 
 EdgeTTS is a service integration that uses Microsoft's online text-to-speech 
-service. Keep in mind, if you want to be completely local, this service is not 
-for you.
+service. Keep in mind, if this is NOT completely local, as it requires a
+connection to Microsoft's service.
 
 *More information about [available voice samples](https://tts.travisvn.com/) 
 the [EdgeTTS codebase and configuration](https://github.com/travisvn/openai-edge-tts)*.
