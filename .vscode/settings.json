@@ -1,0 +1,245 @@
+{
+  // Общие настройки редактора
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.trimAutoWhitespace": true,
+  "editor.rulers": [100],
+  "editor.wordWrap": "bounded",
+  "editor.wordWrapColumn": 100,
+
+  // Настройки для Go
+  "go.formatTool": "goimports",
+  "go.lintTool": "golangci-lint",
+  "go.lintOnSave": "package",
+  "go.vetOnSave": "package",
+  "go.buildOnSave": "package",
+  "go.testOnSave": true,
+  "go.coverOnSave": true,
+  "go.useLanguageServer": true,
+  "go.alternateTools": {
+    "go": "go",
+    "gofmt": "gofmt",
+    "goimports": "goimports"
+  },
+  "go.toolsManagement.autoUpdate": true,
+  "go.testFlags": ["-v", "-race"],
+  "go.buildFlags": ["-v"],
+  "go.installDependenciesWhenBuilding": true,
+
+  // Настройки для TypeScript/JavaScript
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.suggest.autoImports": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+
+  // Настройки ESLint (закомментированы - требуют установки расширения)
+  // "eslint.validate": [
+  //   "javascript",
+  //   "javascriptreact",
+  //   "typescript",
+  //   "typescriptreact"
+  // ],
+  // "eslint.format.enable": true,
+  // "eslint.codeAction.showDocumentation": {
+  //   "enable": true
+  // },
+
+  // Настройки Prettier
+  "prettier.configPath": ".prettierrc.json",
+  "prettier.ignorePath": ".prettierignore",
+  "prettier.requireConfig": true,
+
+  // Настройки для различных типов файлов
+  "[go]": {
+    "editor.defaultFormatter": "golang.go",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[yml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "vscode.markdown-language-features",
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    }
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
+  },
+
+  // Настройки файлов
+  "files.associations": {
+    "*.env.example": "properties",
+    "*.env.template": "properties",
+    "compose.yml.example": "yaml",
+    "Dockerfile.*": "dockerfile",
+    "*.conf": "nginx",
+    "nginx.example": "nginx"
+  },
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/vendor": true,
+    "**/data": true,
+    "**/logs": true,
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/coverage": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/vendor/**": true,
+    "**/data/**": true,
+    "**/logs/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/coverage/**": true
+  },
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+
+  // Настройки поиска
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/vendor": true,
+    "**/data": true,
+    "**/logs": true,
+    "**/coverage": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/*.min.js": true,
+    "**/*.min.css": true
+  },
+
+  // Настройки Git
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.postCommitCommand": "none",
+  // GitLens настройки (закомментированы - требуют установки расширения)
+  // "gitlens.codeLens.enabled": true,
+  // "gitlens.currentLine.enabled": true,
+  // "gitlens.hovers.enabled": true,
+
+  // Настройки Docker (закомментированы - требуют установки расширения)
+  // "docker.showStartPage": false,
+  // "docker.defaultRegistryPath": "ghcr.io",
+
+  // Настройки тестирования (закомментированы - требуют установки расширения)
+  // "vitest.enable": true,
+  // "vitest.commandLine": "npm test",
+
+  // Настройки терминала
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.cwd": "${workspaceFolder}",
+
+  // Настройки безопасности (закомментированы - application scope)
+  // "security.workspace.trust.untrustedFiles": "prompt",
+  // "security.workspace.trust.banner": "always",
+
+  // Настройки для работы с большими файлами
+  "editor.largeFileOptimizations": true,
+  "diffEditor.maxFileSize": 50,
+
+  // Настройки автосохранения
+  "files.autoSave": "onFocusChange",
+  "files.autoSaveDelay": 1000,
+
+  // Настройки подсказок
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.acceptSuggestionOnCommitCharacter": true,
+  "editor.acceptSuggestionOnEnter": "on",
+
+  // Настройки для работы с переменными окружения (закомментированы - требуют установки расширения)
+  // "dotenv.enableAutocloaking": false,
+
+  // Настройки проверки орфографии (закомментированы - требуют установки расширения)
+  // "cSpell.language": "en,ru",
+  // "cSpell.words": [
+  //   "erni",
+  //   "ollama",
+  //   "openwebui",
+  //   "searxng",
+  //   "cloudflared",
+  //   "docling",
+  //   "edgetts",
+  //   "mcposerver",
+  //   "watchtower",
+  //   "pgvector",
+  //   "nginx",
+  //   "postgres",
+  //   "redis",
+  //   "grafana",
+  //   "prometheus",
+  //   "alertmanager"
+  // ],
+
+  // Настройки TODO Tree
+  "todo-tree.general.tags": [
+    "BUG",
+    "HACK",
+    "FIXME",
+    "TODO",
+    "XXX",
+    "[ ]",
+    "[x]",
+    "SECURITY",
+    "PERFORMANCE"
+  ],
+  "todo-tree.highlights.defaultHighlight": {
+    "icon": "alert",
+    "type": "tag",
+    "foreground": "#FF0000",
+    "background": "#FFFFFF",
+    "opacity": 50,
+    "iconColour": "#0000FF"
+  },
+
+  // Настройки для работы с REST API удалены - требуют установки расширения
+}

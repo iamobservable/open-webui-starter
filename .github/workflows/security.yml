@@ -1,0 +1,271 @@
+# Security Pipeline для проекта erni-ki
+# CodeQL анализ безопасности и сканирование зависимостей
+
+name: 🔒 Security Analysis
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Запуск каждый день в 2:00 UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+# Разрешения для security events
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+# Отмена предыдущих запусков
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # CodeQL анализ
+  codeql:
+    name: 🔍 CodeQL Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["go", "javascript"]
+        include:
+          - language: go
+            path: "./auth"
+          - language: javascript
+            path: "."
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: +security-and-quality
+          source-root: ${{ matrix.path }}
+
+      # Настройка окружения для Go
+      - name: 🐹 Setup Go
+        if: matrix.language == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.4"
+
+      # Настройка окружения для JavaScript/TypeScript
+      - name: 🟢 Setup Node.js
+        if: matrix.language == 'javascript'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: 📦 Install JS dependencies
+        if: matrix.language == 'javascript' && hashFiles('package.json') != ''
+        run: npm ci --prefer-offline --no-audit
+
+      # Автоматическая сборка
+      - name: 🏗️ Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      # Выполнение анализа CodeQL
+      - name: 🔍 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # Сканирование зависимостей
+  dependency-scan:
+    name: 📦 Dependency Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # Сканирование Go зависимостей
+      - name: 🐹 Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.4"
+
+      - name: 🔍 Run Go vulnerability check
+        working-directory: ./auth
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      # Сканирование npm зависимостей (если есть)
+      - name: 🟢 Setup Node.js
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 🔍 Run npm audit
+        if: hashFiles('package.json') != ''
+        run: |
+          npm audit --audit-level=moderate
+          npm audit --json > npm-audit-results.json || true
+
+      - name: 📤 Upload npm audit results
+        if: hashFiles('package.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-results
+          path: npm-audit-results.json
+          retention-days: 30
+
+  # Сканирование секретов
+  secret-scan:
+    name: 🔐 Secret Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔐 Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  # Сканирование Docker образов
+  container-scan:
+    name: 🐳 Container Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./auth
+          file: ./auth/Dockerfile
+          load: true
+          tags: erni-ki-auth:security-scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🔍 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "erni-ki-auth:security-scan"
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH,MEDIUM"
+
+      - name: 📤 Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
+
+      - name: 🔍 Run Grype vulnerability scanner
+        uses: anchore/scan-action@v4
+        id: grype-scan
+        with:
+          image: "erni-ki-auth:security-scan"
+          fail-build: false
+          severity-cutoff: high
+
+      - name: 📤 Upload Grype results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ${{ steps.grype-scan.outputs.sarif }}
+
+  # Анализ конфигураций
+  config-scan:
+    name: ⚙️ Configuration Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: dockerfile,github_actions,secrets
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+          quiet: true
+          soft_fail: true
+
+      - name: 📤 Upload Checkov results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov-results.sarif
+
+      # Проверка Docker Compose конфигурации
+      - name: 🐳 Validate Docker Compose
+        run: |
+          if [ -f "compose.yml.example" ]; then
+            docker compose -f compose.yml.example config --quiet
+            echo "✅ Docker Compose configuration is valid"
+          fi
+
+      # Проверка Nginx конфигурации
+      - name: 🌐 Validate Nginx config
+        run: |
+          if [ -f "conf/nginx/nginx.example" ]; then
+            docker run --rm -v $(pwd)/conf/nginx:/etc/nginx:ro nginx:alpine nginx -t
+            echo "✅ Nginx configuration is valid"
+          fi
+
+  # Отчет о безопасности
+  security-report:
+    name: 📊 Security Report
+    runs-on: ubuntu-latest
+    needs: [codeql, dependency-scan, secret-scan, container-scan, config-scan]
+    if: always()
+
+    steps:
+      - name: 📊 Generate security summary
+        run: |
+          echo "## 🔒 Security Analysis Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL | ${{ needs.codeql.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependencies | ${{ needs.dependency-scan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secrets | ${{ needs.secret-scan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Containers | ${{ needs.container-scan.result == 'success' && '✅' || needs.container-scan.result == 'skipped' && '⏭️' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Configuration | ${{ needs.config-scan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "- Review security alerts in the Security tab" >> $GITHUB_STEP_SUMMARY
+          echo "- Update dependencies with known vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          echo "- Follow security best practices for container images" >> $GITHUB_STEP_SUMMARY
+          echo "- Regularly rotate secrets and API keys" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🚨 Check for critical failures
+        if: needs.codeql.result == 'failure' || needs.dependency-scan.result == 'failure'
+        run: |
+          echo "❌ Critical security checks failed!"
+          echo "Please review the security findings before proceeding."
+          exit 1

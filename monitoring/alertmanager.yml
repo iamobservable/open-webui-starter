@@ -1,0 +1,158 @@
+# Alertmanager configuration для проекта erni-ki
+# Правила алертинга и уведомлений
+
+global:
+  smtp_smarthost: "localhost:587"
+  smtp_from: "alerts@erni-ki.local"
+  smtp_auth_username: ""
+  smtp_auth_password: ""
+  smtp_require_tls: false
+
+# Шаблоны для уведомлений
+templates:
+  - "/etc/alertmanager/templates/*.tmpl"
+
+# Маршрутизация алертов
+route:
+  group_by: ["alertname", "cluster", "service"]
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: "default-receiver"
+
+  routes:
+    # Критические алерты - немедленно
+    - match:
+        severity: critical
+      receiver: "critical-alerts"
+      group_wait: 0s
+      repeat_interval: 5m
+
+    # Алерты по сервисам AI
+    - match_re:
+        service: (ollama|openwebui|auth)
+      receiver: "ai-services-alerts"
+      group_interval: 5m
+
+    # Алерты инфраструктуры
+    - match_re:
+        service: (nginx|postgres|redis|cloudflared)
+      receiver: "infrastructure-alerts"
+      group_interval: 10m
+
+    # Алерты безопасности
+    - match:
+        category: security
+      receiver: "security-alerts"
+      group_wait: 0s
+      repeat_interval: 30m
+
+# Подавление дублирующихся алертов
+inhibit_rules:
+  # Подавляем warning если есть critical
+  - source_match:
+      severity: "critical"
+    target_match:
+      severity: "warning"
+    equal: ["alertname", "instance"]
+
+  # Подавляем алерты о недоступности если сервис down
+  - source_match:
+      alertname: "ServiceDown"
+    target_match_re:
+      alertname: "(HighLatency|HighErrorRate)"
+    equal: ["instance"]
+
+# Получатели уведомлений
+receivers:
+  # Получатель по умолчанию
+  - name: "default-receiver"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook"
+        send_resolved: true
+        http_config:
+          basic_auth:
+            username: "admin"
+            password: "webhook-secret"
+
+  # Критические алерты
+  - name: "critical-alerts"
+    email_configs:
+      - to: "admin@erni-ki.local"
+        subject: "🚨 CRITICAL: {{ .GroupLabels.alertname }} in {{ .GroupLabels.cluster }}"
+        body: |
+          {{ range .Alerts }}
+          **Alert:** {{ .Annotations.summary }}
+          **Description:** {{ .Annotations.description }}
+          **Severity:** {{ .Labels.severity }}
+          **Instance:** {{ .Labels.instance }}
+          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+        headers:
+          Priority: "high"
+
+    # Discord webhook для критических алертов
+    webhook_configs:
+      - url: "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
+        send_resolved: true
+        title: "🚨 Critical Alert: {{ .GroupLabels.alertname }}"
+        text: |
+          {{ range .Alerts }}
+          **{{ .Annotations.summary }}**
+          {{ .Annotations.description }}
+          Instance: {{ .Labels.instance }}
+          {{ end }}
+
+  # Алерты AI сервисов
+  - name: "ai-services-alerts"
+    email_configs:
+      - to: "ai-team@erni-ki.local"
+        subject: "🤖 AI Service Alert: {{ .GroupLabels.alertname }}"
+        body: |
+          AI Service Issue Detected:
+          {{ range .Alerts }}
+          - **Service:** {{ .Labels.service }}
+          - **Alert:** {{ .Annotations.summary }}
+          - **Description:** {{ .Annotations.description }}
+          - **Instance:** {{ .Labels.instance }}
+          - **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+  # Алерты инфраструктуры
+  - name: "infrastructure-alerts"
+    email_configs:
+      - to: "devops@erni-ki.local"
+        subject: "🏗️ Infrastructure Alert: {{ .GroupLabels.alertname }}"
+        body: |
+          Infrastructure Issue:
+          {{ range .Alerts }}
+          - **Component:** {{ .Labels.service }}
+          - **Alert:** {{ .Annotations.summary }}
+          - **Description:** {{ .Annotations.description }}
+          - **Instance:** {{ .Labels.instance }}
+          - **Severity:** {{ .Labels.severity }}
+          {{ end }}
+
+  # Алерты безопасности
+  - name: "security-alerts"
+    email_configs:
+      - to: "security@erni-ki.local"
+        subject: "🔒 SECURITY ALERT: {{ .GroupLabels.alertname }}"
+        body: |
+          SECURITY INCIDENT DETECTED:
+          {{ range .Alerts }}
+          **Alert:** {{ .Annotations.summary }}
+          **Description:** {{ .Annotations.description }}
+          **Severity:** {{ .Labels.severity }}
+          **Instance:** {{ .Labels.instance }}
+          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+
+          IMMEDIATE ACTION REQUIRED!
+          {{ end }}
+        headers:
+          Priority: "urgent"
+          X-Priority: "1"
+
+# Конфигурация веб-интерфейса
+web:
+  external_url: "http://alertmanager.erni-ki.local"

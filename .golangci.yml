@@ -1,0 +1,198 @@
+# golangci-lint configuration для проекта erni-ki
+# Конфигурация линтера для Go кода
+
+# Версия конфигурации golangci-lint
+version: "2"
+
+run:
+  timeout: 5m
+  issues-exit-code: 1
+  tests: true
+
+# output: секция удалена - настройки вывода теперь управляются через CLI флаги
+
+linters-settings:
+  # Настройки для различных линтеров
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+    exclude-functions:
+      - fmt.Print
+      - fmt.Println
+      - fmt.Printf
+
+  govet:
+    check-shadowing: true
+    enable-all: true
+    disable:
+      - fieldalignment # Может быть слишком строгим
+
+  gocyclo:
+    min-complexity: 15
+
+  goimports:
+    local-prefixes: main
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+
+  gofumpt:
+    extra-rules: true
+
+  gosec:
+    severity: medium
+    confidence: medium
+    excludes:
+      - G104 # Errors unhandled (слишком строго для некоторых случаев)
+
+  gosimple:
+    checks: ["all"]
+
+  gomodguard:
+    blocked:
+      modules:
+        - github.com/golang/protobuf:
+            recommendations:
+              - google.golang.org/protobuf
+            reason: "deprecated, use google.golang.org/protobuf"
+
+  lll:
+    line-length: 120
+
+  misspell:
+    locale: US
+
+  nakedret:
+    max-func-lines: 30
+
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: false
+
+  staticcheck:
+    checks: ["all"]
+
+  stylecheck:
+    checks: ["all"]
+
+  unused:
+    check-exported: false
+
+  whitespace:
+    multi-if: false
+    multi-func: false
+
+  wsl:
+    strict-append: true
+    allow-assign-and-call: true
+    allow-multiline-assign: true
+    allow-cuddle-declarations: false
+    allow-trailing-comment: false
+    force-case-trailing-whitespace: 0
+    force-err-cuddling: false
+    allow-separated-leading-comment: false
+
+linters:
+  enable:
+    # Базовые линтеры
+    - errcheck # Проверка обработки ошибок
+    - gosimple # Упрощение кода
+    - govet # Статический анализ
+    - ineffassign # Неиспользуемые присваивания
+    - staticcheck # Статический анализ
+    - typecheck # Проверка типов
+    - unused # Неиспользуемый код
+
+    # Дополнительные линтеры
+    - asciicheck # Проверка ASCII символов
+    - bodyclose # Закрытие HTTP body
+    - dogsled # Проверка blank identifiers
+    - dupl # Дублирование кода
+    - durationcheck # Проверка time.Duration
+    - errorlint # Проверка ошибок
+    - exhaustive # Проверка switch statements
+    - exportloopref # Проверка loop variables
+    - gochecknoinits # Проверка init функций
+    - gochecknoglobals # Проверка глобальных переменных
+    - gocognit # Когнитивная сложность
+    - goconst # Повторяющиеся строки
+    - gocritic # Множество проверок
+    - gocyclo # Цикломатическая сложность
+    - godot # Комментарии должны заканчиваться точкой
+    - gofmt # Форматирование
+    - gofumpt # Строгое форматирование
+    - goimports # Импорты
+    - gomodguard # Блокировка модулей
+    - goprintffuncname # Printf функции
+    - gosec # Безопасность
+    - lll # Длина строк
+    - makezero # Проверка make
+    - misspell # Орфография
+    - nakedret # Naked returns
+    - nilerr # Nil errors
+    - nlreturn # Новые строки
+    - noctx # HTTP requests без context
+    - nolintlint # Проверка nolint директив
+    - prealloc # Предварительное выделение памяти
+    - predeclared # Предопределенные идентификаторы
+    - revive # Замена golint
+    - rowserrcheck # SQL rows.Err()
+    - sqlclosecheck # SQL Close()
+    - stylecheck # Стиль кода
+    - tparallel # Параллельные тесты
+    - unconvert # Ненужные конверсии
+    - unparam # Неиспользуемые параметры
+    - wastedassign # Потерянные присваивания
+    - whitespace # Пробелы
+
+  disable:
+    # Отключенные линтеры (могут быть слишком строгими)
+    - cyclop # Цикломатическая сложность (дублирует gocyclo)
+    - deadcode # Устарел, заменен на unused
+    - exhaustivestruct # Слишком строгий
+    - forbidigo # Запрет функций
+    - funlen # Длина функций (может быть слишком строгим)
+    - gci # Импорты (может конфликтовать с goimports)
+    - godox # TODO комментарии
+    - golint # Устарел, заменен на revive
+    - gomnd # Magic numbers (может быть слишком строгим)
+    - ifshort # Устарел
+    - interfacer # Устарел
+    - maligned # Устарел, заменен на fieldalignment
+    - nestif # Вложенность if
+    - nlreturn # Новые строки (может быть слишком строгим)
+    - paralleltest # Параллельные тесты (может быть излишним)
+    - scopelint # Устарел, заменен на exportloopref
+    - structcheck # Устарел, заменен на unused
+    - testpackage # Тестовые пакеты
+    - varcheck # Устарел, заменен на unused
+    - varnamelen # Длина имен переменных
+    - wrapcheck # Обертывание ошибок
+    - wsl # Пробелы (может быть слишком строгим)
+
+issues:
+  # Максимальное количество проблем на линтер
+  max-issues-per-linter: 0
+  # Максимальное количество одинаковых проблем
+  max-same-issues: 0
+  # Показывать только новые проблемы
+  new: false
+
+severity:
+  # Уровень серьезности по умолчанию
+  default: error

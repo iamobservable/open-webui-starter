@@ -1,0 +1,88 @@
+# CODEOWNERS для проекта erni-ki
+# Автоназначение ревьюеров для различных частей проекта
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Глобальные владельцы (по умолчанию для всех файлов)
+* @DIZ-admin
+
+# Основные конфигурационные файлы
+/.github/ @DIZ-admin
+/compose.yml.example @DIZ-admin
+/.dockerignore @DIZ-admin
+/renovate.json @DIZ-admin
+
+# Документация
+/README.md @DIZ-admin
+/docs/ @DIZ-admin
+*.md @DIZ-admin
+
+# Go auth сервис
+/auth/ @DIZ-admin
+/auth/main.go @DIZ-admin
+/auth/Dockerfile @DIZ-admin
+/auth/go.mod @DIZ-admin
+/auth/go.sum @DIZ-admin
+/auth/*.go @DIZ-admin
+
+# Nginx конфигурация
+/conf/nginx/ @DIZ-admin
+/conf/nginx/*.conf @DIZ-admin
+/conf/nginx/*.example @DIZ-admin
+
+# Cloudflare конфигурация
+/conf/cloudflare/ @DIZ-admin
+
+# MCP Server конфигурация
+/conf/mcposerver/ @DIZ-admin
+
+# SearXNG конфигурация
+/conf/searxng/ @DIZ-admin
+
+# Переменные окружения
+/env/ @DIZ-admin
+/env/*.example @DIZ-admin
+
+# Качество кода и форматирование
+/.editorconfig @DIZ-admin
+/.prettierrc.json @DIZ-admin
+/.prettierignore @DIZ-admin
+/eslint.config.js @DIZ-admin
+/.eslintignore @DIZ-admin
+/tsconfig.json @DIZ-admin
+
+# Тестирование
+/vitest.config.ts @DIZ-admin
+/tests/ @DIZ-admin
+/**/*.test.* @DIZ-admin
+/**/*.spec.* @DIZ-admin
+
+# CI/CD Pipeline
+/.github/workflows/ @DIZ-admin
+/.github/workflows/ci.yml @DIZ-admin
+/.github/workflows/release.yml @DIZ-admin
+/.github/workflows/security.yml @DIZ-admin
+
+# Мониторинг и безопасность
+/monitoring/ @DIZ-admin
+/security/ @DIZ-admin
+
+# Git конфигурация
+/.gitattributes @DIZ-admin
+/commitlint.config.cjs @DIZ-admin
+
+# IDE конфигурация
+/.vscode/ @DIZ-admin
+
+# Управление зависимостями
+/package.json @DIZ-admin
+/package-lock.json @DIZ-admin
+/.nvmrc @DIZ-admin
+
+# Специфичные файлы для различных сервисов
+# (добавить дополнительных владельцев при расширении команды)
+
+# Примеры для будущего расширения команды:
+# /auth/ @DIZ-admin @backend-team
+# /conf/nginx/ @DIZ-admin @devops-team
+# /monitoring/ @DIZ-admin @sre-team
+# /docs/ @DIZ-admin @tech-writers

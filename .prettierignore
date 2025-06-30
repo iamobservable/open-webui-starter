@@ -1,0 +1,63 @@
+# Prettier ignore для проекта erni-ki
+# Исключаем файлы, которые не должны форматироваться
+
+# Зависимости и сборки
+node_modules/
+vendor/
+dist/
+build/
+coverage/
+*.min.js
+*.min.css
+
+# Данные и логи
+data/
+logs/
+*.log
+
+# Временные и системные файлы
+.tmp/
+.cache/
+.DS_Store
+Thumbs.db
+
+# Git и Docker
+.git/
+Dockerfile*
+.dockerignore
+
+# Конфигурационные файлы со специфичным форматом
+*.conf
+*.ini
+*.cfg
+.env*
+*.example
+
+# Автогенерированные файлы
+package-lock.json
+yarn.lock
+go.sum
+*.pb.go
+CHANGELOG.md
+
+# Бинарные файлы и медиа
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.zip
+*.tar.gz
+*.rar
+
+# IDE файлы
+.vscode/
+.idea/
+*.swp
+*.swo

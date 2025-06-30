@@ -1,0 +1,228 @@
+# MkDocs configuration для проекта erni-ki
+# Генерация технической документации
+
+site_name: ERNI-KI Documentation
+site_description: "Документация проекта ERNI-KI - AI платформа с Open WebUI"
+site_author: "ERNI-KI Team"
+site_url: "https://docs.erni-ki.local"
+
+# Репозиторий
+repo_name: "DIZ-admin/erni-ki"
+repo_url: "https://github.com/DIZ-admin/erni-ki"
+edit_uri: "edit/main/docs/"
+
+# Конфигурация
+docs_dir: "docs"
+site_dir: "site"
+
+# Тема оформления
+theme:
+  name: "material"
+  language: "ru"
+
+  # Цветовая схема
+  palette:
+    - scheme: default
+      primary: "blue"
+      accent: "light blue"
+      toggle:
+        icon: material/brightness-7
+        name: Переключить на темную тему
+    - scheme: slate
+      primary: "blue"
+      accent: "light blue"
+      toggle:
+        icon: material/brightness-4
+        name: Переключить на светлую тему
+
+  # Шрифты
+  font:
+    text: "Roboto"
+    code: "Roboto Mono"
+
+  # Иконки
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/robot
+
+  # Функции
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.indexes
+    - toc.follow
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - search.share
+    - header.autohide
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+    - content.action.edit
+    - content.action.view
+
+# Плагины
+plugins:
+  - search:
+      lang:
+        - ru
+        - en
+  - git-revision-date-localized:
+      type: datetime
+      locale: ru
+  - minify:
+      minify_html: true
+  - awesome-pages
+  - macros
+  - include-markdown
+
+# Расширения Markdown
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      title: "Содержание"
+
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: DIZ-admin
+      repo: erni-ki
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Дополнительные CSS и JS
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+# Дополнительные настройки
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/DIZ-admin/erni-ki
+    - icon: fontawesome/brands/docker
+      link: https://github.com/DIZ-admin/erni-ki/pkgs/container/erni-ki%2Fauth
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+  consent:
+    title: Согласие на использование cookies
+    description: >-
+      Мы используем cookies для улучшения работы документации и аналитики.
+      С вашего согласия, это поможет нам улучшить документацию.
+
+# Структура навигации
+nav:
+  - Главная: index.md
+  - Быстрый старт:
+      - quick-start/index.md
+      - Установка: quick-start/installation.md
+      - Первый запуск: quick-start/first-run.md
+      - Настройка: quick-start/configuration.md
+  - Архитектура:
+      - architecture/index.md
+      - Обзор системы: architecture/overview.md
+      - Компоненты: architecture/components.md
+      - Диаграммы: architecture/diagrams.md
+  - Сервисы:
+      - services/index.md
+      - Auth Service: services/auth.md
+      - Open WebUI: services/openwebui.md
+      - Ollama: services/ollama.md
+      - Nginx: services/nginx.md
+      - PostgreSQL: services/postgres.md
+      - Redis: services/redis.md
+      - SearXNG: services/searxng.md
+      - Cloudflare: services/cloudflare.md
+  - Конфигурация:
+      - configuration/index.md
+      - Переменные окружения: configuration/environment.md
+      - Docker Compose: configuration/docker-compose.md
+      - Nginx: configuration/nginx.md
+      - Безопасность: configuration/security.md
+  - Разработка:
+      - development/index.md
+      - Настройка среды: development/setup.md
+      - Тестирование: development/testing.md
+      - Отладка: development/debugging.md
+      - Контрибуция: development/contributing.md
+  - Операции:
+      - operations/index.md
+      - Мониторинг: operations/monitoring.md
+      - Логирование: operations/logging.md
+      - Резервное копирование: operations/backup.md
+      - Обновления: operations/updates.md
+  - Безопасность:
+      - security/index.md
+      - Политика безопасности: security/policy.md
+      - Аудит: security/audit.md
+      - Инциденты: security/incidents.md
+  - API:
+      - api/index.md
+      - Auth API: api/auth.md
+      - Open WebUI API: api/openwebui.md
+      - Ollama API: api/ollama.md
+  - Устранение неполадок:
+      - troubleshooting/index.md
+      - Частые проблемы: troubleshooting/common-issues.md
+      - Диагностика: troubleshooting/diagnostics.md
+      - FAQ: troubleshooting/faq.md
+  - Справочник:
+      - reference/index.md
+      - Команды: reference/commands.md
+      - Конфигурационные файлы: reference/config-files.md
+      - Переменные: reference/variables.md
+      - Порты: reference/ports.md
+
+# Настройки валидации
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+
+# Настройки сборки
+strict: true
+use_directory_urls: true

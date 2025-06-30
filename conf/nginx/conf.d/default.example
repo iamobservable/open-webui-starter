@@ -14,7 +14,7 @@ upstream searxngUpstream {
 }
 
 upstream authUpstream {
-  server auth:8080 max_fails=0 fail_timeout=10s;
+  server auth:9090 max_fails=0 fail_timeout=10s;
   keepalive 512;
 }
 

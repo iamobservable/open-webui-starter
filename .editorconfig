@@ -1,0 +1,51 @@
+# EditorConfig для проекта erni-ki
+# Унификация отступов, кодировки, переносов строк
+# https://editorconfig.org/
+
+root = true
+
+# Общие настройки для всех файлов
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# Go файлы - используют табы по конвенции
+[*.go]
+indent_style = tab
+indent_size = 4
+
+# Markdown файлы - сохраняем trailing spaces для переносов
+[*.md]
+trim_trailing_whitespace = false
+
+# YAML файлы - строгие отступы
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON файлы
+[*.json]
+indent_size = 2
+
+# JavaScript/TypeScript
+[*.{js,jsx,ts,tsx}]
+indent_size = 2
+
+# Docker файлы
+[{Dockerfile,Dockerfile.*}]
+indent_size = 2
+
+# Shell скрипты
+[*.{sh,bash}]
+indent_size = 2
+
+# Nginx конфигурация
+[*.conf]
+indent_size = 2
+
+# Конфигурационные файлы
+[*.{ini,cfg,toml}]
+indent_size = 2

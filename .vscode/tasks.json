@@ -1,0 +1,296 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🐹 Build Auth Service",
+      "type": "shell",
+      "command": "go",
+      "args": ["build", "-o", "main", "."],
+      "options": {
+        "cwd": "${workspaceFolder}/auth"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": ["$go"]
+    },
+    {
+      "label": "🧪 Test Auth Service",
+      "type": "shell",
+      "command": "go",
+      "args": ["test", "-v", "-race", "-coverprofile=coverage.out", "./..."],
+      "options": {
+        "cwd": "${workspaceFolder}/auth"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": ["$go"]
+    },
+    {
+      "label": "📊 Coverage Report",
+      "type": "shell",
+      "command": "go",
+      "args": ["tool", "cover", "-html=coverage.out", "-o", "coverage.html"],
+      "options": {
+        "cwd": "${workspaceFolder}/auth"
+      },
+      "dependsOn": "🧪 Test Auth Service",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🔍 Lint Go Code",
+      "type": "shell",
+      "command": "golangci-lint",
+      "args": ["run", "--config", "../.golangci.yml"],
+      "options": {
+        "cwd": "${workspaceFolder}/auth"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": ["$go"]
+    },
+    {
+      "label": "🎨 Format Code",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "format"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🔍 Lint TypeScript",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "lint"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🧪 Run Vitest",
+      "type": "shell",
+      "command": "npm",
+      "args": ["test"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🐳 Build Docker Image",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "build",
+        "-t",
+        "erni-ki-auth:latest",
+        "-f",
+        "Dockerfile",
+        "."
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/auth"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🚀 Start Development Environment",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "up", "-d"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🛑 Stop Development Environment",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "down"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "📋 View Logs",
+      "type": "shell",
+      "command": "docker",
+      "args": ["compose", "logs", "-f", "${input:serviceName}"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "new"
+      }
+    },
+    {
+      "label": "🔒 Security Scan",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-v",
+        "${workspaceFolder}:/src",
+        "securecodewarrior/docker-gosec",
+        "/src/auth/..."
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "📦 Install Dependencies",
+      "type": "shell",
+      "command": "npm",
+      "args": ["ci"],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🔄 Update Go Dependencies",
+      "type": "shell",
+      "command": "go",
+      "args": ["mod", "tidy"],
+      "options": {
+        "cwd": "${workspaceFolder}/auth"
+      },
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "🏗️ Full Build",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "🔄 Update Go Dependencies",
+        "🎨 Format Code",
+        "🔍 Lint Go Code",
+        "🧪 Test Auth Service",
+        "🐹 Build Auth Service"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "serviceName",
+      "description": "Enter service name to view logs",
+      "default": "auth",
+      "type": "pickString",
+      "options": [
+        "auth",
+        "nginx",
+        "openwebui",
+        "ollama",
+        "db",
+        "redis",
+        "searxng",
+        "cloudflared",
+        "docling",
+        "edgetts",
+        "tika",
+        "mcposerver",
+        "watchtower"
+      ]
+    }
+  ]
+}

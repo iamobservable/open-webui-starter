@@ -1,0 +1,170 @@
+# Git attributes для проекта erni-ki
+# Нормализация line endings и настройки для различных типов файлов
+
+# Автоматическое определение текстовых файлов и нормализация line endings
+* text=auto eol=lf
+
+# Исходный код
+*.go text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.jsx text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.sass text eol=lf
+*.less text eol=lf
+
+# Конфигурационные файлы
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+*.conf text eol=lf
+*.config text eol=lf
+*.env text eol=lf
+*.example text eol=lf
+*.template text eol=lf
+
+# Docker файлы
+Dockerfile* text eol=lf
+*.dockerfile text eol=lf
+.dockerignore text eol=lf
+compose*.yml text eol=lf
+compose*.yaml text eol=lf
+
+# Скрипты
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+*.fish text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Документация
+*.md text eol=lf
+*.txt text eol=lf
+*.rst text eol=lf
+*.adoc text eol=lf
+LICENSE text eol=lf
+README* text eol=lf
+CHANGELOG* text eol=lf
+CONTRIBUTING* text eol=lf
+
+# SQL файлы
+*.sql text eol=lf
+
+# XML файлы
+*.xml text eol=lf
+*.xsl text eol=lf
+*.xsd text eol=lf
+
+# Файлы данных
+*.csv text eol=lf
+*.tsv text eol=lf
+
+# Бинарные файлы (не обрабатываются Git)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.webp binary
+*.bmp binary
+*.tiff binary
+
+# Архивы
+*.zip binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.xz binary
+*.7z binary
+*.rar binary
+
+# Исполняемые файлы
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.app binary
+
+# Шрифты
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+
+# Аудио/видео
+*.mp3 binary
+*.mp4 binary
+*.avi binary
+*.mov binary
+*.wmv binary
+*.flv binary
+*.wav binary
+*.ogg binary
+
+# Документы
+*.pdf binary
+*.doc binary
+*.docx binary
+*.xls binary
+*.xlsx binary
+*.ppt binary
+*.pptx binary
+
+# Специальные настройки для Go
+*.go diff=golang
+
+# Специальные настройки для различных файлов
+*.md diff=markdown
+*.json diff=json
+
+# Игнорирование whitespace изменений для определенных файлов
+*.min.js -diff
+*.min.css -diff
+
+# Настройки для больших файлов
+*.log filter=lfs diff=lfs merge=lfs -text
+*.dump filter=lfs diff=lfs merge=lfs -text
+
+# Настройки для файлов с секретами (не должны попадать в репозиторий)
+*.key binary
+*.pem binary
+*.p12 binary
+*.pfx binary
+*.crt binary
+
+# Настройки для lock файлов
+package-lock.json -diff
+yarn.lock -diff
+go.sum -diff
+Pipfile.lock -diff
+
+# Настройки для автогенерированных файлов
+*.pb.go -diff linguist-generated
+*.pb.js -diff linguist-generated
+*.pb.ts -diff linguist-generated
+
+# Языковая статистика GitHub
+*.md linguist-documentation
+*.txt linguist-documentation
+docs/* linguist-documentation
+*.example linguist-documentation
+*.template linguist-documentation
+
+# Исключение из статистики
+vendor/* linguist-vendored
+node_modules/* linguist-vendored
+data/* linguist-vendored
+logs/* linguist-vendored
+coverage/* linguist-vendored
+dist/* linguist-vendored
+build/* linguist-vendored

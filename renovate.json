@@ -1,0 +1,152 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Renovate configuration for erni-ki project - автообновления зависимостей",
+  "extends": ["config:base", "docker:enableMajor", "helpers:pinGitHubActionsByDigest"],
+
+  "timezone": "Europe/Moscow",
+  "schedule": ["before 6am on monday"],
+
+  "labels": ["dependencies", "renovate"],
+  "assignees": ["@DIZ-admin"],
+  "reviewers": ["@DIZ-admin"],
+
+  "prConcurrentLimit": 3,
+  "prHourlyLimit": 2,
+  "branchConcurrentLimit": 5,
+
+  "commitMessagePrefix": "⬆️",
+  "commitMessageAction": "update",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newVersion}}",
+
+  "prTitle": "⬆️ Update {{depName}} to {{newVersion}}",
+  "prBodyTemplate": "This PR updates {{depName}} from {{currentVersion}} to {{newVersion}}.\n\n{{#if hasReleaseNotes}}**Release Notes:**\n{{{releaseNotes}}}{{/if}}\n\n---\n*This PR was generated automatically by Renovate Bot.*",
+
+  "packageRules": [
+    {
+      "description": "Go dependencies - группируем минорные обновления",
+      "matchManagers": ["gomod"],
+      "groupName": "Go dependencies (minor)",
+      "matchUpdateTypes": ["minor", "patch"],
+      "schedule": ["before 6am on monday"]
+    },
+    {
+      "description": "Go major updates - отдельные PR",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["major"],
+      "schedule": ["before 6am on first day of month"]
+    },
+    {
+      "description": "Docker images - автообновление с проверкой",
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "groupName": "Docker images",
+      "matchUpdateTypes": ["minor", "patch"],
+      "schedule": ["before 6am on monday"],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Docker major updates - требуют ручной проверки",
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "matchUpdateTypes": ["major"],
+      "schedule": ["before 6am on first day of month"],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "GitHub Actions - группируем обновления",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "matchUpdateTypes": ["minor", "patch"],
+      "schedule": ["before 6am on monday"]
+    },
+
+    {
+      "description": "Критические security обновления - немедленно",
+      "matchPackagePatterns": ["*"],
+      "matchUpdateTypes": ["patch"],
+      "labels": ["security", "dependencies"],
+      "schedule": ["at any time"],
+      "prPriority": 10,
+      "automerge": false
+    },
+    {
+      "description": "Стабильные образы - автослияние патчей",
+      "matchPackageNames": ["nginx", "redis/redis-stack", "postgres", "alpine"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "requiredStatusChecks": null
+    },
+    {
+      "description": "AI/ML образы - осторожные обновления",
+      "matchPackageNames": [
+        "ollama/ollama",
+        "ghcr.io/open-webui/open-webui",
+        "quay.io/docling-project/docling-serve"
+      ],
+      "schedule": ["before 6am on first day of month"],
+      "minimumReleaseAge": "7 days",
+      "labels": ["ai-services", "dependencies"]
+    },
+    {
+      "description": "Cloudflare и инфраструктурные образы",
+      "matchPackageNames": ["cloudflare/cloudflared", "containrrr/watchtower"],
+      "schedule": ["before 6am on monday"],
+      "minimumReleaseAge": "3 days"
+    }
+  ],
+
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "prPriority": 20,
+    "labels": ["security", "vulnerability"]
+  },
+
+  "osvVulnerabilityAlerts": true,
+
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on first day of month"],
+    "commitMessageAction": "refresh",
+    "prTitle": "🔒 Refresh lock files"
+  },
+
+  "regexManagers": [
+    {
+      "description": "Update Go version in Dockerfile",
+      "fileMatch": ["^auth/Dockerfile$"],
+      "matchStrings": ["FROM golang:(?<currentValue>.*?)-alpine"],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "golang",
+      "versioningTemplate": "docker"
+    },
+    {
+      "description": "Update Go version in GitHub Actions",
+      "fileMatch": ["^\\.github/workflows/.*\\.ya?ml$"],
+      "matchStrings": ["go-version: ['\"]?(?<currentValue>.*?)['\"]?\\s"],
+      "datasourceTemplate": "golang-version",
+      "depNameTemplate": "golang"
+    },
+    {
+      "description": "Update Node.js version in GitHub Actions",
+      "fileMatch": ["^\\.github/workflows/.*\\.ya?ml$"],
+      "matchStrings": ["node-version: ['\"]?(?<currentValue>.*?)['\"]?\\s"],
+      "datasourceTemplate": "node-version",
+      "depNameTemplate": "node"
+    }
+  ],
+
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update versions in compose.yml.example",
+      "fileMatch": ["^compose\\.yml\\.example$"],
+      "matchStrings": ["image: (?<depName>.*?):(?<currentValue>.*?)\\s"],
+      "datasourceTemplate": "docker"
+    }
+  ],
+
+  "ignoreDeps": ["node", "npm"],
+
+  "ignorePaths": ["**/node_modules/**", "**/vendor/**", "**/data/**", "**/logs/**"]
+}

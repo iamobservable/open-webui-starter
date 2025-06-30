@@ -1,0 +1,59 @@
+{
+  "recommendations": [
+    // Go разработка
+    "golang.go",
+
+    // TypeScript/JavaScript (только если есть frontend)
+    "ms-vscode.vscode-typescript-next",
+
+    // Форматирование и линтинг
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "editorconfig.editorconfig",
+
+    // Docker и контейнеры
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.remote-containers",
+
+    // YAML и конфигурации
+    "redhat.vscode-yaml",
+
+    // Git и версионирование
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+
+    // Тестирование
+    "vitest.explorer",
+
+    // Markdown и документация
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+
+    // Nginx конфигурация
+    "ahmadalli.vscode-nginx-conf",
+
+    // Полезные утилиты
+    "streetsidesoftware.code-spell-checker",
+    "streetsidesoftware.code-spell-checker-russian",
+
+    // Prometheus и мониторинг
+    "prom-community-vscode.promql",
+
+    // Работа с переменными окружения
+    "mikestead.dotenv",
+
+    // Подсветка TODO комментариев
+    "gruntfuggly.todo-tree"
+  ],
+  "unwantedRecommendations": [
+    // Устаревшие или конфликтующие расширения
+    "ms-vscode.vscode-typescript",
+    "hookyqr.beautify",
+    "ms-vscode.vscode-json-languageservice",
+    "coenraads.bracket-pair-colorizer-2",
+    "golang.go-nightly",
+    "bradlc.vscode-tailwindcss",
+    "ritwickdey.liveserver",
+    "formulahendry.auto-rename-tag"
+  ]
+}

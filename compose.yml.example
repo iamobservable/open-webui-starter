@@ -1,14 +1,39 @@
+# GPU deployment configuration anchor
+x-gpu-deploy: &gpu-deploy
+  resources:
+    reservations:
+      devices:
+        - driver: nvidia
+          count: all
+          capabilities: [gpu]
+
 services:
   auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
     env_file: env/auth.env
-    image: ghcr.io/iamobservable/jwt-auth-validator:0.1.0
+    ports:
+      - "9090:9090"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/app/main", "--health-check"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 
   cloudflared:
     command: tunnel --no-autoupdate run
     depends_on:
       - watchtower
     env_file: env/cloudflared.env
+    healthcheck:
+      test: ["CMD-SHELL", "cloudflared tunnel info || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
     volumes:
@@ -32,11 +57,11 @@ services:
   docling:
     env_file: env/docling.env
     healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:5001/health || exit 1"]
       interval: 30s
+      timeout: 5s
       retries: 5
       start_period: 10s
-      test: curl --fail http://localhost:5001/health || exit 1
-      timeout: 5s
     image: quay.io/docling-project/docling-serve:latest
     ports:
       - 5001:5001
@@ -47,11 +72,11 @@ services:
       - watchtower
     env_file: env/edgetts.env
     healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:5050/voices || exit 1"]
       interval: 30s
+      timeout: 5s
       retries: 5
       start_period: 5s
-      test: "curl --fail http://localhost:5050/voices -H 'Authorization: Bearer your_api_key_here' || exit 1"
-      timeout: 5s
     image: travisvn/openai-edge-tts:latest
     ports:
       - 5050:5050
@@ -62,6 +87,12 @@ services:
     depends_on:
       - watchtower
     env_file: env/mcposerver.env
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep mcpo | grep -v grep || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     image: ghcr.io/open-webui/mcpo:latest
     restart: unless-stopped
     volumes:
@@ -72,11 +103,11 @@ services:
       - cloudflared
       - watchtower
     healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost/ || exit 1"]
       interval: 30s
+      timeout: 3s
       retries: 5
       start_period: 5s
-      test: curl --fail http://localhost/ || exit 1
-      timeout: 3s
     image: nginx:latest
     ports:
       - 80:80
@@ -91,11 +122,11 @@ services:
     deploy: *gpu-deploy
     env_file: env/ollama.env
     healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:11434/api/version || exit 1"]
       interval: 30s
+      timeout: 3s
       retries: 5
       start_period: 10s
-      test: curl --fail http://localhost:11434/api/version || exit 1
-      timeout: 3s
     image: ollama/ollama:latest
     ports:
       - 11434:11434
@@ -118,11 +149,11 @@ services:
     deploy: *gpu-deploy
     env_file: env/openwebui.env
     healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:8080/health || exit 1"]
       interval: 30s
+      timeout: 3s
       retries: 5
       start_period: 10s
-      test: curl --fail http://localhost:8080/health || exit 1
-      timeout: 3s
     image: ghcr.io/open-webui/open-webui:cuda
     restart: unless-stopped
     volumes:
@@ -156,11 +187,11 @@ services:
       - redis
       - watchtower
     healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:8080/ || exit 1"]
       interval: 30s
+      timeout: 3s
       retries: 5
       start_period: 10s
-      test: curl --fail http://localhost:8080/ || exit 1
-      timeout: 3s
     image: searxng/searxng:latest
     logging:
       driver: "json-file"
@@ -175,11 +206,11 @@ services:
   tika:
     env_file: env/tika.env
     healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:9998/tika || exit 1"]
       interval: 30s
+      timeout: 5s
       retries: 5
       start_period: 5s
-      test: curl --fail http://localhost:9998/tika || exit 1
-      timeout: 5s
     image: apache/tika:latest-full
     ports:
       - 9998:9998
@@ -188,6 +219,12 @@ services:
   watchtower:
     command: --cleanup --debug --interval 300
     env_file: env/watchtower.env
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep watchtower | grep -v grep || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     image: containrrr/watchtower
     restart: unless-stopped
     volumes:

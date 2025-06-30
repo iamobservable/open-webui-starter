@@ -1,0 +1,245 @@
+# Release Pipeline для проекта erni-ki
+# Автоматические релизы с semantic versioning
+
+name: 🚀 Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Release type"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+# Разрешения для создания релизов
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  issues: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Определение версии релиза
+  version:
+    name: 📋 Determine Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      changelog: ${{ steps.version.outputs.changelog }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 📦 Install semantic-release
+        run: |
+          npm install -g semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github
+
+      - name: 🏷️ Generate version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Ручной релиз
+            CURRENT_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            CURRENT_VERSION=${CURRENT_VERSION#v}
+
+            case "${{ github.event.inputs.release_type }}" in
+              "major")
+                NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print ($1+1)".0.0"}')
+                ;;
+              "minor")
+                NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."($2+1)".0"}')
+                ;;
+              "patch")
+                NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1"."$2"."($3+1)}')
+                ;;
+            esac
+
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "changelog=Manual release: ${{ github.event.inputs.release_type }} version bump" >> $GITHUB_OUTPUT
+          else
+            # Автоматический релиз через semantic-release
+            npx semantic-release --dry-run --no-ci > release-output.txt 2>&1 || true
+
+            if grep -q "The next release version is" release-output.txt; then
+              VERSION=$(grep "The next release version is" release-output.txt | sed 's/.*The next release version is //')
+              echo "version=$VERSION" >> $GITHUB_OUTPUT
+              echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+              echo "changelog=Automated release based on conventional commits" >> $GITHUB_OUTPUT
+            else
+              echo "version=" >> $GITHUB_OUTPUT
+              echo "tag=" >> $GITHUB_OUTPUT
+              echo "changelog=" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  # Сборка и тестирование перед релизом
+  pre-release:
+    name: 🧪 Pre-release Tests
+    runs-on: ubuntu-latest
+    needs: [version]
+    if: needs.version.outputs.version != ''
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐹 Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.4"
+
+      - name: 🧪 Run comprehensive tests
+        working-directory: ./auth
+        run: |
+          go test -v -race -coverprofile=coverage.out ./...
+          go tool cover -func=coverage.out
+
+      - name: 🔒 Security scan
+        run: |
+          go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+          gosec ./auth/...
+
+  # Создание релиза
+  release:
+    name: 🚀 Create Release
+    runs-on: ubuntu-latest
+    needs: [version, pre-release]
+    if: needs.version.outputs.version != ''
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Сборка и публикация Docker образов с тегами релиза
+      - name: 🏗️ Build and push release images
+        uses: docker/build-push-action@v5
+        with:
+          context: ./auth
+          file: ./auth/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/auth:${{ needs.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/auth:latest
+          labels: |
+            org.opencontainers.image.title=erni-ki-auth
+            org.opencontainers.image.description=JWT Authentication service for erni-ki
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Создание GitHub релиза
+      - name: 📋 Generate changelog
+        id: changelog
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changelog=${{ needs.version.outputs.changelog }}" >> $GITHUB_OUTPUT
+          else
+            # Генерируем changelog на основе коммитов
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+            if [ -n "$PREVIOUS_TAG" ]; then
+              CHANGELOG=$(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" --no-merges)
+            else
+              CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges)
+            fi
+
+            # Экранируем для GitHub Actions
+            CHANGELOG="${CHANGELOG//'%'/'%25'}"
+            CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
+            CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
+
+            echo "changelog=$CHANGELOG" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🏷️ Create Git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a ${{ needs.version.outputs.tag }} -m "Release ${{ needs.version.outputs.version }}"
+          git push origin ${{ needs.version.outputs.tag }}
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: Release ${{ needs.version.outputs.version }}
+          body: |
+            ## 🚀 Release ${{ needs.version.outputs.version }}
+
+            ### 📋 Changes
+            ${{ steps.changelog.outputs.changelog }}
+
+            ### 🐳 Docker Images
+            - `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/auth:${{ needs.version.outputs.version }}`
+            - `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/auth:latest`
+
+            ### 📊 Metrics
+            - Build time: ${{ github.run_number }}
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+
+            ### 🔗 Links
+            - [Docker Image](${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/auth)
+            - [Commit](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+          draft: false
+          prerelease: false
+
+  # Уведомления о релизе
+  notify:
+    name: 📢 Notify Release
+    runs-on: ubuntu-latest
+    needs: [version, release]
+    if: always() && needs.version.outputs.version != ''
+
+    steps:
+      - name: 📊 Create release summary
+        run: |
+          echo "## 🚀 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ needs.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ needs.release.result == 'success' && '✅ Success' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker Image**: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/auth:${{ needs.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

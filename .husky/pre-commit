@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Запуск lint-staged для проверки изменений перед коммитом
+npx lint-staged

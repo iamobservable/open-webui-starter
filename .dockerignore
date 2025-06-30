@@ -1,0 +1,142 @@
+# Docker ignore для проекта erni-ki
+# Оптимизация Docker build контекста
+
+# Версионирование
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Документация
+README.md
+CHANGELOG.md
+LICENSE
+docs/
+*.md
+
+# Зависимости (будут установлены в контейнере)
+node_modules/
+vendor/
+auth/vendor/
+
+# Сборки и артефакты
+dist/
+build/
+coverage/
+*.min.js
+*.min.css
+
+# Данные и логи (не должны попадать в образ)
+data/
+logs/
+*.log
+
+# Временные файлы
+.tmp/
+.cache/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE файлы
+.vscode/
+.idea/
+*.sublime-*
+
+# Переменные окружения (содержат секреты)
+.env*
+env/*.env
+!env/*.example
+
+# Конфигурационные файлы для разработки
+compose.yml
+compose.override.yml
+docker-compose.yml
+docker-compose.override.yml
+
+# Тестовые файлы и покрытие
+tests/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+coverage/
+.nyc_output/
+
+# Линтеры и форматтеры
+.eslintrc*
+.prettierrc*
+.editorconfig
+eslint.config.js
+prettier.config.js
+
+# Конфигурации инструментов разработки
+tsconfig.json
+vitest.config.ts
+jest.config.js
+webpack.config.js
+rollup.config.js
+vite.config.ts
+
+# Пакетные менеджеры
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+go.sum
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Резервные копии
+*.bak
+*.backup
+*.old
+*.orig
+
+# Архивы
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Сертификаты и ключи (безопасность)
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Локальные конфигурации
+.local/
+.config/
+
+# Мониторинг и метрики (не нужны в образе)
+monitoring/
+grafana/
+prometheus/
+
+# Скрипты развертывания
+scripts/deploy/
+scripts/local/
+
+# Примеры и шаблоны
+*.example
+*.template
+*.sample
+
+# Файлы конфигурации, которые монтируются как volumes
+conf/nginx/nginx.conf
+conf/nginx/conf.d/default.conf
+conf/cloudflare/config.yml
+conf/mcposerver/config.json
+conf/searxng/settings.yml
+conf/searxng/uwsgi.ini
+
+# Исключения для auth сервиса
+auth/main
+auth/*.test
+auth/coverage.out

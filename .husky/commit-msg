@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Валидация commit message с помощью commitlint
+npx --no-install commitlint --edit "$1"

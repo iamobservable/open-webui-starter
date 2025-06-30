@@ -12,7 +12,7 @@ graph
     end
 
     %% Cloudflare
-    browser -- 
+    browser --
         HTTP/SSL Termination
         and
         Domain Routing

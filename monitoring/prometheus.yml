@@ -1,0 +1,190 @@
+# Prometheus configuration для проекта erni-ki
+# Сбор метрик сервисов и мониторинг AI инфраструктуры
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: "erni-ki"
+    environment: "production"
+
+# Правила алертинга
+rule_files:
+  - "alert_rules.yml"
+
+# Конфигурация Alertmanager
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Конфигурация сбора метрик
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Node Exporter для системных метрик
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # cAdvisor для метрик контейнеров
+  - job_name: "cadvisor"
+    static_configs:
+      - targets: ["cadvisor:8080"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Auth service метрики
+  - job_name: "auth-service"
+    static_configs:
+      - targets: ["auth:9090"]
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+  # Nginx метрики
+  - job_name: "nginx"
+    static_configs:
+      - targets: ["nginx:9113"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # PostgreSQL метрики
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Redis метрики
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Ollama метрики (если доступны)
+  - job_name: "ollama"
+    static_configs:
+      - targets: ["ollama:11434"]
+    scrape_interval: 60s
+    metrics_path: /api/metrics
+    scrape_timeout: 30s
+
+  # Open WebUI метрики
+  - job_name: "openwebui"
+    static_configs:
+      - targets: ["openwebui:8080"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+    scrape_timeout: 15s
+
+  # SearXNG метрики (если доступны)
+  - job_name: "searxng"
+    static_configs:
+      - targets: ["searxng:8080"]
+    scrape_interval: 60s
+    metrics_path: /stats
+    scrape_timeout: 15s
+
+  # Docling метрики
+  - job_name: "docling"
+    static_configs:
+      - targets: ["docling:5001"]
+    scrape_interval: 60s
+    metrics_path: /metrics
+    scrape_timeout: 15s
+
+  # EdgeTTS метрики
+  - job_name: "edgetts"
+    static_configs:
+      - targets: ["edgetts:5050"]
+    scrape_interval: 60s
+    metrics_path: /metrics
+    scrape_timeout: 15s
+
+  # Tika метрики
+  - job_name: "tika"
+    static_configs:
+      - targets: ["tika:9998"]
+    scrape_interval: 60s
+    metrics_path: /metrics
+    scrape_timeout: 15s
+
+  # MCP Server метрики
+  - job_name: "mcposerver"
+    static_configs:
+      - targets: ["mcposerver:8000"]
+    scrape_interval: 60s
+    metrics_path: /metrics
+    scrape_timeout: 15s
+
+  # Cloudflared метрики
+  - job_name: "cloudflared"
+    static_configs:
+      - targets: ["cloudflared:8080"]
+    scrape_interval: 60s
+    metrics_path: /metrics
+    scrape_timeout: 15s
+
+  # Blackbox exporter для проверки доступности
+  - job_name: "blackbox-http"
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://nginx/
+          - http://openwebui:8080/health
+          - http://auth:9090/health
+          - http://ollama:11434/api/version
+          - http://redis:8001/
+          - http://searxng:8080/
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Blackbox exporter для проверки TCP портов
+  - job_name: "blackbox-tcp"
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+          - db:5432
+          - redis:6379
+          - ollama:11434
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+# Конфигурация хранения данных
+storage:
+  tsdb:
+    retention.time: 30d
+    retention.size: 10GB
+    path: /prometheus/data
+    wal-compression: true
+
+# Конфигурация веб-интерфейса
+web:
+  console.libraries: /etc/prometheus/console_libraries
+  console.templates: /etc/prometheus/consoles
+  enable-lifecycle: true
+  enable-admin-api: true

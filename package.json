@@ -1,0 +1,134 @@
+{
+  "name": "erni-ki",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AI платформа на базе Open WebUI с полной контейнеризацией",
+  "keywords": [
+    "ai",
+    "llm",
+    "open-webui",
+    "ollama",
+    "docker",
+    "typescript",
+    "go",
+    "nginx",
+    "postgresql",
+    "redis"
+  ],
+  "homepage": "https://github.com/DIZ-admin/erni-ki#readme",
+  "bugs": {
+    "url": "https://github.com/DIZ-admin/erni-ki/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DIZ-admin/erni-ki.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "ERNI-KI Team",
+    "email": "team@erni-ki.local"
+  },
+  "contributors": [
+    {
+      "name": "DIZ-admin",
+      "email": "admin@erni-ki.local",
+      "url": "https://github.com/DIZ-admin"
+    }
+  ],
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "vitest",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest --ui",
+    "lint": "eslint . --ext .js,.ts,.jsx,.tsx",
+    "lint:fix": "eslint . --ext .js,.ts,.jsx,.tsx --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit",
+    "build": "tsc",
+    "clean": "rm -rf dist coverage node_modules/.cache",
+    "docker:build": "docker build -t erni-ki-auth:latest ./auth",
+    "docker:run": "docker compose up -d",
+    "docker:stop": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "security:scan": "npm audit && docker run --rm -v $(pwd):/src securecodewarrior/docker-gosec /src/auth/...",
+    "prepare": "husky install",
+    "commit": "git-cz",
+    "release": "semantic-release",
+    "precommit": "lint-staged",
+    "postinstall": "npm run prepare"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.6.1",
+    "@commitlint/config-conventional": "^18.6.3",
+    "@eslint/js": "^9.15.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.0",
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.18.1",
+    "@typescript-eslint/parser": "^8.18.1",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^9.15.0",
+    "eslint-plugin-n": "^17.13.2",
+    "eslint-plugin-promise": "^7.1.0",
+    "eslint-plugin-security": "^3.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.6.2",
+    "semantic-release": "^24.0.0",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.4"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,yaml,yml,md}": [
+      "prettier --write"
+    ],
+    "*.go": [
+      "gofmt -w",
+      "goimports -w"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "release": {
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      "@semantic-release/changelog",
+      "@semantic-release/npm",
+      "@semantic-release/github",
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "CHANGELOG.md",
+            "package.json"
+          ],
+          "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+        }
+      ]
+    ]
+  },
+  "volta": {
+    "node": "20.18.0",
+    "npm": "10.8.2"
+  }
+}

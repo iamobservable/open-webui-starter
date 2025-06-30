@@ -1,0 +1,133 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🐹 Debug Auth Service",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/auth/main.go",
+      "cwd": "${workspaceFolder}/auth",
+      "env": {
+        "WEBUI_SECRET_KEY": "test-secret-key-for-debugging",
+        "GIN_MODE": "debug"
+      },
+      "args": [],
+      "showLog": true,
+      "trace": "verbose",
+      "logOutput": "rpc"
+    },
+    {
+      "name": "🧪 Debug Auth Tests",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/auth",
+      "cwd": "${workspaceFolder}/auth",
+      "env": {
+        "WEBUI_SECRET_KEY": "test-secret-key-for-debugging"
+      },
+      "args": [
+        "-test.v",
+        "-test.run",
+        "TestMain"
+      ],
+      "showLog": true
+    },
+    {
+      "name": "🔍 Debug Specific Test",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${workspaceFolder}/auth",
+      "cwd": "${workspaceFolder}/auth",
+      "env": {
+        "WEBUI_SECRET_KEY": "test-secret-key-for-debugging"
+      },
+      "args": [
+        "-test.v",
+        "-test.run",
+        "${input:testName}"
+      ],
+      "showLog": true
+    },
+    {
+      "name": "🐳 Attach to Docker Container",
+      "type": "go",
+      "request": "attach",
+      "mode": "remote",
+      "remotePath": "/app",
+      "port": 2345,
+      "host": "127.0.0.1",
+      "showLog": true,
+      "trace": "verbose"
+    },
+    {
+      "name": "🟢 Debug Node.js Script",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/${input:scriptName}",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "name": "🧪 Debug Vitest Tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "args": [
+        "run",
+        "--reporter=verbose",
+        "${input:testFile}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "NODE_ENV": "test"
+      },
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "testName",
+      "description": "Enter test name to run",
+      "default": "TestValidateEndpoint",
+      "type": "promptString"
+    },
+    {
+      "id": "scriptName",
+      "description": "Enter script name to debug",
+      "default": "setup.js",
+      "type": "promptString"
+    },
+    {
+      "id": "testFile",
+      "description": "Enter test file path",
+      "default": "tests/",
+      "type": "promptString"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🚀 Debug Full Stack",
+      "configurations": [
+        "🐹 Debug Auth Service"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "hidden": false,
+        "group": "debug",
+        "order": 1
+      }
+    }
+  ]
+}
