@@ -88,6 +88,9 @@ services:
       test: curl --fail http://localhost:11434/api/version || exit 1
       timeout: 3s
     image: ollama/ollama:latest
+    post_start:
+      - command: "ollama pull nomic-embed-text:latest"
+      - command: "ollama pull qwen3:0.6b"
     restart: unless-stopped
     volumes:
       - ollama:/root/.ollama
