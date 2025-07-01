@@ -113,18 +113,23 @@ The applciation is ready to start. Let's do it!
 docker compose up -d
 ```
 
-### Download the first Ollama model from a terminal
+### Download the Ollama models from a terminal
 
-Now download an LLM for Ollama. Llama3.2:3b is listed below, but feel free to change this to any model that works best. [More on Ollama models](https://ollama.com/search)
+The initial up command above will automatically download two models.
+
+1. nomic-embed-text:latest (used for RAG embeddings)
+2. qwen3:0.6b (small model for testing purposes)
+
+Now download another LLM for Ollama. Qwen3:4b is listed below, but feel free to change this to any model that works best. [More on Ollama models](https://ollama.com/search)
 
 ```sh
 docker compose exec ollama bash
 
-ollama pull llama3.2:3b
+ollama pull qwen3:4b
 ```
 
 Once the containers are started, and any models are downloaded, the Open WebUI platform is ready to be accessed. Visit 
-`http://localhost:4000/` in a web browser.
+[http://localhost:4000/](http://localhost:4000/) in a web browser.
 
 
 
