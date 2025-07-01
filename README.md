@@ -231,6 +231,7 @@ Generates a JSON document with the markdown text included. Changes to the config
 
 ```sh
 curl -X POST "http://localhost:4000/docling/v1alpha/convert/source" \
+    -H "Cookie: token=<add-jwt-token>"
     -H "accept: application/json" \
     -H "Content-Type: application/json" \
     -d '{
