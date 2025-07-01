@@ -1,2 +1,2 @@
 # https://containrrr.dev/shoutrrr/v0.8/services/discord/
-WATCHTOWER_NOTIFICATION_URL="discord://<token>@<webhookid>"
+#WATCHTOWER_NOTIFICATION_URL="discord://<token>@<webhookid>"

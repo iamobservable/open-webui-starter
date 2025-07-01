@@ -21,8 +21,8 @@ Here is a link to follow 🔗[project development](https://github.com/users/iamo
 
 ## Table of Contents
 1. [Dependencies](#dependencies)
-2. [Tooling and Applications](#tooling-and-applications)
 3. [Installation](#installation)
+2. [Tooling and Applications](#tooling-and-applications)
 4. [Additional Setup](#additional-setup)
 5. [Service Examples](#service-examples)
 6. [Contribution](#contribution)
@@ -31,6 +31,58 @@ Here is a link to follow 🔗[project development](https://github.com/users/iamo
 
 - **[Git](https://git-scm.com/)**: Version control system for managing code changes
 - **[Docker](https://docs.docker.com/)**: Containerization platform for running and deploying applications
+
+
+## Installation
+
+To install the Open WebUI Starter project, follow these steps:
+
+
+### Install Docker
+
+Get started by visiting the [get-started section](https://www.docker.com/get-started/) of the Docker website. The website will describe how to download and install Docker Desktop.
+
+
+### Clone this repository
+
+```sh
+git clone https://github.com/iamobservable/open-webui-starter.git
+cd open-webui-starter
+```
+
+### Execute install.sh bash script
+
+This script has been tested within unix environments. A powershell script has not
+yet been created for Windows.
+
+```bash
+./install.sh
+```
+
+#### Environment variables
+
+More detailed configuration can be done the script by providing any of the 
+following environment variables while running install.sh.
+
+```
+EMBEDDING_MODEL
+HOST_PORT
+NGINX_HOST
+POSTGRES_DB
+POSTGRES_HOST
+POSTGRES_USER
+POSTGRES_PASSWORD
+SECRET_KEY
+TIMEZONE
+```
+
+e.g.
+```bash
+NGINX_HOST=192.168.1.100 ./install.sh
+```
+
+
+Once the installation script is complete, a browser page will open to OWUI.
 
 
 ## Tooling and Applications
@@ -51,76 +103,16 @@ The starter project includes the following tooling and applications. A [Service 
 - **[Watchtower](https://github.com/containrrr/watchtower)**: Automated Docker container for updating container images automatically
 
 
-## Installation
+## Additional Setup
 
-To install the Open WebUI Starter project, follow these steps:
+### Download more Ollama models
 
-
-### Install Docker
-
-Get started by visiting the [get-started section](https://www.docker.com/get-started/) of the Docker website. The website will describe how to download and install Docker Desktop.
-
-
-### Clone this repository
-
-```sh
-git clone https://github.com/iamobservable/open-webui-starter.git
-```
-
-### Create the docker compose and environment files
-
-```sh
-cp compose.yml.example compose.yml
-
-cp conf/mcposerver/config.example conf/mcposerver/config.json
-cp conf/nginx/nginx.example conf/nginx/nginx.conf
-cp conf/nginx/conf.d/default.example conf/nginx/conf.d/default.conf
-
-cp env/auth.example env/auth.env
-cp env/db.example env/db.env
-cp env/docling.example env/docling.env
-cp env/edgetts.example env/edgetts.env
-cp env/ollama.example env/ollama.env
-cp env/mcposerver.example env/mcposerver.env
-cp env/nginx.example env/nginx.env
-cp env/openwebui.example env/openwebui.env
-cp env/redis.example env/redis.env
-cp env/searxng.example env/searxng.env
-cp env/tika.example env/tika.env
-cp env/watchtower.example env/watchtower.env
-```
-
-*The environment files can contain sensitive information such as API keys 
-and passwords. Do not check them into source control. *.env files have been
-added to the project .gitignore for this reason.*
-
-### Allow Open WebUI to manage authentication across Open WebUI, Redis, and Searxng.
-
-Open WebUI uses Java Web Token (JWT) to manage authentication. To configure this, a secret key will need to be set in 3 environment files; the keys SEARXNG_SECRET, JWT_SECRET, and WEB_SECRET_KEY. Update the following files accordingly.
-
-- *SEARXNG_SECRET* - [env/searxng.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/searxng.example#L2)
-- *JWT_SECRET* - [env/auth.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/auth.example#L2)
-- *WEBUI_SECRET_KEY* - [env/openwebui.env](http://github.com/iamobservable/open-webui-starter/blob/main/env/openwebui.example#L35)
-
-**Make sure the environment files match**:. This allows jwt token authentication to work with the main Open WebUI (/), swagger (/docs), redis (/redis), and searxng (/searxng)
-
-
-### Start docker container environment from a terminal
-
-The applciation is ready to start. Let's do it!
-
-```sh
-docker compose up -d
-```
-
-### Download the Ollama models from a terminal
-
-The initial up command above will automatically download two models.
+The install.sh script automatically downloaded the below two models:
 
 1. nomic-embed-text:latest (used for RAG embeddings)
 2. qwen3:0.6b (small model for testing purposes)
 
-Now download another LLM for Ollama. Qwen3:4b is listed below, but feel free to change this to any model that works best. [More on Ollama models](https://ollama.com/search)
+Additional LLMs can be downloaded for Ollama using the following commands. Qwen3:4b is listed below, but feel free to use any model that works best. [More on Ollama models](https://ollama.com/search)
 
 ```sh
 docker compose exec ollama bash
@@ -128,12 +120,6 @@ docker compose exec ollama bash
 ollama pull qwen3:4b
 ```
 
-Once the containers are started, and any models are downloaded, the Open WebUI platform is ready to be accessed. Visit 
-[http://localhost:4000/](http://localhost:4000/) in a web browser.
-
-
-
-## Additional Setup
 
 ### MCP Servers
 
@@ -152,22 +138,22 @@ For now, to use the two default tools, it is required to add them manually. **Th
 though it is added. Add the following two urls using the Settings -> Tools -> General interface. This can also be set in the Admin Settings as well.
 
 *Note - the default postgres tool is configured to access this Open WebUI postgres database. While this is read-only, the tool server that is defined allows any user with 
-the credentials added to the [env/mcposerver.env](http://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example#L12) to access the database tables. If 
+the credentials added to the [env/mcp.env](http://github.com/iamobservable/open-webui-starter/blob/main/conf/mcp/config.example#L12) to access the database tables. If 
 anything should be restricted, make sure to do so ahead of time.*
 
 
 ```clipboard
-http://mcposerver:8000/time
+http://mcp:8000/time
 ```
 ```clipboard
-http://mcposerver:8000/postgres
+http://mcp:8000/postgres
 ```
 
 <img src="./images/owui-settings-tools-general-dialog.png" alt="OWUI Tool Settings" align="center" width="1000">
 
 #### Initial configuration
 
-Configurations for MCP services can be found in the [conf/mcposerver/config.json](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example) file. Links below in the table describe the initially configuration.
+Configurations for MCP services can be found in the [conf/mcp/config.json](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcp/config.example) file. Links below in the table describe the initially configuration.
 
 ***Note - the time tool is configured using uvx instead of directly with the python binary, as the repository describes*** 
 
@@ -175,8 +161,8 @@ A few tool examples are listed below.
 
 | Tool                                                                               | Description                                                               | Configuration |
 | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------- |
-| [time](https://github.com/modelcontextprotocol/servers/tree/main/src/time)         | Provides current time values for [configured timezone](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example#L5)                      | [config/mcposerver/config.json](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example#L3) |
-| [postgres](https://github.com/modelcontextprotocol/servers/tree/main/src/postgres) | Provides sql querying for the configured database (defaults to openwebui) | [config/mcposerver/config.json](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcposerver/config.example#L7) |
+| [time](https://github.com/modelcontextprotocol/servers/tree/main/src/time)         | Provides current time values for [configured timezone](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcp/config.example#L5)                      | [config/mcp/config.json](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcp/config.example#L3) |
+| [postgres](https://github.com/modelcontextprotocol/servers/tree/main/src/postgres) | Provides sql querying for the configured database (defaults to openwebui) | [config/mcp/config.json](https://github.com/iamobservable/open-webui-starter/blob/main/conf/mcp/config.example#L7) |
 
 #### MCP Server Discovery
 
