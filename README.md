@@ -160,7 +160,7 @@ http://mcp:8000/time
 http://mcp:8000/postgres
 ```
 
-<img src="./images/owui-settings-tools-general-dialog.png" alt="OWUI Tool Settings" align="center" width="1000">
+<img width="494" alt="owui-settings-tools-general-dialog" src="https://github.com/user-attachments/assets/7824c8c2-7e6a-4619-ae31-85d0abab5af5" />
 
 #### Initial configuration
 
