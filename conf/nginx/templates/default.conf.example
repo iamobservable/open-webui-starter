@@ -1,5 +1,20 @@
 upstream docsUpstream {
+  server docling:5001 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+upstream docsUpstream {
   server openwebui:8080 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+upstream edgettsUpstream {
+  server edgetts:5050 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+upstream ollamaUpstream {
+  server ollama:11434 max_fails=0 fail_timeout=10s;
   keepalive 512;
 }
 
@@ -10,6 +25,11 @@ upstream redisUpstream {
 
 upstream searxngUpstream {
   server searxng:8080 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+upstream tikaUpstream {
+  server tika:9998 max_fails=0 fail_timeout=10s;
   keepalive 512;
 }
 
@@ -25,7 +45,7 @@ server {
 
   absolute_redirect off;
 
-  location ~ ^/(docs|redis|searxng) {
+  location ~ ^/(docs|docling|edgetts|ollama|redis|searxng|tika)(.*)? {
     auth_request /auth-server/validate;
     auth_request_set $auth_status $upstream_status;
 
@@ -33,7 +53,7 @@ server {
     error_page 404 = @notfound;
     add_header X-Auth-Status $auth_status;
 
-    proxy_pass http://$1Upstream;
+    proxy_pass http://$1Upstream$2;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
