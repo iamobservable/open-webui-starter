@@ -1,0 +1,85 @@
+# Backrest Configuration
+# Веб-интерфейс и оркестратор для restic backup
+
+# === Основные настройки ===
+BACKREST_PORT=0.0.0.0:9898
+BACKREST_CONFIG=/config/config.json
+BACKREST_DATA=/data
+XDG_CACHE_HOME=/cache
+TMPDIR=/tmp
+TZ=Europe/Moscow
+
+# === Аутентификация ===
+# Оставьте пустым для отключения аутентификации (не рекомендуется для продакшена)
+BACKREST_USERNAME=admin
+BACKREST_PASSWORD=CHANGE_BEFORE_GOING_LIVE
+
+# === Restic настройки ===
+# Путь к бинарному файлу restic (оставьте пустым для автоматической установки)
+BACKREST_RESTIC_COMMAND=
+
+# === Хранилище бэкапов ===
+# Локальное хранилище (по умолчанию)
+BACKREST_REPO_PATH=/data/repositories
+
+# === S3-совместимое хранилище (опционально) ===
+# Раскомментируйте и настройте для использования S3/B2/MinIO
+# AWS_ACCESS_KEY_ID=your_access_key
+# AWS_SECRET_ACCESS_KEY=your_secret_key
+# AWS_DEFAULT_REGION=us-east-1
+
+# === Backblaze B2 (опционально) ===
+# B2_ACCOUNT_ID=your_account_id
+# B2_ACCOUNT_KEY=your_account_key
+
+# === Google Cloud Storage (опционально) ===
+# GOOGLE_PROJECT_ID=your_project_id
+# GOOGLE_APPLICATION_CREDENTIALS=/config/gcs-credentials.json
+
+# === SFTP хранилище (опционально) ===
+# SFTP_HOST=backup.example.com
+# SFTP_USER=backup_user
+# SFTP_PATH=/backups/erni-ki
+
+# === Уведомления ===
+# Discord webhook (опционально)
+# DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+
+# Slack webhook (опционально)
+# SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+
+# Gotify (опционально)
+# GOTIFY_URL=https://gotify.example.com
+# GOTIFY_TOKEN=your_gotify_token
+
+# === Производительность ===
+# Ограничения пропускной способности (KB/s)
+RESTIC_LIMIT_UPLOAD=0
+RESTIC_LIMIT_DOWNLOAD=0
+
+# Количество параллельных операций
+RESTIC_PACK_SIZE=16
+RESTIC_COMPRESSION=auto
+
+# === Безопасность ===
+# Пароль для шифрования репозитория (ОБЯЗАТЕЛЬНО ИЗМЕНИТЬ!)
+RESTIC_PASSWORD=CHANGE_BEFORE_GOING_LIVE_BACKUP_ENCRYPTION_KEY
+
+# === Логирование ===
+BACKREST_LOG_LEVEL=info
+RESTIC_VERBOSE=1
+
+# === Дополнительные опции ===
+# Отключить блокировку репозитория (только для отладки)
+# RESTIC_NO_LOCK=true
+
+# Кастомные флаги для restic
+# RESTIC_EXTRA_FLAGS=--verbose
+
+# === Мониторинг ===
+# Healthchecks.io (опционально)
+# HEALTHCHECKS_URL=https://hc-ping.com/your-uuid
+
+# === Интеграция с Docker ===
+# Доступ к Docker socket для остановки сервисов во время бэкапа
+DOCKER_HOST=unix:///var/run/docker.sock

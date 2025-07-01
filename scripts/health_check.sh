@@ -81,11 +81,12 @@ check_http_endpoints() {
     declare -A endpoints=(
         ["http://localhost:9090/health"]="Auth сервис"
         ["http://localhost:11434/api/version"]="Ollama API"
-        ["http://localhost:80"]="Nginx proxy"
+        ["http://localhost:80/health"]="Nginx proxy"
         ["http://localhost:8080/health"]="OpenWebUI"
         ["http://localhost:5001/health"]="Docling"
         ["http://localhost:5050/voices"]="EdgeTTS"
         ["http://localhost:9998/tika"]="Tika"
+        ["http://localhost:8080/"]="SearXNG"
     )
 
     for url in "${!endpoints[@]}"; do

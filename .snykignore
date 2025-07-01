@@ -1,0 +1,52 @@
+# Snyk ignore файл для проекта erni-ki
+# Исключения файлов и директорий из сканирования
+
+# Данные Docker контейнеров (права доступа root)
+data/
+data/**
+data/postgres/**
+data/redis/**
+data/ollama/**
+data/openwebui/**
+
+# Временные и системные файлы
+logs/
+*.log
+tmp/
+temp/
+.cache/
+
+# Backup и конфигурационные файлы
+backup/
+backups/
+.config-backup/
+secrets/
+
+# Конфигурации с потенциальными секретами
+env/
+conf/**/config
+conf/**/*.conf
+conf/**/*.ini
+conf/**/*.json
+conf/**/*.yml
+
+# Зависимости
+node_modules/
+vendor/
+
+# Сборочные артефакты
+dist/
+build/
+out/
+lib/
+coverage/
+
+# IDE файлы
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS файлы
+.DS_Store
+Thumbs.db

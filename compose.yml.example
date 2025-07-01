@@ -229,3 +229,29 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+
+  backrest:
+    depends_on:
+      - db
+      - redis
+      - watchtower
+    env_file: env/backrest.env
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:9898/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    image: garethgeorge/backrest:latest
+    ports:
+      - "9898:9898"
+    restart: unless-stopped
+    volumes:
+      - ./data/backrest:/data
+      - ./conf/backrest:/config
+      - ./cache/backrest:/cache
+      - ./tmp/backrest:/tmp
+      - ./data:/backup-sources/data:ro
+      - ./conf:/backup-sources/conf:ro
+      - ./env:/backup-sources/env:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
