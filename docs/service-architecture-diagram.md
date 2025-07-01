@@ -83,16 +83,16 @@ graph
         --> tika
 
         subgraph MCP Services
-            mcposerver[mcposerver]
+            mcp[mcp]
         end
 
-        openwebui -- "mcposerver:8000"
+        openwebui -- "mcp:8000"
             tools, resources, prompts
             samplings, roots
-        --> mcposerver
+        --> mcp
 
         subgraph Persistence Service
-            db[PostgreSQL/PGVector]
+            postgres[PostgreSQL/PGVector]
             redis[Redis]
         end
 
@@ -100,7 +100,7 @@ graph
             Configuration,
             Vector (RAG), and
             General Storage
-        --> db
+        --> postgres
 
         searxng --
             Persistence Storage

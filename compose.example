@@ -4,21 +4,6 @@ services:
     image: ghcr.io/iamobservable/jwt-auth-validator:0.1.0
     restart: unless-stopped
 
-  db:
-    depends_on:
-      - watchtower
-    env_file: env/db.env
-    healthcheck:
-      interval: 30s
-      retries: 5
-      start_period: 20s
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
-      timeout: 5s
-    image: pgvector/pgvector:pg15
-    restart: unless-stopped
-    volumes:
-      - postgres:/var/lib/postgresql/data
-
   docling:
     env_file: env/docling.env
     healthcheck:
@@ -43,15 +28,15 @@ services:
     image: travisvn/openai-edge-tts:latest
     restart: unless-stopped
 
-  mcposerver:
+  mcp:
     command: ["--config", "/app/conf/config.json"]
     depends_on:
       - watchtower
-    env_file: env/mcposerver.env
+    env_file: env/mcp.env
     image: ghcr.io/open-webui/mcpo:latest
     restart: unless-stopped
     volumes:
-      - ./conf/mcposerver:/app/conf:ro
+      - ./conf/mcp:/app/conf:ro
 
   nginx:
     depends_on:
@@ -65,7 +50,7 @@ services:
       timeout: 3s
     image: nginx:latest
     ports:
-      - 4000:80
+      - ${HOST_PORT}:80
     restart: unless-stopped
     volumes:
       - ./conf/nginx/templates:/etc/nginx/templates
@@ -88,9 +73,6 @@ services:
       test: curl --fail http://localhost:11434/api/version || exit 1
       timeout: 3s
     image: ollama/ollama:latest
-    post_start:
-      - command: "ollama pull nomic-embed-text:latest"
-      - command: "ollama pull qwen3:0.6b"
     restart: unless-stopped
     volumes:
       - ollama:/root/.ollama
@@ -99,9 +81,9 @@ services:
     depends_on:
       - auth
       - docling
-      - db
+      - postgres
       - edgetts
-      - mcposerver
+      - mcp
       - nginx
       - ollama
       - searxng
@@ -125,6 +107,21 @@ services:
     restart: unless-stopped
     volumes:
       - openwebui:/app/backend/data
+
+  postgres:
+    depends_on:
+      - watchtower
+    env_file: env/postgres.env
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 20s
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      timeout: 5s
+    image: pgvector/pgvector:pg15
+    restart: unless-stopped
+    volumes:
+      - postgres:/var/lib/postgresql/data
 
   redis:
     depends_on:
