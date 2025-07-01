@@ -62,7 +62,7 @@ yet been created for Windows.
 
 #### Environment variables
 
-More detailed configuration can be done the script by providing any of the 
+More detailed configuration can be done with the script by providing any of the 
 following environment variables while running install.sh.
 
 ```
