@@ -1,4 +1,4 @@
-upstream docsUpstream {
+upstream doclingUpstream {
   server docling:5001 max_fails=0 fail_timeout=10s;
   keepalive 512;
 }
