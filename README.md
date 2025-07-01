@@ -228,7 +228,7 @@ have been created as *.sh scripts that can be executed via the command line.
 Generates a JSON document with the markdown text included. Changes to the config.json document, located in the same directory, can change how Docling responds. More information on how to configure Docling can be found in the [Advance usage section](https://github.com/docling-project/docling-serve/blob/main/docs/usage.md) of the [Docling Serve documentation](https://github.com/docling-project/docling-serve/blob/main/docs/README.md).
 
 ```sh
-curl -X POST "http://localhost:5001/v1alpha/convert/source" \
+curl -X POST "http://localhost:4000/docling/v1alpha/convert/source" \
     -H "accept: application/json" \
     -H "Content-Type: application/json" \
     -d '{
@@ -259,7 +259,8 @@ the [EdgeTTS codebase and configuration](https://github.com/travisvn/openai-edge
 Generate Spanish speech from a speaker with a Spanish accent.
 
 ```sh
-curl -X POST "http://localhost:5050/v1/audio/speech" \
+curl -X POST "http://localhost:4000/edgetts/v1/audio/speech" \
+    -H "Cookie: token=<add-jwt-token>"
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer your_api_key_here" \
     -d '{
@@ -277,7 +278,8 @@ curl -X POST "http://localhost:5050/v1/audio/speech" \
 Generates English speech from a speaker with an English accent.
 
 ```sh
-curl -X POST "http://localhost:5050/v1/audio/speech" \
+curl -X POST "http://localhost:4000/edgetts/v1/audio/speech" \
+    -H "Cookie: token=<add-jwt-token>"
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer your_api_key_here" \
     -d '{
@@ -299,7 +301,8 @@ Generates meta data from a provided url. More information can be found via the [
 
 ```sh
 curl https://arxiv.org/abs/2408.09869v5 > 2408.09869v5.pdf
-curl http://localhost:9998/meta \
+curl http://localhost:4000/tika/meta \
+    -H "Cookie: token=<add-jwt-token>"
     -H "Accept: application/json" -T 2408.09869v5.pdf 
 ```
 
@@ -309,7 +312,8 @@ Generates HTML from a provided url. More information can be found via the [Tika 
 
 ```sh
 curl https://arxiv.org/abs/2408.09869v5 > 2408.09869v5.pdf
-curl http://localhost:9998/tika \
+curl http://localhost:4000/tika/tika \
+    -H "Cookie: token=<add-jwt-token>"
     -H "Accept: text/html" -T 2408.09869v5.pdf 
 ```
 
@@ -319,7 +323,8 @@ Generates plain text from a provided url. More information can be found via the 
 
 ```sh
 curl https://arxiv.org/abs/2408.09869v5 > 2408.09869v5.pdf
-curl http://localhost:9998/tika \
+curl http://localhost:4000/tika/tika \
+    -H "Cookie: token=<add-jwt-token>"
     -H "Accept: text/plain" -T 2408.09869v5.pdf 
 ```
 

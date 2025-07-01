@@ -28,8 +28,6 @@ services:
       test: curl --fail http://localhost:5001/health || exit 1
       timeout: 5s
     image: quay.io/docling-project/docling-serve:latest
-    ports:
-      - 5001:5001
     restart: unless-stopped
 
   edgetts:
@@ -43,8 +41,6 @@ services:
       test: "curl --fail http://localhost:5050/voices -H 'Authorization: Bearer your_api_key_here' || exit 1"
       timeout: 5s
     image: travisvn/openai-edge-tts:latest
-    ports:
-      - 5050:5050
     restart: unless-stopped
 
   mcposerver:
@@ -92,8 +88,6 @@ services:
       test: curl --fail http://localhost:11434/api/version || exit 1
       timeout: 3s
     image: ollama/ollama:latest
-    ports:
-      - 11434:11434
     restart: unless-stopped
     volumes:
       - ollama:/root/.ollama
@@ -172,8 +166,6 @@ services:
       test: curl --fail http://localhost:9998/tika || exit 1
       timeout: 5s
     image: apache/tika:latest-full
-    ports:
-      - 9998:9998
     restart: unless-stopped
 
   watchtower:
