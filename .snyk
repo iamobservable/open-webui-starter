@@ -15,7 +15,6 @@ exclude:
   
   # Временные файлы и логи
   - logs/**
-  - *.log
   - tmp/**
   - temp/**
   
@@ -28,10 +27,10 @@ exclude:
   - env/**
   - secrets/**
   - conf/**/config
-  - conf/**/*.conf
-  - conf/**/*.ini
-  - conf/**/*.json
-  - conf/**/*.yml
+  - "conf/**/*.conf"
+  - "conf/**/*.ini"
+  - "conf/**/*.json"
+  - "conf/**/*.yml"
   
   # Исключаем примеры конфигураций (они безопасны)
   - "!conf/**/*.example"

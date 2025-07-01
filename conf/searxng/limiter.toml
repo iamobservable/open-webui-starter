@@ -1,0 +1,23 @@
+# SearXNG Rate Limiter Configuration
+# Конфигурация ограничения скорости для SearXNG
+
+[botdetection]
+# Включить защиту от ботов
+enabled = true
+
+# Максимальное количество запросов в минуту для IP
+max_requests_per_minute = 60
+
+# Максимальное количество запросов в час для IP  
+max_requests_per_hour = 600
+
+# Время блокировки в секундах при превышении лимитов
+block_time = 300
+
+[real_ip]
+# Доверенные прокси для получения реального IP
+x_for = 1
+
+[link_token]
+# Включить токены для ссылок
+enabled = false
