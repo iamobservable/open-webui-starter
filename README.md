@@ -7,12 +7,7 @@ setting up [Open WebUI](https://openwebui.com/). More information can be found
 about configurations on the [Open WebUI Docs](https://docs.openwebui.com/) or the [Gitub repository](https://github.com/open-webui/open-webui).
 
 
-## 📢Join others on Discord
-
-If you run into issues, please join the [Open WebUI Starter project discord channel](https://discord.gg/xD89WPmgut). I'll do what I can to help!
-
-
-## 👷Project Overview
+## 👷 Project Overview
 
 The Open WebUI Starter project is an entry point into using the open-source project Open WebUI. The goal is to simplify setup and configuration. Open WebUI 
 integrates with various Large Language Models (LLMs) and provides a private, user-friendly, and local interface for interacting with computer intelligence.
@@ -21,6 +16,8 @@ Here is a link to follow 🔗[project development](https://github.com/users/iamo
 
 ## Table of Contents
 1. [Dependencies](#dependencies)
+1. [Connect](#-connect-with-the-observable-world-community)
+2. [Donations](#service-examples)
 2. [Installation](#installation)
 3. [Tooling and Applications](#tooling-and-applications)
 4. [JWT Auth Validator Purpose](#jwt-auth-validator-purpose)
@@ -28,11 +25,29 @@ Here is a link to follow 🔗[project development](https://github.com/users/iamo
 6. [Service Examples](#service-examples)
 7. [Contribution](#contribution)
 
+---
+
+## 📢 Connect with the Observable World Community
+
+Welcome! Join the [Observable World Discord](https://discord.gg/xD89WPmgut) to connect with like-minded 
+others and get real-time support. If you encounter any challenges, I'm here to help however I can!
+
+---
+
+## ❤️ Donations
+
+Thank you for finding this useful! Your support means the world to me. If you’d like to [help me 
+continue sharing code freely](https://github.com/sponsors/iamobservable), any donation—no matter 
+how small—would go a long way. Together, we can keep this community thriving!
+
+---
+
 ## Dependencies
 
 - **[Git](https://git-scm.com/)**: Version control system for managing code changes
 - **[Docker](https://docs.docker.com/)**: Containerization platform for running and deploying applications
 
+---
 
 ## Installation
 
@@ -85,6 +100,7 @@ NGINX_HOST=192.168.1.100 ./install.sh
 
 Once the installation script is complete, a browser page will open to OWUI.
 
+---
 
 ## Tooling and Applications
 
@@ -104,6 +120,7 @@ The starter project includes the following tooling and applications. A [Service 
 - **[Tika](https://tika.apache.org/)**: (default CONTENT_EXTRACTION_ENGINE) A toolkit that detects and extracts metadata and text from over a thousand different file types
 - **[Watchtower](https://github.com/containrrr/watchtower)**: Automated Docker container for updating container images automatically
 
+---
 
 ## JWT Auth Validator Purpose
 
@@ -113,6 +130,7 @@ More can be found about the configuration at [the JWT Auth Validator documentati
 
 *For its use in this project, I created an [image for the JWT Auth Validator](https://github.com/iamobservable/jwt-auth-validator/pkgs/container/jwt-auth-validator). This allows a prebuilt docker image that is pulled during the setup process. This eliminates the need to build during the docker compose up step.*
 
+---
 
 ## Additional Setup
 
@@ -331,10 +349,17 @@ curl http://localhost:4000/tika/tika \
     -H "Accept: text/plain" -T 2408.09869v5.pdf 
 ```
 
+---
 
-## Contribution
+## 💪 Contribution
 
-Contributions to the Open WebUI Starter project are welcome and encouraged! If you'd like to 
-contribute, please fork this repository and submit a [pull request](https://github.com/iamobservable/open-webui-starter/pulls) with any 
-suggested changes or additions.
+I am deeply grateful for any contributions to the Observable World project! If you’d like to contribute, 
+simply fork this repository and submit a [pull request](https://github.com/iamobservable/open-webui-starter/pulls)) with any improvements, additions, or fixes you’d 
+like to see. I will review and consider any suggestions — thank you for being part of this journey!
+
+---
+
+## License
+
+This project is licensed under the [MIT License](https://en.wikipedia.org/wiki/MIT_License). Find more in the [LICENSE document](https://raw.githubusercontent.com/iamobservable/open-webui-starter/refs/heads/main/LICENSE).
 
