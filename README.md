@@ -34,10 +34,10 @@ others and get real-time support. If you encounter any challenges, I'm here to h
 
 ---
 
-## ❤️ Donations
+## ❤️ DSubscriptions & Donations
 
 Thank you for finding this useful! Your support means the world to me. If you’d like to [help me 
-continue sharing code freely](https://github.com/sponsors/iamobservable), any donation—no matter 
+continue sharing code freely](https://github.com/sponsors/iamobservable), any subscriptons or donation—no matter 
 how small—would go a long way. Together, we can keep this community thriving!
 
 ---
@@ -354,7 +354,7 @@ curl http://localhost:4000/tika/tika \
 ## 💪 Contribution
 
 I am deeply grateful for any contributions to the Observable World project! If you’d like to contribute, 
-simply fork this repository and submit a [pull request](https://github.com/iamobservable/open-webui-starter/pulls)) with any improvements, additions, or fixes you’d 
+simply fork this repository and submit a [pull request](https://github.com/iamobservable/open-webui-starter/pulls) with any improvements, additions, or fixes you’d 
 like to see. I will review and consider any suggestions — thank you for being part of this journey!
 
 ---
