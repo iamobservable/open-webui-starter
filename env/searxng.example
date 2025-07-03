@@ -1,4 +1,35 @@
-#SEARXNG_HOST=localhost:8080/
+# SearXNG Configuration
+# Конфигурация SearXNG для ERNI-KI
+
+# === Основные настройки ===
+SEARXNG_HOST=0.0.0.0:8080
+SEARXNG_PORT=8080
+SEARXNG_BIND_ADDRESS=0.0.0.0
+
+# === Redis подключение ===
 SEARXNG_REDIS_URL=redis://redis:6379/1
-SEARXNG_SECRET=YOUR-SECRET-KEY
-#SEARXNG_BASE_URL=https://<domain-name>/searxng
+
+# === Безопасность ===
+# ВАЖНО: Сгенерируйте уникальный секретный ключ командой: openssl rand -hex 32
+SEARXNG_SECRET=CHANGE_BEFORE_GOING_LIVE_GENERATE_WITH_OPENSSL_RAND_HEX_32
+
+# === URL настройки ===
+# Базовый URL для SearXNG (будет переопределен в production)
+SEARXNG_BASE_URL=https://<domain-name>/searxng
+
+# === Функции безопасности ===
+# Включить ограничение скорости запросов
+SEARXNG_LIMITER=true
+
+# Включить проксирование изображений для безопасности
+SEARXNG_IMAGE_PROXY=true
+
+# Отключить режим публичного инстанса (для приватного использования)
+SEARXNG_PUBLIC_INSTANCE=false
+
+# === Дополнительные настройки ===
+# Отладочный режим (только для разработки)
+SEARXNG_DEBUG=false
+
+# Протокол HTTP (1.0 или 1.1)
+SEARXNG_HTTP_PROTOCOL_VERSION=1.1

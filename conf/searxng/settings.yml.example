@@ -80,36 +80,48 @@ search:
     - json
 
 server:
+  # Настройки сервера - переопределяются переменными окружения
   # Is overwritten by ${SEARXNG_PORT} and ${SEARXNG_BIND_ADDRESS}
-  port: 8888
-  bind_address: "127.0.0.1"
-  # public URL of the instance, to ensure correct inbound links. Is overwritten
-  # by ${SEARXNG_URL}.
-  ### BEWARE... THE PREVIOUS IS INCORRECT AND REQUIRES THE USE OF SEARXNG_BASE_URL
-  base_url: / # "http://example.com/location"
-  # rate limit the number of request on the instance, block some bots.
+  port: 8080
+  bind_address: "0.0.0.0"
+
+  # Базовый URL инстанса для корректных входящих ссылок
+  # Is overwritten by ${SEARXNG_BASE_URL}
+  base_url: "/searxng"
+
+  # Ограничение скорости запросов и защита от ботов
   # Is overwritten by ${SEARXNG_LIMITER}
-  limiter: false
-  # enable features designed only for public instances.
+  limiter: true
+
+  # Функции для публичных инстансов (отключено для приватного использования)
   # Is overwritten by ${SEARXNG_PUBLIC_INSTANCE}
   public_instance: false
 
-  # If your instance owns a /etc/searxng/settings.yml file, then set the following
-  # values there.
+  # Секретный ключ для криптографических операций
+  # КРИТИЧНО: Должен быть уникальным для каждого инстанса
+  # Is overwritten by ${SEARXNG_SECRET}
+  secret_key: "CHANGE_BEFORE_GOING_LIVE"
 
-  secret_key: "a48ea95e8eb0b9997e8285bcfeea0bc34802ade2f5fdb0d336b1d82a3959eed7" # Is overwritten by ${SEARXNG_SECRET}
-  # Proxy image results through SearXNG. Is overwritten by ${SEARXNG_IMAGE_PROXY}
-  image_proxy: false
-  # 1.0 and 1.1 are supported
-  http_protocol_version: "1.0"
-  # POST queries are more secure as they don't show up in history but may cause
-  # problems when using Firefox containers
+  # Проксирование изображений через SearXNG для безопасности
+  # Is overwritten by ${SEARXNG_IMAGE_PROXY}
+  image_proxy: true
+
+  # Версия HTTP протокола (1.0 или 1.1)
+  # Is overwritten by ${SEARXNG_HTTP_PROTOCOL_VERSION}
+  http_protocol_version: "1.1"
+
+  # POST запросы более безопасны (не отображаются в истории)
   method: "POST"
+
+  # Заголовки безопасности по умолчанию
   default_http_headers:
     X-Content-Type-Options: nosniff
     X-Download-Options: noopen
     X-Robots-Tag: noindex, nofollow
     Referrer-Policy: no-referrer
+    X-Frame-Options: DENY
+    X-XSS-Protection: "1; mode=block"
+    Strict-Transport-Security: "max-age=31536000; includeSubDomains"
 
 redis:
   # URL to connect redis database. Is overwritten by ${SEARXNG_REDIS_URL}.

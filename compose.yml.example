@@ -176,10 +176,8 @@ services:
 
   searxng:
     cap_add:
-      - CHOWN
       - SETGID
       - SETUID
-      - DAC_OVERRIDE
     cap_drop:
       - ALL
     env_file: env/searxng.env
@@ -187,21 +185,29 @@ services:
       - redis
       - watchtower
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:8080/ || exit 1"]
+      test: ["CMD-SHELL", "curl --fail http://localhost:8080/healthz || curl --fail http://localhost:8080/ || exit 1"]
       interval: 30s
-      timeout: 3s
-      retries: 5
-      start_period: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     image: searxng/searxng:latest
     logging:
       driver: "json-file"
       options:
-        max-size: "1m"
-        max-file: "1"
+        max-size: "2m"
+        max-file: "3"
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+      - /var/cache/searxng:noexec,nosuid,size=50m
+      - /usr/local/searxng/searx/static/cache:noexec,nosuid,size=20m
     volumes:
-      - ./conf/searxng/settings.yml:/etc/searxng/settings.yml:rw
-      - ./conf/searxng/uwsgi.ini:/etc/searxng/uwsgi.ini:rw
+      - ./conf/searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - ./conf/searxng/uwsgi.ini:/etc/searxng/uwsgi.ini:ro
+      - ./conf/searxng/limiter.toml:/etc/searxng/limiter.toml:ro
 
   tika:
     env_file: env/tika.env

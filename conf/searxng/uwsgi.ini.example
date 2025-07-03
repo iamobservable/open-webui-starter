@@ -31,24 +31,51 @@ chdir = /usr/local/searxng/searx/
 # automatically set processes name to something meaningful
 auto-procname = true
 
-# Disable request logging for privacy
-disable-logging = true
+# Логирование (включено для мониторинга, но ограничено)
+disable-logging = false
 log-5xx = true
+log-4xx = true
+log-slow = 1000
+log-date = true
 
-# Set the max size of a request (request-body excluded)
-buffer-size = 8192
+# Размер буфера запроса (увеличен для лучшей производительности)
+buffer-size = 16384
+post-buffering = 8192
 
-# No keep alive
-# See https://github.com/searx/searx-docker/issues/24
-add-header = Connection: close
+# HTTP настройки для улучшенной производительности
+http-keepalive = true
+http-auto-chunked = true
+add-header = Connection: keep-alive
 
-# Follow SIGTERM convention
-# See https://github.com/searxng/searxng/issues/3427
-die-on-term
+# Graceful shutdown
+die-on-term = true
+hook-master-start = unix_signal:15 gracefully_kill_them_all
 
-# uwsgi serves the static files
+# Статические файлы с улучшенным кэшированием
 static-map = /static=/usr/local/searxng/searx/static
-# expires set to one day
-static-expires = /* 1
-static-gzip-all = True
-offload-threads = 4
+static-expires = /* 86400
+static-gzip-all = true
+static-gzip-ext = .js .css .html .txt .xml .json
+offload-threads = 8
+
+# Мониторинг и метрики
+stats = 127.0.0.1:9191
+stats-http = true
+memory-report = true
+
+# Оптимизация производительности
+cheaper = 2
+cheaper-initial = 2
+cheaper-step = 1
+cheaper-algo = busyness
+cheaper-overload = 30
+
+# Лимиты и таймауты
+harakiri = 30
+harakiri-verbose = true
+max-requests = 1000
+max-requests-delta = 100
+reload-on-rss = 512
+
+# Кэширование (если доступно)
+cache2 = name=searxngcache,items=2000,blocks=2000,blocksize=4096,bitmap=1

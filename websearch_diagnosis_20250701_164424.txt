@@ -1,0 +1,87 @@
+Web Search Issue Diagnosis Report
+Generated: Tue Jul  1 04:44:24 PM CEST 2025
+=================================
+
+PROBLEM DESCRIPTION:
+- Web search works via localhost/local IPs
+- Web search fails via diz.zone domain
+- Error: SyntaxError: JSON.parse: unexpected character
+
+CURRENT CONFIGURATION:
+- SEARXNG_QUERY_URL: SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
+- WEBUI_URL: WEBUI_URL=https://diz.zone
+- WEB_SEARCH_ENGINE: WEB_SEARCH_ENGINE=searxng
+RAG_WEB_SEARCH_ENGINE=searxng
+
+SERVICE STATUS:
+NAME                    IMAGE                                COMMAND                  SERVICE       CREATED        STATUS                       PORTS
+erni-ki-auth-1          erni-ki-auth                         "/app/main"              auth          23 hours ago   Up 6 hours (healthy)         0.0.0.0:9090->9090/tcp, [::]:9090->9090/tcp
+erni-ki-cloudflared-1   cloudflare/cloudflared:latest        "cloudflared --no-au…"   cloudflared   23 hours ago   Up 2 hours (unhealthy)       
+erni-ki-nginx-1         nginx:latest                         "/docker-entrypoint.…"   nginx         3 hours ago    Up About an hour (healthy)   0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp
+erni-ki-openwebui-1     ghcr.io/open-webui/open-webui:main   "bash start.sh"          openwebui     4 hours ago    Up 4 hours (healthy)         8080/tcp
+erni-ki-searxng-1       searxng/searxng:latest               "/usr/local/searxng/…"   searxng       23 hours ago   Up 2 hours (unhealthy)       0.0.0.0:8081->8080/tcp, [::]:8081->8080/tcp
+
+NGINX SEARXNG ROUTE:
+upstream redisUpstream {
+  server redis:8001 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+upstream searxngUpstream {
+  server searxng:8080 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+upstream authUpstream {
+  server auth:9090 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+upstream backrestUpstream {
+  server backrest:9898 max_fails=0 fail_timeout=10s;
+  keepalive 512;
+}
+
+
+server {
+--
+    return 200 "healthy\n";
+    add_header Content-Type text/plain;
+  }
+
+  # Защищенные маршруты с аутентификацией
+  location ~ ^/(docs|redis|searxng|backrest) {
+    auth_request /auth-server/validate;
+    auth_request_set $auth_status $upstream_status;
+
+    error_page 401 = @fallback;
+    error_page 404 = @notfound;
+    add_header X-Auth-Status $auth_status;
+
+    proxy_pass http://$1Upstream;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Дополнительные заголовки для Backrest WebUI
+    proxy_http_version 1.1;
+
+RECENT ERRORS:
+OpenWebUI errors:
+No errors found
+
+SearXNG errors:
+searxng-1  | 2025-07-01 14:37:12,790 ERROR:searx.engines.qwant: CAPTCHA
+searxng-1  | 2025-07-01 14:43:35,713 ERROR:searx.engines.wikipedia: engine timeout
+searxng-1  | 2025-07-01 14:43:35,722 ERROR:searx.engines.wikipedia: engine timeout
+searxng-1  | 2025-07-01 14:43:35,817 ERROR:searx: call to ResultContainer.add_unresponsive_engine after ResultContainer.close
+searxng-1  | 2025-07-01 14:43:35,822 WARNING:searx.engines.wikipedia: ErrorContext('searx/search/processors/online.py', 116, "response = req(params['url'], **request_args)", 'httpx.ReadTimeout', None, (None, None, 'en.wikipedia.org')) False
+searxng-1  | 2025-07-01 14:43:35,822 ERROR:searx.engines.wikipedia: HTTP requests timeout (search duration : 3.108977345000312 s, timeout: 3.0 s) : ReadTimeout
+searxng-1  | 2025-07-01 14:43:35,824 ERROR:searx: call to ResultContainer.add_unresponsive_engine after ResultContainer.close
+searxng-1  | 2025-07-01 14:43:35,862 WARNING:searx.engines.wikipedia: ErrorContext('searx/search/processors/abstract.py', 100, 'count_error(self.engine_name, exception_or_message)', None, 'timeout', ()) False
+searxng-1  | 2025-07-01 14:44:23,315 WARNING:searx.engines.qwant: ErrorContext('searx/engines/qwant.py', 199, 'raise SearxEngineCaptchaException()', 'searx.exceptions.SearxEngineCaptchaException', None, ('CAPTCHA',)) False
+searxng-1  | 2025-07-01 14:44:23,315 ERROR:searx.engines.qwant: CAPTCHA
+
+Nginx errors:
+No errors found

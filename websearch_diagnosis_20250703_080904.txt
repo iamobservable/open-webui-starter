@@ -1,0 +1,10 @@
+Web Search Domain Diagnosis Report
+Generated: Thu Jul  3 08:09:04 AM CEST 2025
+======================================
+
+SUMMARY:
+- API endpoints tested: localhost, diz.zone, webui.diz.zone
+- Configuration checked: Nginx, OpenWebUI environment
+- Services status verified
+
+For detailed results, see terminal output above.
