@@ -2,8 +2,8 @@
 
 # Open WebUI Starter
 
-The Open WebUI (OWUI) Starter project is meant to provide a quick template for 
-setting up [Open WebUI](https://openwebui.com/). More information can be found 
+The [Open WebUI (OWUI) Starter project](https://github.com/iamobservable/open-webui-starter) is meant to provide a quick template for 
+setting up Open WebUI. More information can be found 
 about configurations on the [Open WebUI Docs](https://docs.openwebui.com/) or the [Gitub repository](https://github.com/open-webui/open-webui).
 
 
