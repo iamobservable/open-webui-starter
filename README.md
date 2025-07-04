@@ -15,15 +15,15 @@ integrates with various Large Language Models (LLMs) and provides a private, use
 Here is a link to follow 🔗[project development](https://github.com/users/iamobservable/projects/1).
 
 ## Table of Contents
-1. [Dependencies](#dependencies)
 1. [Connect](#-connect-with-the-observable-world-community)
 2. [Donations](#service-examples)
-2. [Installation](#installation)
-3. [Tooling and Applications](#tooling-and-applications)
-4. [JWT Auth Validator Purpose](#jwt-auth-validator-purpose)
-5. [Additional Setup](#additional-setup)
-6. [Service Examples](#service-examples)
-7. [Contribution](#contribution)
+3. [Dependencies](#dependencies)
+4. [Installation](#installation)
+5. [Tooling and Applications](#tooling-and-applications)
+6. [JWT Auth Validator Purpose](#jwt-auth-validator-purpose)
+7. [Additional Setup](#additional-setup)
+8. [Service Examples](#service-examples)
+9. [Contribution](#contribution)
 
 ---
 
