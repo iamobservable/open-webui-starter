@@ -1,9 +1,9 @@
 compose.yml
 
 conf/**/*.conf
-conf/**/*.ini
+# conf/**/*.ini
 conf/**/*.json
-conf/**/*.yml
+# conf/**/*.yml
 
 conf/comfyui/runner-scripts/download-models.txt
 
