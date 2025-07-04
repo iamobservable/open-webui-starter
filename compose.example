@@ -1,3 +1,6 @@
+
+version: "3.9"
+
 services:
   auth:
     env_file: env/auth.env
@@ -108,6 +111,17 @@ services:
     volumes:
       - openwebui:/app/backend/data
 
+  postgres-init:
+    depends_on:
+      - postgres
+      - watchtower
+    env_file: env/postgres.env
+    image: pgvector/pgvector:pg17
+    restart: no
+    volumes:
+      - ./conf/postgres/init:/init:ro
+    command: sh /init/openwebui-db-init.sh
+
   postgres:
     depends_on:
       - watchtower
@@ -118,7 +132,7 @@ services:
       start_period: 20s
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       timeout: 5s
-    image: pgvector/pgvector:pg15
+    image: pgvector/pgvector:pg17
     restart: unless-stopped
     volumes:
       - postgres:/var/lib/postgresql/data
@@ -147,14 +161,21 @@ services:
       start_period: 10s
       test: curl --fail http://localhost:8080/ || exit 1
       timeout: 3s
-    image: searxng/searxng:latest
+    image: searxng/searxng:2025.6.30-39c50dc
+    volumes:
+      - ./conf/searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - ./conf/searxng/uwsgi.ini:/etc/searxng/uwsgi.ini:ro
+      - ./conf/searxng/limiter.toml:/etc/searxng/limiter.toml:ro
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
     logging:
       driver: "json-file"
       options:
         max-size: "1m"
         max-file: "1"
-    post_start:
-      - command: "wget https://raw.githubusercontent.com/iamobservable/open-webui-starter/refs/heads/main/conf/searxng/settings.yml.example -O /etc/searxng/settings.yml"
     restart: unless-stopped
 
   tika:
@@ -166,7 +187,11 @@ services:
       test: curl --fail http://localhost:9998/tika || exit 1
       timeout: 5s
     image: apache/tika:latest-full
+    entrypoint: ["/bin/sh", "-c", "exec java -cp \"/customocr:/tika-server-standard-${TIKA_VERSION}.jar:/tika-extras/*\" org.apache.tika.server.core.TikaServerCli -h 0.0.0.0 $0 $@"]
+    command: -c /tika-config.xml
     restart: unless-stopped
+    volumes:
+      - ./conf/tika/customocr/tika-config-rendered.xml:/tika-config.xml
 
   watchtower:
     command: --cleanup --debug --interval 300
@@ -178,8 +203,8 @@ services:
 
 volumes:
   ollama:
-    external: false
+    external: true
   openwebui:
-    external: false
+    external: true
   postgres:
-    external: false
+    external: true
