@@ -28,7 +28,7 @@ RAG_WEB_SEARCH_ENGINE=searxng
 RAG_WEB_SEARCH_RESULT_COUNT=6
 RAG_WEB_SEARCH_CONCURRENT_REQUESTS=10
 REDIS_KEY_PREFIX=open-webui
-REDIS_URL=redis://redis:6379/0
+REDIS_URL=redis://redis:6379/2
 SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
 TIKA_SERVER_URL=http://tika:9998
 #TOOL_SERVER_CONNECTIONS=["http://mcp:8000/time", "http://mcp:8000/postgres"]
