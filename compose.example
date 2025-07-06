@@ -159,8 +159,6 @@ services:
 
   tika:
     env_file: env/tika.env
-    entrypoint: [ "/bin/sh", "-c", "exec java -cp \"/customocr:/tika-server-standard-$${TIKA_VERSION}.jar:/tika-extras/*\" org.apache.tika.server.core.TikaServerCli -h 0.0.0.0 $$0 $$@"]
-    command: -c /tika-config.xml
     healthcheck:
       interval: 30s
       retries: 5
@@ -168,8 +166,6 @@ services:
       test: curl --fail http://localhost:9998/tika || exit 1
       timeout: 5s
     image: apache/tika:latest-full
-    volumes:
-       - ./conf/tika/customocr/tika-config-rendered.xml:/tika-config.xml
     restart: unless-stopped
 
   watchtower:
