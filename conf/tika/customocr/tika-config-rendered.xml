@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<properties>
+  <!-- Increasing Render Time-Out -->
+  <taskTimeoutMillis>900000</taskTimeoutMillis>
+  <parsers>     
+        <!-- Load TesseractOCRParser (could use DefaultParser if you want others too) -->
+        <parser class="org.apache.tika.parser.ocr.TesseractOCRParser"/>   
+
+        <!-- OCR on Rendered Pages -->
+        <parser class="org.apache.tika.parser.pdf.PDFParser">
+            <params>
+                <!-- no_ocr - extract text only
+                     ocr_only - don't extract text and just attempt OCR
+                     ocr_and_text - extract text and attempt OCR (from Tika 1.24)
+                     auto - extract text but if < 10 characters try OCR
+                -->
+                <param name="ocrStrategy" type="string">ocr_and_text</param>
+                <param name="ocrImageType" type="string">rgb</param>
+                <param name="ocrDPI" type="int">100</param>
+            </params>
+        </parser>
+
+  </parsers>
+</properties>
