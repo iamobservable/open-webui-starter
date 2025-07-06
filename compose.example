@@ -180,6 +180,6 @@ volumes:
   ollama:
     external: false
   openwebui:
-    external: true
+    external: false
   postgres:
     external: false
