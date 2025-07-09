@@ -15,7 +15,7 @@
                      ocr_and_text - extract text and attempt OCR (from Tika 1.24)
                      auto - extract text but if < 10 characters try OCR
                 -->
-                <param name="ocrStrategy" type="string">ocr_and_text</param>
+                <param name="ocrStrategy" type="string">auto</param>
                 <param name="ocrImageType" type="string">rgb</param>
                 <param name="ocrDPI" type="int">100</param>
             </params>
