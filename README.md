@@ -403,5 +403,5 @@ simply fork this repository and submit a [pull request](https://github.com/iamob
 
 ## License
 
-This project is licensed under the [Apache 2 License](https://github.com/iamobservable/open-webui-starter?tab=Apache-2.0-1-ov-file#readme). Find more in the [LICENSE document](https://raw.githubusercontent.com/iamobservable/open-webui-starter/refs/heads/main/LICENSE).
+This project is licensed under the [Apache 2 License](https://github.com/iamobservable/open-webui-starter?tab=Apache-2.0-1-ov-file#readme). Find more in the [LICENSE document](https://github.com/iamobservable/open-webui-starter/blob/main/LICENSE).
 
