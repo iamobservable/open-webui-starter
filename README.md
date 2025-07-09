@@ -166,7 +166,7 @@ The starter project includes the following tooling and applications. A [Service 
 
 ## JWT Auth Validator Purpose
 
-As this project was being developed, I had a need to restrict access to all web requests to the environment. The initial goal was to restrict the /docs link of a given dev version of OWUI -- it comes out of the box with unrestricted access. I also was using Redis and Searxng and wanted to use the same authentication as OWUI, so as not to require an additional "login" when accessing these sites. So I started researching how OWUI is managing authentication. During the research, I found OWUI creates a [JWT (JSON Web Token)](https://en.wikipedia.org/wiki/JSON_Web_Token) during the authentication process. This JWT (JSON Web Token) allows OWUI to verify a user has authenticated by validating the signature created in the JWT. The JWT is stored in the browser as a cookie and passed to any subsequent requests on the same Host + Port (e.g. localhost:4000). Given this pattern, I decided to let the nginx proxy become a gatekeeper of sorts. I setup an nginx configuration to capture the request header for the JWT and pass it to an internal service for verifying the signature. That service is the JWT Auth Validator. Its sole purpose is to tell the nginx proxy if a signature was signed by the appropriate authority -- in this case OWUI -- and return True or False to the nginx proxy. The nginx proxy then, based on a True response, allows the initial request to continue through to the expected service container. If the response is False, nginx will redirect to a /auth route for login.
+As this project was being developed, I had a need to restrict access to all web requests to the environment. The initial goal was to restrict the /docs link of a given dev version of OWUI -- it comes out of the box with unrestricted access. I also was using Redis and Searxng and wanted to use the same authentication as OWUI, so as not to require an additional "login" when accessing these sites. So I started researching how OWUI is managing authentication. During the research, I found OWUI creates a [JWT (JSON Web Token)](https://en.wikipedia.org/wiki/JSON_Web_Token) during the authentication process. This JWT (JSON Web Token) allows OWUI to verify a user has authenticated by validating the signature created in the JWT. The JWT is stored in the browser as a cookie and passed to any subsequent requests on the same Host + Port (e.g. localhost:3000). Given this pattern, I decided to let the nginx proxy become a gatekeeper of sorts. I setup an nginx configuration to capture the request header for the JWT and pass it to an internal service for verifying the signature. That service is the JWT Auth Validator. Its sole purpose is to tell the nginx proxy if a signature was signed by the appropriate authority -- in this case OWUI -- and return True or False to the nginx proxy. The nginx proxy then, based on a True response, allows the initial request to continue through to the expected service container. If the response is False, nginx will redirect to a /auth route for login.
 
 More can be found about the configuration at [the JWT Auth Validator documentation](https://github.com/iamobservable/jwt-auth-validator?tab=readme-ov-file#nginx-proxy-example).
 
@@ -290,7 +290,7 @@ have been created as *.sh scripts that can be executed via the command line.
 Generates a JSON document with the markdown text included. Changes to the config.json document, located in the same directory, can change how Docling responds. More information on how to configure Docling can be found in the [Advance usage section](https://github.com/docling-project/docling-serve/blob/main/docs/usage.md) of the [Docling Serve documentation](https://github.com/docling-project/docling-serve/blob/main/docs/README.md).
 
 ```sh
-curl -X POST "http://localhost:4000/docling/v1alpha/convert/source" \
+curl -X POST "http://localhost:3000/docling/v1alpha/convert/source" \
     -H "Cookie: token=<add-jwt-token>"
     -H "accept: application/json" \
     -H "Content-Type: application/json" \
@@ -322,17 +322,17 @@ the [EdgeTTS codebase and configuration](https://github.com/travisvn/openai-edge
 Generate Spanish speech from a speaker with a Spanish accent.
 
 ```sh
-curl -X POST "http://localhost:4000/edgetts/v1/audio/speech" \
-    -H "Cookie: token=<add-jwt-token>"
+curl -X POST "http://localhost:3000/edgetts/v1/audio/speech" \
+    -H "Cookie: token=<add-jwt-token>" \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer your_api_key_here" \
-    -d '{
-      "input": "Hola! Mi nombre es Alonso",
-      "response_format": "mp3",
-      "speed": 1,
-      "stream": true,
-      "voice": "es-US-AlonsoNeural",
-      "model": "tts-1-hd"
+    -d '{ \
+      "input": "Hola! Mi nombre es Alonso", \
+      "response_format": "mp3", \
+      "speed": 1, \
+      "stream": true, \
+      "voice": "es-US-AlonsoNeural", \
+      "model": "tts-1-hd" \
     }' > alonso-es-hola.mp3
 ```
 
@@ -341,17 +341,17 @@ curl -X POST "http://localhost:4000/edgetts/v1/audio/speech" \
 Generates English speech from a speaker with an English accent.
 
 ```sh
-curl -X POST "http://localhost:4000/edgetts/v1/audio/speech" \
+curl -X POST "http://localhost:3000/edgetts/v1/audio/speech" \
     -H "Cookie: token=<add-jwt-token>"
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer your_api_key_here" \
-    -d '{
-      "input": "Hi, my name is Wayland. This is an audio example.",
-      "response_format": "mp3",
-      "speed": 1,
-      "stream": true,
-      "voice": "en-US-AndrewMultilingualNeural",
-      "model": "tts-1-hd"
+    -d '{ \
+      "input": "Hi, my name is Wayland. This is an audio example.", \
+      "response_format": "mp3", \
+      "speed": 1, \
+      "stream": true, \
+      "voice": "en-US-AndrewMultilingualNeural", \
+      "model": "tts-1-hd" \
     }' > wayland-intro.mp3
 ```
 
@@ -363,9 +363,9 @@ curl -X POST "http://localhost:4000/edgetts/v1/audio/speech" \
 Generates meta data from a provided url. More information can be found via the [Metadata Resource documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-MetadataResource)
 
 ```sh
-curl https://arxiv.org/abs/2408.09869v5 > 2408.09869v5.pdf
-curl http://localhost:4000/tika/meta \
-    -H "Cookie: token=<add-jwt-token>"
+curl https://arxiv.org/pdf/2408.09869v5 > 2408.09869v5.pdf
+curl http://localhost:3000/tika/meta \
+    -H "Cookie: token=<add-jwt-token>" \
     -H "Accept: application/json" -T 2408.09869v5.pdf 
 ```
 
@@ -374,9 +374,9 @@ curl http://localhost:4000/tika/meta \
 Generates HTML from a provided url. More information can be found via the [Tika Resource Documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-GettheTextofaDocument)
 
 ```sh
-curl https://arxiv.org/abs/2408.09869v5 > 2408.09869v5.pdf
-curl http://localhost:4000/tika/tika \
-    -H "Cookie: token=<add-jwt-token>"
+curl https://arxiv.org/pdf/2408.09869v5 > 2408.09869v5.pdf
+curl http://localhost:3000/tika/tika \
+    -H "Cookie: token=<add-jwt-token>" \
     -H "Accept: text/html" -T 2408.09869v5.pdf 
 ```
 
@@ -385,9 +385,9 @@ curl http://localhost:4000/tika/tika \
 Generates plain text from a provided url. More information can be found via the [Tika Resource Documentation](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=148639291#TikaServer-GettheTextofaDocument)
 
 ```sh
-curl https://arxiv.org/abs/2408.09869v5 > 2408.09869v5.pdf
-curl http://localhost:4000/tika/tika \
-    -H "Cookie: token=<add-jwt-token>"
+curl https://arxiv.org/pdf/2408.09869v5 > 2408.09869v5.pdf
+curl http://localhost:3000/tika/tika \
+    -H "Cookie: token=<add-jwt-token>" \
     -H "Accept: text/plain" -T 2408.09869v5.pdf 
 ```
 
