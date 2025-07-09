@@ -1,2 +1,0 @@
-# REDIS_ARGS="--requirepass sider"
-RI_PROXY_PATH=redis
