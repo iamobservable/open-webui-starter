@@ -65,7 +65,7 @@ Get started by visiting the [get-started section](https://www.docker.com/get-sta
 ### Install script
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/iamobservable/open-webui-starter/main/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/iamobservable/open-webui-starter/refs/heads/main/starter.sh)"
 ```
 
 This command will download and install the open-webui-starter. A script will be
