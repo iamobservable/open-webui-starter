@@ -189,13 +189,15 @@ pull_templates () {
     print_message "\nPulling latest templates"
     curl -s $2 > templates.zip
 
-    mkdir unzip
-    unzip -q templates.zip -d $PULLTMP/unzip
-    cp -rf unzip/starter-templates-main/* $1
+    local SHABASE="$(basename $2)"
+
+    mkdir -p --mode 750 ./unzip
+
+    unzip -q templates.zip -d ./unzip
+    cp -rf ./unzip/starter-templates-$SHABASE/* $1
   popd > /dev/null
 
   rm -rf $PULLTMP
-
 }
 
 remove_project () {
