@@ -170,6 +170,7 @@ services:
     image: apache/tika:latest-full
     volumes:
       - ./conf/tika/customocr/tika-config-rendered.xml:/tika-config.xml
+      - ./conf/tika/customocr:/customocr
     restart: unless-stopped
 
   watchtower:
