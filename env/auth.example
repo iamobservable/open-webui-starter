@@ -1,2 +1,0 @@
-GIN_MODE=release
-JWT_SECRET=${JWT_SECRET}
