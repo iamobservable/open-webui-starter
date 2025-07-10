@@ -92,9 +92,11 @@ source $HOME/.zshrc
 starter
 
 #  -c, --create project-name   create new project
+#  -p, --projects              list starter projects
+#      --ps                    show running container process list
+#      --pull                  pull latest templates
 #  -r, --remove project-name   remove project
 #  -u, --update                update starter command
-#      --ps                    show running container process list
 ```
 
 - This script has been tested in a linux environment

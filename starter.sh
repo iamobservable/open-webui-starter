@@ -157,6 +157,20 @@ fail_if_project_directory_exists () {
   fi
 }
 
+list_projects () {
+  local INSTALL_DIR="$1"
+
+  print_message "\nprojects:\n"
+
+  pushd $INSTALL_DIR > /dev/null
+    while IFS= read -r FULLPATH; do
+      local FILE_NAME="$(basename ${FULLPATH#${INSTALL_DIR}/})"
+      
+      print_message "   \033[1m$FILE_NAME -> \033[3m$FULLPATH"
+    done < <(find $INSTALL_DIR -maxdepth 1 -mindepth 1 -type d | sort)
+  popd > /dev/null
+}
+
 open_browser () {
   print_message "\nOpening $1 (OWUI) in the browser"
   open $1
@@ -186,9 +200,11 @@ print_usage () {
   echo
   # echo -e "\033[22m\033[22m  -p, --pull                  \033[1mfetch all templates\033[0m"
   echo -e "\033[22m\033[22m  -c, --create project-name   \033[1mcreate new project\033[0m"
+  echo -e "\033[22m\033[22m  -p, --projects              \033[1mlist starter projects\033[0m"
+  echo -e "\033[22m\033[22m      --ps                    \033[1mshow running container process list\033[0m"
+  echo -e "\033[22m\033[22m      --pull                  \033[1mpull latest templates\033[0m"
   echo -e "\033[22m\033[22m  -r, --remove project-name   \033[1mremove project\033[0m"
   echo -e "\033[22m\033[22m  -u, --update                \033[1mupdate starter command\033[0m"
-  echo -e "\033[22m\033[22m      --ps                    \033[1mshow running container process list\033[0m"
   echo
 }
 
@@ -239,22 +255,20 @@ show_ps () {
 
 start_containers () {
   pushd $1 > /dev/null
+    print_message "\nStarting Ollama container"
+    docker compose up ollama -d
 
-  print_message "\nStarting Ollama container"
-  docker compose up ollama -d
+    print_message "\nDownloading nomic-embed-text model"
+    docker compose exec ollama ollama pull $EMBEDDING_MODEL
 
-  print_message "\nDownloading nomic-embed-text model"
-  docker compose exec ollama ollama pull $EMBEDDING_MODEL
+    print_message "\nDownloading $DECISION_MODEL model"
+    docker compose exec ollama ollama pull $DECISION_MODEL
 
-  print_message "\nDownloading $DECISION_MODEL model"
-  docker compose exec ollama ollama pull $DECISION_MODEL
+    print_message "\nStarting Postgres container"
+    docker compose up postgres -d
 
-  print_message "\nStarting Postgres container"
-  docker compose up postgres -d
-
-  print_message "\nStarting Openwebui and dependency containers"
-  docker compose up -d
-
+    print_message "\nStarting Openwebui and dependency containers"
+    docker compose up -d
   popd > /dev/null
 }
 
@@ -262,13 +276,13 @@ update_starter () {
   local starter_script_url="https://raw.githubusercontent.com/iamobservable/open-webui-starter/refs/heads/main/starter.sh"
   curl -s $starter_script_url > $HOME/bin/starter
 
-  print_message "starter updated:\n  see commit history for changes -> https://github.com/iamobservable/open-webui-starter/commits/main/"
+  print_message "\nstarter updated:\n  see commit history for changes -> https://github.com/iamobservable/open-webui-starter/commits/main/"
 }
 
 
 
 
-options=$(getopt -l "create,remove,ps,pull,update,help" -o "cpruh" -- "$@")
+options=$(getopt -l "create,remove,ps,projects,pull,update,help" -o "cpruh" -- "$@")
 
 eval set -- "$options"
 
@@ -300,9 +314,10 @@ do
 
     # open_browser "http://$NGINX_HOST:$HOST_PORT/"
     ;;
-  -p|--pull)
+  -p|--projects)
     define_setup_variables
-    pull_templates "$TEMPLATES_DIR" "$TEMPLATES_URL"
+
+    list_projects "$INSTALL_PATH"
     ;;
   --ps)
     shift
@@ -316,6 +331,10 @@ do
     define_setup_variables
 
     show_ps "$INSTALL_PATH/$PROJECT_NAME"
+    ;;
+  --pull)
+    define_setup_variables
+    pull_templates "$TEMPLATES_DIR" "$TEMPLATES_URL"
     ;;
   -r|--remove)
     shift
