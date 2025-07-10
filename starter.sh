@@ -3,16 +3,15 @@
 shopt -s nullglob
 
 create_project () {
-  local DEFAULT_OWUI_STARTER_ID="4b35c72a-6775-41cb-a717-26276f7ae56e"
-  local DEFAULT_TEMPLATE_PATH="$1/$DEFAULT_OWUI_STARTER_ID"
+  local TEMPLATE_PATH="$1"
   local INSTALL_PATH="$2"
 
 
-  pushd $DEFAULT_TEMPLATE_PATH > /dev/null
+  pushd $TEMPLATE_PATH > /dev/null
     TEMPLATE_FILE_PATHS=()
     while IFS= read -r FULLPATH; do
-      TEMPLATE_FILE_PATHS+=("${FULLPATH#${DEFAULT_TEMPLATE_PATH}/}")
-    done < <(find $DEFAULT_TEMPLATE_PATH -name "*.template" | sort)
+      TEMPLATE_FILE_PATHS+=("${FULLPATH#${TEMPLATE_PATH}/}")
+    done < <(find $TEMPLATE_PATH -name "*.template" | sort)
 
     print_message "\nCreating install directory $INSTALL_PATH"
     mkdir -p $1
@@ -129,14 +128,26 @@ define_environment_variables () {
 define_setup_variables () {
   if [ -z "$INSTALL_PATH" ]; then
     INSTALL_PATH="$HOME/MyStarters"
+  else
+    print_message "Using provided INSTALL_PATH"
+  fi
+
+  if [ -z "$TEMPLATE_ID" ]; then
+    TEMPLATE_ID="4b35c72a-6775-41cb-a717-26276f7ae56e"
+  else
+    print_message "Using provided TEMPLATE_ID"
   fi
 
   if [ -z "$TEMPLATES_DIR" ]; then
     TEMPLATES_DIR="$HOME/.starter-templates"
+  else
+    print_message "Using provided TEMPLATE_DIR"
   fi
 
   if [ -z "$TEMPLATES_URL" ]; then
     TEMPLATES_URL="https://codeload.github.com/iamobservable/starter-templates/zip/refs/heads/main"
+  else
+    print_message "Using provided TEMPLATE_URL"
   fi
 }
 
@@ -281,7 +292,7 @@ do
     fail_if_project_directory_exists "$INSTALL_PATH/$PROJECT_NAME"
 
     pull_templates "$TEMPLATES_DIR" "$TEMPLATES_URL"
-    create_project "$TEMPLATES_DIR" "$INSTALL_PATH/$PROJECT_NAME"
+    create_project "$TEMPLATES_DIR/$TEMPLATE_ID" "$INSTALL_PATH/$PROJECT_NAME"
     start_containers "$INSTALL_PATH/$PROJECT_NAME"
 
     # open_browser "http://$NGINX_HOST:$HOST_PORT/"
