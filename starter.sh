@@ -204,6 +204,8 @@ print_usage () {
   echo -e "\033[22m\033[22m      --ps                    \033[1mshow running container process list\033[0m"
   echo -e "\033[22m\033[22m      --pull                  \033[1mpull latest templates\033[0m"
   echo -e "\033[22m\033[22m  -r, --remove project-name   \033[1mremove project\033[0m"
+  echo -e "\033[22m\033[22m      --start                 \033[1mstart project\033[0m"
+  echo -e "\033[22m\033[22m      --stop                  \033[1mstop project\033[0m"
   echo -e "\033[22m\033[22m  -u, --update                \033[1mupdate starter command\033[0m"
   echo
 }
@@ -272,6 +274,18 @@ start_containers () {
   popd > /dev/null
 }
 
+start_project () {
+  pushd $1 > /dev/null
+    docker compose -f compose.yaml up -d
+  popd > /dev/null
+}
+
+stop_project () {
+  pushd $1 > /dev/null
+    docker compose -f compose.yaml down
+  popd > /dev/null
+}
+
 update_starter () {
   local starter_script_url="https://raw.githubusercontent.com/iamobservable/open-webui-starter/refs/heads/main/starter.sh"
   curl -s $starter_script_url > $HOME/bin/starter
@@ -282,7 +296,7 @@ update_starter () {
 
 
 
-options=$(getopt -l "create,remove,ps,projects,pull,update,help" -o "cpruh" -- "$@")
+options=$(getopt -l "create,remove,ps,projects,pull,stop,start,update,help" -o "cpruh" -- "$@")
 
 eval set -- "$options"
 
@@ -347,6 +361,30 @@ do
     define_setup_variables
 
     remove_project "$INSTALL_PATH/$PROJECT_NAME"
+    ;;
+  --start)
+    shift
+    PROJECT_NAME=$2
+
+    if [ -z "$PROJECT_NAME" ]; then
+      print_error_and_exit "missing project-name"
+    fi
+
+    define_setup_variables
+
+    start_project "$INSTALL_PATH/$PROJECT_NAME"
+    ;;
+  --stop)
+    shift
+    PROJECT_NAME=$2
+
+    if [ -z "$PROJECT_NAME" ]; then
+      print_error_and_exit "missing project-name"
+    fi
+
+    define_setup_variables
+
+    stop_project "$INSTALL_PATH/$PROJECT_NAME"
     ;;
   -u|--update)
     shift
