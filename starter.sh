@@ -176,6 +176,7 @@ print_usage () {
   # echo -e "\033[22m\033[22m  -p, --pull                  \033[1mfetch all templates\033[0m"
   echo -e "\033[22m\033[22m  -c, --create project-name   \033[1mcreate new project\033[0m"
   echo -e "\033[22m\033[22m  -r, --remove project-name   \033[1mremove project\033[0m"
+  echo -e "\033[22m\033[22m  -u, --update                \033[1mupdate starter command\033[0m"
   echo
 }
 
@@ -239,10 +240,17 @@ start_containers () {
   popd > /dev/null
 }
 
+update_starter () {
+  local starter_script_url="https://raw.githubusercontent.com/iamobservable/open-webui-starter/refs/heads/main/starter.sh"
+  curl -s $starter_script_url > $HOME/bin/starter
+
+  print_message "starter updated:\n  see commit history for changes -> https://github.com/iamobservable/open-webui-starter/commits/main/"
+}
 
 
 
-options=$(getopt -l "help,pull,remove,create" -o "hprc" -- "$@")
+
+options=$(getopt -l "pull,create,remove,update,help" -o "pcruh" -- "$@")
 
 eval set -- "$options"
 
@@ -289,6 +297,11 @@ do
     define_setup_variables
 
     remove_project "$INSTALL_PATH/$PROJECT_NAME"
+    ;;
+  -u|--update)
+    shift
+
+    update_starter
     ;;
   -h|--help)
     print_usage
