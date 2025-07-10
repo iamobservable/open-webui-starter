@@ -214,6 +214,8 @@ remove_project () {
     print_message "\nRemoving compose file"
     rm -fv compose.yml
   popd > /dev/null
+
+  rm -rfv $1
 }
 
 start_containers () {
