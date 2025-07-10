@@ -188,6 +188,7 @@ print_usage () {
   echo -e "\033[22m\033[22m  -c, --create project-name   \033[1mcreate new project\033[0m"
   echo -e "\033[22m\033[22m  -r, --remove project-name   \033[1mremove project\033[0m"
   echo -e "\033[22m\033[22m  -u, --update                \033[1mupdate starter command\033[0m"
+  echo -e "\033[22m\033[22m      --ps                    \033[1mshow running container process list\033[0m"
   echo
 }
 
@@ -230,6 +231,12 @@ remove_project () {
   rm -rfv $1
 }
 
+show_ps () {
+  pushd $1 > /dev/null
+    docker compose -f compose.yaml ps
+  popd > /dev/null
+}
+
 start_containers () {
   pushd $1 > /dev/null
 
@@ -261,7 +268,7 @@ update_starter () {
 
 
 
-options=$(getopt -l "pull,create,remove,update,help" -o "pcruh" -- "$@")
+options=$(getopt -l "create,remove,ps,pull,update,help" -o "cpruh" -- "$@")
 
 eval set -- "$options"
 
@@ -273,10 +280,6 @@ fi
 while true
 do
   case "$1" in
-  -p|--pull)
-    define_setup_variables
-    pull_templates "$TEMPLATES_DIR" "$TEMPLATES_URL"
-    ;;
   -c|--create)
     shift
     PROJECT_NAME=$2
@@ -296,6 +299,23 @@ do
     start_containers "$INSTALL_PATH/$PROJECT_NAME"
 
     # open_browser "http://$NGINX_HOST:$HOST_PORT/"
+    ;;
+  -p|--pull)
+    define_setup_variables
+    pull_templates "$TEMPLATES_DIR" "$TEMPLATES_URL"
+    ;;
+  --ps)
+    shift
+
+    PROJECT_NAME=$2
+
+    if [ -z "$PROJECT_NAME" ]; then
+      print_error_and_exit "missing project-name"
+    fi
+
+    define_setup_variables
+
+    show_ps "$INSTALL_PATH/$PROJECT_NAME"
     ;;
   -r|--remove)
     shift
