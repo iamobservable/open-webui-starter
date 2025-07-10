@@ -93,6 +93,8 @@ starter
 
 #  -c, --create project-name   create new project
 #  -r, --remove project-name   remove project
+#  -u, --update                update starter command
+#      --ps                    show running container process list
 ```
 
 - This script has been tested in a linux environment
@@ -116,13 +118,15 @@ POSTGRES_HOST
 POSTGRES_USER
 POSTGRES_PASSWORD
 SECRET_KEY
+TEMPLATES_URL
+TEMPLATE_ID
 TIMEZONE
 ```
 
 e.g.
 
 ```bash
-NGINX_HOST=192.168.1.100 starter -c project-name
+DECISION_MODEL=qwen3:4b starter -c project-name
 ```
 
 
