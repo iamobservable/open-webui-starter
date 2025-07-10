@@ -95,6 +95,8 @@ starter
 #  -p, --projects              list starter projects
 #      --ps                    show running container process list
 #      --pull                  pull latest templates
+#      --start                 start project
+#      --stop                  stop project
 #  -r, --remove project-name   remove project
 #  -u, --update                update starter command
 ```
