@@ -198,31 +198,9 @@ Model Context Protocol (MCP) is a configurable set of tools, resources, prompts,
 a structured way to expose local functionality to the LLM. Examples are providing access to the local file system, 
 searching the internet, interacting with git or github, and much more.
 
-#### Manual entry (MUST COMPLETE)
-
-The configuration for tools currently requires a manual step to complete. This is due my own lack of understanding of how 
-the environment variable TOOL_SERVER_CONNECTIONS is used in [env/openwebui.env.template](https://github.com/iamobservable/starter-templates/blob/1c0f2730b7bf32d303be0c156ff833a3c1d93e00/4b35c72a-6775-41cb-a717-26276f7ae56e/env/openwebui.env.template#L34). 
-If anyone has a good understanding, and has been able to see it work in practice, please share a [pull request](https://github.com/iamobservable/starter-templates/pulls) or 
-message me [directly on Discord](https://discordapp.com/users/observable).
-
-For now, to use the two default tools, it is required to add them manually. **They will NOT** automatically load using the environment variable TOOL_SERVER_CONNECTIONS, enen 
-though it is added. Add the following two urls using the Settings -> Tools -> General interface. This can also be set in the Admin Settings as well.
-
-*Note - the default postgres tool is configured to access this Open WebUI postgres database. While this is read-only, the tool server that is defined allows any user with 
-the credentials added to the [env/mcp.env.template](https://github.com/iamobservable/starter-templates/blob/main/4b35c72a-6775-41cb-a717-26276f7ae56e/env/mcp.env.template) to access the database tables. If 
-anything should be restricted, make sure to do so ahead of time.*
-
-
-```clipboard
-http://mcp:8000/time
-```
-```clipboard
-http://mcp:8000/postgres
-```
-
-<img width="494" alt="owui-settings-tools-general-dialog" src="https://github.com/user-attachments/assets/7824c8c2-7e6a-4619-ae31-85d0abab5af5" />
-
 #### Initial configuration
+
+<img width="745" alt="image" src="https://github.com/user-attachments/assets/b5640592-79c2-430c-91fb-a9269585727e" />
 
 Configurations for MCP services can be found in the [conf/mcp/config.json.template](https://github.com/iamobservable/starter-templates/blob/main/4b35c72a-6775-41cb-a717-26276f7ae56e/conf/mcp/config.json.template) file. Links below in the table describe the initially configuration.
 
