@@ -235,17 +235,9 @@ remove_project () {
   pushd $1 > /dev/null
     print_message "\nShutting down and removing containers"
     docker compose down -v
-
-    print_message "\nRemoving environment files"
-    rm -fv env/*.env
-
-    print_message "\nRemoving mcp configuration"
-    rm -fv conf/mcp/config.json
-
-    print_message "\nRemoving compose file"
-    rm -fv compose.yml
   popd > /dev/null
 
+  print_message "\nRemoving files and directory"
   rm -rfv $1
 }
 
