@@ -198,15 +198,14 @@ print_usage () {
   echo
   echo -e "\033[22musage: \033[32m\033[1m$command\033[0m"
   echo
-  # echo -e "\033[22m\033[22m  -p, --pull                  \033[1mfetch all templates\033[0m"
-  echo -e "\033[22m\033[22m  -c, --create project-name   \033[1mcreate new project\033[0m"
-  echo -e "\033[22m\033[22m  -p, --projects              \033[1mlist starter projects\033[0m"
-  echo -e "\033[22m\033[22m      --ps                    \033[1mshow running container process list\033[0m"
-  echo -e "\033[22m\033[22m      --pull                  \033[1mpull latest templates\033[0m"
-  echo -e "\033[22m\033[22m  -r, --remove project-name   \033[1mremove project\033[0m"
-  echo -e "\033[22m\033[22m      --start                 \033[1mstart project\033[0m"
-  echo -e "\033[22m\033[22m      --stop                  \033[1mstop project\033[0m"
-  echo -e "\033[22m\033[22m  -u, --update                \033[1mupdate starter command\033[0m"
+  echo -e "\033[22m\033[22m  -c, --create    project-name   \033[1mcreate new project\033[0m"
+  echo -e "\033[22m\033[22m  -p, --projects                 \033[1mlist starter projects\033[0m"
+  echo -e "\033[22m\033[22m      --ps        project-name   \033[1mshow running container process list\033[0m"
+  echo -e "\033[22m\033[22m      --pull                     \033[1mpull latest templates\033[0m"
+  echo -e "\033[22m\033[22m  -r, --remove    project-name   \033[1mremove project\033[0m"
+  echo -e "\033[22m\033[22m      --start     project-name   \033[1mstart project\033[0m"
+  echo -e "\033[22m\033[22m      --stop      project-name   \033[1mstop project\033[0m"
+  echo -e "\033[22m\033[22m  -u, --update                   \033[1mupdate starter command\033[0m"
   echo
 }
 
