@@ -114,14 +114,14 @@ source $HOME/.zshrc
 ```bash
 starter
 
-#  -c, --create project-name   create new project
-#  -p, --projects              list starter projects
-#      --ps                    show running container process list
-#      --pull                  pull latest templates
-#      --start                 start project
-#      --stop                  stop project
-#  -r, --remove project-name   remove project
-#  -u, --update                update starter command
+#  -c, --create    project-name   create new project
+#  -p, --projects                 list starter projects
+#      --ps        project-name   show running container process list
+#      --pull                     pull latest templates
+#  -r, --remove    project-name   remove project
+#      --start     project-name   start project
+#      --stop      project-name   stop project
+#  -u, --update                   update starter command
 ```
 
 - This script has been tested in a linux environment
