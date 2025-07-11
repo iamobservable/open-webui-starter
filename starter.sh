@@ -193,7 +193,7 @@ print_message () {
 }
 
 print_usage () {
-  command="install.sh"
+  command="$(basename $0)"
 
   echo
   echo -e "\033[22musage: \033[32m\033[1m$command\033[0m"
