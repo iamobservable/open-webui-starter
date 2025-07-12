@@ -307,7 +307,10 @@ templates_list () {
       local UUID="$(basename ${FULLPATH#${INSTALL_DIR}/})"
       
       print_message "\n\033[1m$FULLPATH\033[0m"
-      print_message "\e[1;35;3m$(head -n4 "$UUID/locker.yaml" | tail -n +2)\033[0m"
+
+      if [ -f "$UUID/locker.yaml.templates" ]; then
+        print_message "\e[1;35;3m$(head -n4 "$UUID/locker.yaml.templates" | tail -n +2)\033[0m"
+      fi
     done < <(find $1 -maxdepth 1 -mindepth 1 -type d | sort)
   popd > /dev/null
 }
