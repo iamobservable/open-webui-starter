@@ -114,14 +114,21 @@ source $HOME/.zshrc
 ```bash
 starter
 
-#  -c, --create    project-name   create new project
-#  -p, --projects                 list starter projects
-#      --ps        project-name   show running container process list
-#      --pull                     pull latest templates
-#  -r, --remove    project-name   remove project
-#      --start     project-name   start project
-#      --stop      project-name   stop project
-#  -u, --update                   update starter command
+# project commands:
+#       --containers    project-name                     show running containers
+#   -c, --create        project-name  [--template uuid]  create new project
+#   -p, --projects                                       list starter projects
+#   -r, --remove        project-name                     remove project
+#       --start         project-name                     start project
+#       --stop          project-name                     stop project
+# 
+# template commands:
+#       --copytemplate  template-id                      make copy of template
+#       --pull                                           pull latest templates
+#       --templates                                      list starter templates
+# 
+# system commands:
+#   -u, --update                                         update starter command
 ```
 
 - This script has been tested in a linux environment
@@ -146,7 +153,6 @@ POSTGRES_USER
 POSTGRES_PASSWORD
 SECRET_KEY
 TEMPLATES_URL
-TEMPLATE_ID
 TIMEZONE
 ```
 
