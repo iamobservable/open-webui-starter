@@ -8,6 +8,9 @@ environments. More information can be found about configurations on the
 [Open WebUI Docs](https://docs.openwebui.com/), the [Gitub repository](https://github.com/open-webui/open-webui), 
 and available [Starter Templates](https://github.com/iamobservable/starter-templates).
 
+
+[![video](https://github.com/user-attachments/assets/6185c8e9-93ab-4e2a-888a-9b256783167a)](https://github.com/user-attachments/assets/b3966df3-08e2-4467-b068-c38bd94f07c4)
+
 ---
 
 ## 👷 Project Overview
