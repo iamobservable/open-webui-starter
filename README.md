@@ -24,7 +24,7 @@ Here is a link to follow 🔗[project development](https://github.com/users/iamo
 
 ## Table of Contents
 1. [Connect](#-connect-with-the-observable-world-community)
-2. [Subscriptions & Donations](#service-examples)
+2. [Subscriptions & Donations](#%EF%B8%8F-subscriptions--donations)
 3. [Tooling and Applications](#tooling-and-applications)
 4. [Dependencies](#dependencies)
 5. [Installation](#installation)
@@ -32,7 +32,9 @@ Here is a link to follow 🔗[project development](https://github.com/users/iamo
 7. [JWT Auth Validator Purpose](https://github.com/iamobservable/starter-templates/tree/main/4b35c72a-6775-41cb-a717-26276f7ae56e#jwt-auth-validator-purpose)
 8. [Additional Setup](https://github.com/iamobservable/starter-templates/tree/main/4b35c72a-6775-41cb-a717-26276f7ae56e#additional-setup)
 9. [Service Examples](https://github.com/iamobservable/starter-templates/tree/main/4b35c72a-6775-41cb-a717-26276f7ae56e#service-examples)
-10. [Contribution](#contribution)
+10. [Contribution](#-contribution)
+11. [Star History](#-star-history)
+12. [License](#license)
 
 ---
 
@@ -175,6 +177,14 @@ Once the installation script is complete, [open OWUI in your browser](http://loc
 
 I am deeply grateful for any contributions to the Observable World project! If you’d like to contribute, 
 simply fork this repository and submit a [pull request](https://github.com/iamobservable/open-webui-starter/pulls) with any improvements, additions, or fixes you’d like to see. I will review and consider any suggestions — thank you for being part of this journey!
+
+
+---
+
+## ✨ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=iamobservable/open-webui-starter&type=Date)](https://www.star-history.com/#iamobservable/open-webui-starter&Date)
+
 
 ---
 
