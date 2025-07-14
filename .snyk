@@ -12,17 +12,20 @@ exclude:
   - data/redis/**
   - data/ollama/**
   - data/openwebui/**
-  
+  - cache/backrest/restic/**
+  - data/postgres/**
+  - .git/**
+
   # Временные файлы и логи
   - logs/**
   - tmp/**
   - temp/**
-  
+
   # Backup файлы
   - backup/**
   - backups/**
   - .config-backup/**
-  
+
   # Конфигурационные файлы с секретами
   - env/**
   - secrets/**
@@ -31,18 +34,18 @@ exclude:
   - "conf/**/*.ini"
   - "conf/**/*.json"
   - "conf/**/*.yml"
-  
+
   # Исключаем примеры конфигураций (они безопасны)
   - "!conf/**/*.example"
   - "!conf/**/*.template"
   - "!conf/**/*.sample"
-  
+
   # Node.js зависимости
   - node_modules/**
-  
+
   # Go vendor директория
   - vendor/**
-  
+
   # Сборочные артефакты
   - dist/**
   - build/**
@@ -65,7 +68,7 @@ language-settings:
   javascript:
     # Исключаем dev зависимости из production сканирования
     includeDevDependencies: false
-  
+
   docker:
     # Сканируем только production образы
     excludeBaseImageVulns: false
