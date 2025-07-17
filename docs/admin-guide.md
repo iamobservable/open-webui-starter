@@ -1,13 +1,13 @@
 # 👨‍💼 Руководство администратора ERNI-KI
 
-> **Версия документа:** 2.0  
-> **Дата обновления:** 2025-07-04  
+> **Версия документа:** 3.0
+> **Дата обновления:** 2025-07-15
 > **Аудитория:** Системные администраторы
 
 ## 🎯 Обзор административных задач
 
 Как администратор ERNI-KI, вы отвечаете за:
-- Мониторинг состояния всех 14 сервисов
+- Мониторинг состояния всех 16 сервисов (включая LiteLLM, Docling, Context Engineering)
 - Управление пользователями и доступом
 - Настройку резервного копирования
 - Обеспечение безопасности системы
@@ -38,10 +38,17 @@ docker stats
 - **auth** - JWT аутентификация
 - **openwebui** - основной AI интерфейс
 - **ollama** - сервер языковых моделей
+- **litellm** - прокси для LLM провайдеров
 - **db** - PostgreSQL база данных
 - **redis** - кэш и сессии
 - **searxng** - поисковый движок
+- **mcposerver** - Context Engineering сервер
+- **docling** - обработка документов
+- **tika** - извлечение метаданных
+- **edgetts** - синтез речи
 - **backrest** - система резервного копирования
+- **cloudflared** - туннель Cloudflare
+- **watchtower** - автообновление контейнеров
 
 #### Использование ресурсов
 ```bash
@@ -102,11 +109,11 @@ docker compose exec db psql -U openwebui -d openwebui
 
 # Проверка размера базы данных
 docker compose exec db psql -U openwebui -d openwebui -c "
-SELECT 
+SELECT
     schemaname,
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
-FROM pg_tables 
+FROM pg_tables
 WHERE schemaname = 'public'
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 "
@@ -122,8 +129,8 @@ VACUUM ANALYZE;
 
 # Проверка индексов
 docker compose exec db psql -U openwebui -d openwebui -c "
-SELECT schemaname, tablename, indexname, idx_tup_read, idx_tup_fetch 
-FROM pg_stat_user_indexes 
+SELECT schemaname, tablename, indexname, idx_tup_read, idx_tup_fetch
+FROM pg_stat_user_indexes
 ORDER BY idx_tup_read DESC;
 "
 
@@ -155,7 +162,7 @@ docker compose exec db pg_dump -U openwebui openwebui > backup_$(date +%Y%m%d).s
       "repo": "local-backup",
       "paths": [
         "/backup-sources/data/postgres",
-        "/backup-sources/data/openwebui", 
+        "/backup-sources/data/openwebui",
         "/backup-sources/data/redis",
         "/backup-sources/env",
         "/backup-sources/conf"
@@ -194,7 +201,7 @@ curl -X POST http://localhost:8080/api/v1/auths/signup \
   -H "Content-Type: application/json" \
   -d '{
     "name": "New User",
-    "email": "user@example.com", 
+    "email": "user@example.com",
     "password": "secure-password"
   }'
 
@@ -235,8 +242,8 @@ docker compose logs auth | grep "authentication failed" | tail -10
 # Анализ медленных запросов PostgreSQL
 docker compose exec db psql -U openwebui -d openwebui -c "
 SELECT query, calls, total_time, mean_time, rows
-FROM pg_stat_statements 
-ORDER BY total_time DESC 
+FROM pg_stat_statements
+ORDER BY total_time DESC
 LIMIT 10;
 "
 
@@ -328,7 +335,7 @@ docker compose exec redis redis-cli info memory
 - **GPU**: RTX 4060 (8GB VRAM)
 - **Диск**: 500GB SSD
 
-#### Для средних команд (10-50 пользователей)  
+#### Для средних команд (10-50 пользователей)
 - **CPU**: 16 ядер
 - **RAM**: 64GB
 - **GPU**: RTX 4080 (16GB VRAM)
@@ -344,12 +351,12 @@ docker compose exec redis redis-cli info memory
 ```bash
 # Отслеживание роста базы данных
 docker compose exec db psql -U openwebui -d openwebui -c "
-SELECT 
+SELECT
     date_trunc('month', created_at) as month,
     count(*) as new_chats,
     pg_size_pretty(sum(length(content))) as total_content_size
-FROM chat 
-GROUP BY date_trunc('month', created_at) 
+FROM chat
+GROUP BY date_trunc('month', created_at)
 ORDER BY month DESC;
 "
 ```

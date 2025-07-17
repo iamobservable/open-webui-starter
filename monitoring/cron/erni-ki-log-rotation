@@ -1,0 +1,56 @@
+# Cron задачи для автоматической ротации логов ERNI-KI
+# Установка: sudo cp monitoring/cron/erni-ki-log-rotation /etc/cron.d/
+# Проверка: sudo crontab -l
+
+# Переменные окружения
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=admin@erni-ki.local
+HOME=/home/konstantin/Documents/augment-projects/erni-ki
+
+# ============================================================================
+# ЕЖЕДНЕВНАЯ РОТАЦИЯ ЛОГОВ
+# ============================================================================
+
+# Ежедневная ротация логов в 02:00
+0 2 * * * root cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/log-rotation-manager.sh --daily >> /var/log/erni-ki-rotation.log 2>&1
+
+# Мониторинг размера логов каждые 6 часов
+0 */6 * * * root cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/log-rotation-manager.sh --monitor >> /var/log/erni-ki-monitor.log 2>&1
+
+# ============================================================================
+# ЕЖЕНЕДЕЛЬНАЯ РОТАЦИЯ ЛОГОВ
+# ============================================================================
+
+# Еженедельная ротация логов по воскресеньям в 03:00
+0 3 * * 0 root cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/log-rotation-manager.sh --weekly >> /var/log/erni-ki-rotation.log 2>&1
+
+# ============================================================================
+# ОЧИСТКА СТАРЫХ АРХИВОВ
+# ============================================================================
+
+# Очистка старых архивов каждый день в 04:00
+0 4 * * * root cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/log-rotation-manager.sh --cleanup >> /var/log/erni-ki-cleanup.log 2>&1
+
+# ============================================================================
+# ОТЧЕТЫ И МОНИТОРИНГ
+# ============================================================================
+
+# Генерация еженедельного отчета по понедельникам в 08:00
+0 8 * * 1 root cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/log-rotation-manager.sh --report >> /var/log/erni-ki-reports.log 2>&1
+
+# ============================================================================
+# ДОПОЛНИТЕЛЬНЫЕ ЗАДАЧИ МОНИТОРИНГА
+# ============================================================================
+
+# Проверка health checks каждые 5 минут
+*/5 * * * * root cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/health_check.sh --quiet >> /var/log/erni-ki-health.log 2>&1
+
+# Мониторинг критических ошибок каждые 15 минут
+*/15 * * * * root cd /home/konstantin/Documents/augment-projects/erni-ki && docker-compose logs --since=15m 2>/dev/null | grep -i -E "(error|fatal|critical)" | tail -10 >> /var/log/erni-ki-critical.log 2>&1
+
+# Проверка использования диска каждый час
+0 * * * * root df -h | grep -E "(/$|/var|/home)" | awk '$5 > 80 {print strftime("%Y-%m-%d %H:%M:%S") " WARNING: Disk usage " $5 " on " $6}' >> /var/log/erni-ki-disk.log 2>&1
+
+# Мониторинг GPU каждые 30 минут (если доступен)
+*/30 * * * * root which nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=timestamp,temperature.gpu,utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits >> /var/log/erni-ki-gpu.log 2>&1 || true

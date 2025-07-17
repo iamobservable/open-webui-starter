@@ -1,12 +1,12 @@
 # 🏗️ Архитектура системы ERNI-KI
 
-> **Версия документа:** 2.0  
-> **Дата обновления:** 2025-07-04  
+> **Версия документа:** 3.0
+> **Дата обновления:** 2025-07-15
 > **Статус:** Production Ready
 
 ## 📋 Обзор архитектуры
 
-ERNI-KI представляет собой современную микросервисную AI платформу, построенную на принципах контейнеризации, безопасности и масштабируемости. Система состоит из 14 взаимосвязанных сервисов, каждый из которых выполняет специализированную функцию.
+ERNI-KI представляет собой современную микросервисную AI платформу, построенную на принципах контейнеризации, безопасности и масштабируемости. Система состоит из **16 взаимосвязанных сервисов**, включая новые компоненты LiteLLM, Docling и Context Engineering, каждый из которых выполняет специализированную функцию.
 
 ## 🎯 Архитектурные принципы
 
@@ -36,32 +36,32 @@ graph TB
         USER[👤 User Browser]
         CF[☁️ Cloudflare Zero Trust]
     end
-    
+
     subgraph "🚪 Gateway Layer"
         NGINX[🚪 Nginx Reverse Proxy]
         AUTH[🔐 Auth Service JWT]
         TUNNEL[🔗 Cloudflared Tunnel]
     end
-    
+
     subgraph "🤖 Application Layer"
         OWUI[🤖 Open WebUI]
         OLLAMA[🧠 Ollama LLM Server]
         SEARXNG[🔍 SearXNG Search]
         MCP[🔌 MCP Servers]
     end
-    
+
     subgraph "🔧 Processing Layer"
         DOCLING[📄 Docling Parser]
         TIKA[📋 Apache Tika]
         EDGETTS[🎤 EdgeTTS Speech]
     end
-    
+
     subgraph "💾 Data Layer"
         POSTGRES[(🗄️ PostgreSQL + pgvector)]
         REDIS[(⚡ Redis Cache)]
         BACKREST[💾 Backrest Backup]
     end
-    
+
     subgraph "🛠️ Infrastructure Layer"
         WATCHTOWER[🔄 Watchtower Updates]
         DOCKER[🐳 Docker Engine]
@@ -71,11 +71,11 @@ graph TB
     USER --> CF
     CF --> TUNNEL
     TUNNEL --> NGINX
-    
+
     %% Gateway layer
     NGINX --> AUTH
     NGINX --> OWUI
-    
+
     %% Application connections
     OWUI --> OLLAMA
     OWUI --> SEARXNG
@@ -83,14 +83,14 @@ graph TB
     OWUI --> DOCLING
     OWUI --> TIKA
     OWUI --> EDGETTS
-    
+
     %% Data connections
     OWUI --> POSTGRES
     OWUI --> REDIS
     SEARXNG --> REDIS
     BACKREST --> POSTGRES
     BACKREST --> REDIS
-    
+
     %% Infrastructure
     WATCHTOWER -.-> OWUI
     WATCHTOWER -.-> OLLAMA
@@ -163,14 +163,26 @@ graph TB
   - Кэширование результатов в Redis
   - Rate limiting и защита от блокировок
 
-#### MCP Servers
+#### LiteLLM Proxy
+- **Технология**: Python FastAPI
+- **Порт**: 4000
+- **Функции**:
+  - Унифицированный API для различных LLM провайдеров
+  - Поддержка OpenAI, Anthropic, Google, Azure
+  - Балансировка нагрузки между моделями
+  - Мониторинг использования и затрат
+  - Кэширование ответов
+  - Rate limiting и квоты
+
+#### MCP Servers (Context Engineering)
 - **Технология**: Model Context Protocol
 - **Порт**: 8000
 - **Функции**:
   - Расширение возможностей AI через инструменты
-  - Интеграция с внешними API
+  - Интеграция с внешними API и сервисами
   - Выполнение кода и команд
-  - Доступ к базам данных
+  - Доступ к базам данных и файловым системам
+  - Context Engineering для улучшения AI ответов
 
 ### 🔧 **Processing Layer (Обработка)**
 
@@ -251,6 +263,7 @@ graph TB
 | auth | - | 9090 | HTTP | JWT validation |
 | openwebui | - | 8080 | HTTP/WS | AI interface |
 | ollama | - | 11434 | HTTP | LLM API |
+| litellm | 4000 | 4000 | HTTP | LLM proxy |
 | db | - | 5432 | PostgreSQL | Database |
 | redis | - | 6379, 8001 | Redis/HTTP | Cache & UI |
 | searxng | - | 8080 | HTTP | Search API |
@@ -259,6 +272,8 @@ graph TB
 | tika | - | 9998 | HTTP | Metadata extraction |
 | edgetts | - | 5050 | HTTP | Speech synthesis |
 | backrest | 9898 | 9898 | HTTP | Backup management |
+| cloudflared | - | - | HTTPS | Tunnel service |
+| watchtower | - | - | - | Auto-updater |
 
 ### Docker Networks
 - **erni-ki_default**: Основная сеть для всех сервисов

@@ -96,6 +96,7 @@ Thumbs.db
 # ===================================================================
 *.log
 logs/
+tmp/
 *.tmp
 *.temp
 *.bak
@@ -147,3 +148,4 @@ site/
 local/
 *.pid
 *.tgz
+conf/backrest/repo-password.txt

@@ -77,82 +77,25 @@ receivers:
 
   # Критические алерты
   - name: "critical-alerts"
-    email_configs:
-      - to: "admin@erni-ki.local"
-        subject: "🚨 CRITICAL: {{ .GroupLabels.alertname }} in {{ .GroupLabels.cluster }}"
-        body: |
-          {{ range .Alerts }}
-          **Alert:** {{ .Annotations.summary }}
-          **Description:** {{ .Annotations.description }}
-          **Severity:** {{ .Labels.severity }}
-          **Instance:** {{ .Labels.instance }}
-          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
-          {{ end }}
-        headers:
-          Priority: "high"
-
-    # Discord webhook для критических алертов
     webhook_configs:
-      - url: "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
+      - url: "http://webhook-receiver:9093/webhook/critical"
         send_resolved: true
-        title: "🚨 Critical Alert: {{ .GroupLabels.alertname }}"
-        text: |
-          {{ range .Alerts }}
-          **{{ .Annotations.summary }}**
-          {{ .Annotations.description }}
-          Instance: {{ .Labels.instance }}
-          {{ end }}
 
   # Алерты AI сервисов
   - name: "ai-services-alerts"
-    email_configs:
-      - to: "ai-team@erni-ki.local"
-        subject: "🤖 AI Service Alert: {{ .GroupLabels.alertname }}"
-        body: |
-          AI Service Issue Detected:
-          {{ range .Alerts }}
-          - **Service:** {{ .Labels.service }}
-          - **Alert:** {{ .Annotations.summary }}
-          - **Description:** {{ .Annotations.description }}
-          - **Instance:** {{ .Labels.instance }}
-          - **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
-          {{ end }}
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/warning"
+        send_resolved: true
 
   # Алерты инфраструктуры
   - name: "infrastructure-alerts"
-    email_configs:
-      - to: "devops@erni-ki.local"
-        subject: "🏗️ Infrastructure Alert: {{ .GroupLabels.alertname }}"
-        body: |
-          Infrastructure Issue:
-          {{ range .Alerts }}
-          - **Component:** {{ .Labels.service }}
-          - **Alert:** {{ .Annotations.summary }}
-          - **Description:** {{ .Annotations.description }}
-          - **Instance:** {{ .Labels.instance }}
-          - **Severity:** {{ .Labels.severity }}
-          {{ end }}
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/warning"
+        send_resolved: true
 
   # Алерты безопасности
   - name: "security-alerts"
-    email_configs:
-      - to: "security@erni-ki.local"
-        subject: "🔒 SECURITY ALERT: {{ .GroupLabels.alertname }}"
-        body: |
-          SECURITY INCIDENT DETECTED:
-          {{ range .Alerts }}
-          **Alert:** {{ .Annotations.summary }}
-          **Description:** {{ .Annotations.description }}
-          **Severity:** {{ .Labels.severity }}
-          **Instance:** {{ .Labels.instance }}
-          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
-
-          IMMEDIATE ACTION REQUIRED!
-          {{ end }}
-        headers:
-          Priority: "urgent"
-          X-Priority: "1"
-
-# Конфигурация веб-интерфейса
-web:
-  external_url: "http://alertmanager.erni-ki.local"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/critical"
+        send_resolved: true
+# Конфигурация веб-интерфейса задается через command line аргументы в docker-compose

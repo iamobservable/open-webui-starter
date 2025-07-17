@@ -82,11 +82,17 @@ graph
 
         subgraph LLM Services
             ollama[Ollama]
+            litellm[LiteLLM Proxy]
         end
 
-        openwebui -- ""ollama:11434
-            logic requests
+        openwebui -- "ollama:11434"
+            Local LLM requests
         --> ollama
+
+        openwebui -- "litellm:4000"
+            External LLM requests
+            (OpenAI, Anthropic, etc.)
+        --> litellm
 
         subgraph Document Services
             docling[Docling]

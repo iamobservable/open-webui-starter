@@ -1,7 +1,7 @@
 # 👤 ERNI-KI Benutzerhandbuch
 
-> **Dokumentversion:** 2.0  
-> **Aktualisierungsdatum:** 2025-07-04  
+> **Dokumentversion:** 3.0
+> **Aktualisierungsdatum:** 2025-07-15
 > **Zielgruppe:** Endbenutzer
 
 ## 🎯 Einführung
@@ -126,7 +126,7 @@ Hebe die Hauptthesen aus dem Dokument hervor
 
 ### Modell-Einstellungen
 - **Temperatur** (0.1-2.0) - Kreativität der Antworten
-- **Top-p** (0.1-1.0) - Vielfalt der Antworten  
+- **Top-p** (0.1-1.0) - Vielfalt der Antworten
 - **Maximale Länge** - Token-Limit für Antworten
 - **System-Prompt** - Grundanweisungen für AI
 
@@ -157,7 +157,7 @@ Du bist ein Datenanalyst. Analysiere bereitgestellte Informationen und ziehe Sch
 ### Anfrage-Vorlagen
 Speichern Sie häufig verwendete Anfragen:
 - Dokumentenanalyse
-- Präsentationserstellung  
+- Präsentationserstellung
 - Textübersetzung
 - Code-Erstellung
 - Aufgabenplanung

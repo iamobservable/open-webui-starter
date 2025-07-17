@@ -1,0 +1,72 @@
+# Grafana Data Sources для ERNI-KI
+# Автоматическая настройка Prometheus и других источников данных
+
+apiVersion: 1
+
+datasources:
+  # Prometheus - основной источник метрик
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      httpMethod: POST
+      queryTimeout: 60s
+      timeInterval: 15s
+      manageAlerts: true
+      alertmanagerUid: alertmanager
+      prometheusType: Prometheus
+      prometheusVersion: 2.48.0
+      cacheLevel: 'High'
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
+      disableRecordingRules: false
+      customQueryParameters: ''
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: jaeger
+    uid: prometheus
+
+  # Alertmanager - управление алертами
+  - name: Alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    editable: true
+    jsonData:
+      implementation: prometheus
+      handleGrafanaManagedAlerts: true
+    uid: alertmanager
+
+  # Elasticsearch - логи (когда будет развернут)
+  - name: Elasticsearch
+    type: elasticsearch
+    access: proxy
+    url: http://elasticsearch:9200
+    database: erni-ki-logs-*
+    editable: true
+    jsonData:
+      interval: Daily
+      timeField: '@timestamp'
+      esVersion: '8.11.0'
+      maxConcurrentShardRequests: 5
+      logMessageField: message
+      logLevelField: level
+    uid: elasticsearch
+
+  # Loki - альтернативное логирование (опционально)
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        - datasourceUid: jaeger
+          matcherRegex: "trace_id=(\\w+)"
+          name: TraceID
+          url: "$${__value.raw}"
+    uid: loki

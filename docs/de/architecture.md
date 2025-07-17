@@ -1,12 +1,12 @@
 # 🏗️ ERNI-KI Systemarchitektur
 
-> **Dokumentversion:** 2.0  
-> **Aktualisierungsdatum:** 2025-07-04  
+> **Dokumentversion:** 3.0
+> **Aktualisierungsdatum:** 2025-07-15
 > **Status:** Production Ready
 
 ## 📋 Architektur-Überblick
 
-ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den Prinzipien der Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das System besteht aus 14 miteinander verbundenen Services, von denen jeder eine spezialisierte Funktion erfüllt.
+ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den Prinzipien der Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das System besteht aus **16 miteinander verbundenen Services**, einschließlich neuer Komponenten wie LiteLLM, Docling und Context Engineering, von denen jeder eine spezialisierte Funktion erfüllt.
 
 ## 🎯 Architektur-Prinzipien
 
@@ -36,32 +36,32 @@ graph TB
         USER[👤 User Browser]
         CF[☁️ Cloudflare Zero Trust]
     end
-    
+
     subgraph "🚪 Gateway Layer"
         NGINX[🚪 Nginx Reverse Proxy]
         AUTH[🔐 Auth Service JWT]
         TUNNEL[🔗 Cloudflared Tunnel]
     end
-    
+
     subgraph "🤖 Application Layer"
         OWUI[🤖 Open WebUI]
         OLLAMA[🧠 Ollama LLM Server]
         SEARXNG[🔍 SearXNG Search]
         MCP[🔌 MCP Servers]
     end
-    
+
     subgraph "🔧 Processing Layer"
         DOCLING[📄 Docling Parser]
         TIKA[📋 Apache Tika]
         EDGETTS[🎤 EdgeTTS Speech]
     end
-    
+
     subgraph "💾 Data Layer"
         POSTGRES[(🗄️ PostgreSQL + pgvector)]
         REDIS[(⚡ Redis Cache)]
         BACKREST[💾 Backrest Backup]
     end
-    
+
     subgraph "🛠️ Infrastructure Layer"
         WATCHTOWER[🔄 Watchtower Updates]
         DOCKER[🐳 Docker Engine]
@@ -71,11 +71,11 @@ graph TB
     USER --> CF
     CF --> TUNNEL
     TUNNEL --> NGINX
-    
+
     %% Gateway layer
     NGINX --> AUTH
     NGINX --> OWUI
-    
+
     %% Application connections
     OWUI --> OLLAMA
     OWUI --> SEARXNG
@@ -83,14 +83,14 @@ graph TB
     OWUI --> DOCLING
     OWUI --> TIKA
     OWUI --> EDGETTS
-    
+
     %% Data connections
     OWUI --> POSTGRES
     OWUI --> REDIS
     SEARXNG --> REDIS
     BACKREST --> POSTGRES
     BACKREST --> REDIS
-    
+
     %% Infrastructure
     WATCHTOWER -.-> OWUI
     WATCHTOWER -.-> OLLAMA

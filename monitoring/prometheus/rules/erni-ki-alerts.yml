@@ -1,0 +1,209 @@
+# ERNI-KI Critical Alerts Configuration
+# Критические алерты для системы мониторинга ERNI-KI
+
+groups:
+  # ============================================================================
+  # КРИТИЧЕСКИЕ СИСТЕМНЫЕ АЛЕРТЫ / CRITICAL SYSTEM ALERTS
+  # ============================================================================
+  - name: erni-ki-critical-system
+    rules:
+      # GPU температура критическая
+      - alert: GPUTemperatureCritical
+        expr: nvidia_gpu_temperature_celsius > 85
+        for: 2m
+        labels:
+          severity: critical
+          service: gpu
+          component: nvidia
+        annotations:
+          summary: "🔥 GPU температура критическая / GPU temperature critical"
+          description: "GPU {{$labels.gpu_id}} температура {{$value}}°C превышает критический порог 85°C более 2 минут / GPU {{$labels.gpu_id}} temperature {{$value}}°C exceeds critical threshold 85°C for more than 2 minutes"
+          runbook_url: "https://docs.erni-ki.local/runbooks/gpu-temperature"
+
+      # GPU температура предупреждение
+      - alert: GPUTemperatureWarning
+        expr: nvidia_gpu_temperature_celsius > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: gpu
+          component: nvidia
+        annotations:
+          summary: "⚠️ GPU температура высокая / GPU temperature high"
+          description: "GPU {{$labels.gpu_id}} температура {{$value}}°C превышает предупреждающий порог 80°C более 5 минут / GPU {{$labels.gpu_id}} temperature {{$value}}°C exceeds warning threshold 80°C for more than 5 minutes"
+
+      # Использование RAM критическое
+      - alert: MemoryUsageCritical
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+          component: memory
+        annotations:
+          summary: "🚨 Критическое использование памяти / Critical memory usage"
+          description: "Использование памяти {{$value | humanize}}% превышает критический порог 90% более 2 минут / Memory usage {{$value | humanize}}% exceeds critical threshold 90% for more than 2 minutes"
+          runbook_url: "https://docs.erni-ki.local/runbooks/memory-usage"
+
+      # Использование RAM предупреждение
+      - alert: MemoryUsageWarning
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+          component: memory
+        annotations:
+          summary: "⚠️ Высокое использование памяти / High memory usage"
+          description: "Использование памяти {{$value | humanize}}% превышает предупреждающий порог 80% более 5 минут / Memory usage {{$value | humanize}}% exceeds warning threshold 80% for more than 5 minutes"
+
+      # Использование диска критическое
+      - alert: DiskUsageCritical
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 85
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+          component: disk
+        annotations:
+          summary: "💾 Критическое использование диска / Critical disk usage"
+          description: "Использование диска {{$value | humanize}}% превышает критический порог 85% более 2 минут / Disk usage {{$value | humanize}}% exceeds critical threshold 85% for more than 2 minutes"
+          runbook_url: "https://docs.erni-ki.local/runbooks/disk-usage"
+
+      # Использование диска предупреждение
+      - alert: DiskUsageWarning
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 75
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+          component: disk
+        annotations:
+          summary: "⚠️ Высокое использование диска / High disk usage"
+          description: "Использование диска {{$value | humanize}}% превышает предупреждающий порог 75% более 5 минут / Disk usage {{$value | humanize}}% exceeds warning threshold 75% for more than 5 minutes"
+
+  # ============================================================================
+  # КРИТИЧЕСКИЕ СЕРВИСЫ / CRITICAL SERVICES
+  # ============================================================================
+  - name: erni-ki-critical-services
+    rules:
+      # Недоступность критических сервисов
+      - alert: CriticalServiceDown
+        expr: up{job=~"db|redis|nginx|auth"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: "{{$labels.job}}"
+          component: availability
+        annotations:
+          summary: "🚨 Критический сервис недоступен / Critical service down"
+          description: "Критический сервис {{$labels.job}} недоступен более 2 минут / Critical service {{$labels.job}} is down for more than 2 minutes"
+          runbook_url: "https://docs.erni-ki.local/runbooks/service-down"
+
+      # Медленные RAG запросы
+      - alert: SlowRAGQueries
+        expr: histogram_quantile(0.95, rate(prometheus_http_request_duration_seconds_bucket{handler=~"/api/v1/query.*"}[5m])) > 5
+        for: 3m
+        labels:
+          severity: warning
+          service: rag
+          component: performance
+        annotations:
+          summary: "🐌 Медленные RAG запросы / Slow RAG queries"
+          description: "95-й процентиль времени RAG запросов {{$value | humanizeDuration}} превышает 5 секунд более 3 минут / 95th percentile RAG query time {{$value | humanizeDuration}} exceeds 5 seconds for more than 3 minutes"
+
+      # Высокий error rate
+      - alert: HighErrorRate
+        expr: (rate(prometheus_http_requests_total{code=~"5.."}[5m]) / rate(prometheus_http_requests_total[5m])) * 100 > 10
+        for: 3m
+        labels:
+          severity: warning
+          service: "{{$labels.job}}"
+          component: errors
+        annotations:
+          summary: "📈 Высокий уровень ошибок / High error rate"
+          description: "Уровень ошибок 5xx для сервиса {{$labels.job}} составляет {{$value | humanize}}% более 3 минут / 5xx error rate for service {{$labels.job}} is {{$value | humanize}}% for more than 3 minutes"
+
+  # ============================================================================
+  # AI СЕРВИСЫ / AI SERVICES
+  # ============================================================================
+  - name: erni-ki-ai-services
+    rules:
+      # Ollama недоступен
+      - alert: OllamaServiceDown
+        expr: up{job="ollama"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: ollama
+          component: availability
+        annotations:
+          summary: "🤖 Ollama сервис недоступен / Ollama service down"
+          description: "Ollama сервис недоступен более 2 минут / Ollama service is down for more than 2 minutes"
+          runbook_url: "https://docs.erni-ki.local/runbooks/ollama-down"
+
+      # OpenWebUI недоступен
+      - alert: OpenWebUIServiceDown
+        expr: up{job="openwebui"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: openwebui
+          component: availability
+        annotations:
+          summary: "🌐 OpenWebUI сервис недоступен / OpenWebUI service down"
+          description: "OpenWebUI сервис недоступен более 2 минут / OpenWebUI service is down for more than 2 minutes"
+          runbook_url: "https://docs.erni-ki.local/runbooks/openwebui-down"
+
+      # SearXNG недоступен
+      - alert: SearXNGServiceDown
+        expr: up{job="searxng"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: searxng
+          component: availability
+        annotations:
+          summary: "🔍 SearXNG сервис недоступен / SearXNG service down"
+          description: "SearXNG сервис недоступен более 2 минут, RAG функциональность может быть ограничена / SearXNG service is down for more than 2 minutes, RAG functionality may be limited"
+
+      # GPU память критическая
+      - alert: GPUMemoryCritical
+        expr: (nvidia_gpu_memory_used_bytes / nvidia_gpu_memory_total_bytes) * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          service: gpu
+          component: memory
+        annotations:
+          summary: "🎮 GPU память критическая / GPU memory critical"
+          description: "GPU {{$labels.gpu_id}} использование памяти {{$value | humanize}}% превышает критический порог 90% более 2 минут / GPU {{$labels.gpu_id}} memory usage {{$value | humanize}}% exceeds critical threshold 90% for more than 2 minutes"
+
+  # ============================================================================
+  # БАЗА ДАННЫХ / DATABASE
+  # ============================================================================
+  - name: erni-ki-database
+    rules:
+      # PostgreSQL слишком много подключений
+      - alert: PostgreSQLTooManyConnections
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+          component: connections
+        annotations:
+          summary: "🗄️ PostgreSQL слишком много подключений / PostgreSQL too many connections"
+          description: "PostgreSQL имеет {{$value}} активных подключений, что превышает предупреждающий порог 80 более 5 минут / PostgreSQL has {{$value}} active connections, exceeding warning threshold 80 for more than 5 minutes"
+
+      # Redis память критическая
+      - alert: RedisMemoryCritical
+        expr: redis_memory_used_bytes > 1073741824  # 1GB
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+          component: memory
+        annotations:
+          summary: "⚡ Redis использование памяти высокое / Redis memory usage high"
+          description: "Redis использует {{$value | humanizeBytes}} памяти, что превышает предупреждающий порог 1GB более 5 минут / Redis is using {{$value | humanizeBytes}} memory, exceeding warning threshold 1GB for more than 5 minutes"

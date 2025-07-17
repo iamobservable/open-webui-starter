@@ -1,0 +1,277 @@
+# PostgreSQL Exporter кастомные запросы для ERNI-KI
+# Расширенные метрики для мониторинга AI инфраструктуры
+
+# Общие метрики производительности
+pg_stat_database:
+  query: |
+    SELECT 
+      datname as database,
+      numbackends as active_connections,
+      xact_commit as transactions_committed,
+      xact_rollback as transactions_rolled_back,
+      blks_read as blocks_read,
+      blks_hit as blocks_hit,
+      tup_returned as tuples_returned,
+      tup_fetched as tuples_fetched,
+      tup_inserted as tuples_inserted,
+      tup_updated as tuples_updated,
+      tup_deleted as tuples_deleted,
+      conflicts as conflicts,
+      temp_files as temp_files,
+      temp_bytes as temp_bytes,
+      deadlocks as deadlocks,
+      blk_read_time as block_read_time_ms,
+      blk_write_time as block_write_time_ms
+    FROM pg_stat_database 
+    WHERE datname NOT IN ('template0', 'template1', 'postgres')
+  metrics:
+    - database:
+        usage: "LABEL"
+        description: "Database name"
+    - active_connections:
+        usage: "GAUGE"
+        description: "Number of active connections to database"
+    - transactions_committed:
+        usage: "COUNTER"
+        description: "Number of transactions committed"
+    - transactions_rolled_back:
+        usage: "COUNTER"
+        description: "Number of transactions rolled back"
+    - blocks_read:
+        usage: "COUNTER"
+        description: "Number of disk blocks read"
+    - blocks_hit:
+        usage: "COUNTER"
+        description: "Number of buffer hits"
+    - tuples_returned:
+        usage: "COUNTER"
+        description: "Number of rows returned by queries"
+    - tuples_fetched:
+        usage: "COUNTER"
+        description: "Number of rows fetched by queries"
+    - tuples_inserted:
+        usage: "COUNTER"
+        description: "Number of rows inserted"
+    - tuples_updated:
+        usage: "COUNTER"
+        description: "Number of rows updated"
+    - tuples_deleted:
+        usage: "COUNTER"
+        description: "Number of rows deleted"
+    - conflicts:
+        usage: "COUNTER"
+        description: "Number of queries canceled due to conflicts"
+    - temp_files:
+        usage: "COUNTER"
+        description: "Number of temporary files created"
+    - temp_bytes:
+        usage: "COUNTER"
+        description: "Total amount of data written to temporary files"
+    - deadlocks:
+        usage: "COUNTER"
+        description: "Number of deadlocks detected"
+    - block_read_time_ms:
+        usage: "COUNTER"
+        description: "Time spent reading data file blocks by backends"
+    - block_write_time_ms:
+        usage: "COUNTER"
+        description: "Time spent writing data file blocks by backends"
+
+# Метрики подключений
+pg_stat_activity:
+  query: |
+    SELECT 
+      state,
+      COUNT(*) as connections
+    FROM pg_stat_activity 
+    WHERE state IS NOT NULL
+    GROUP BY state
+  metrics:
+    - state:
+        usage: "LABEL"
+        description: "Connection state"
+    - connections:
+        usage: "GAUGE"
+        description: "Number of connections in this state"
+
+# Метрики блокировок
+pg_locks:
+  query: |
+    SELECT 
+      mode,
+      locktype,
+      COUNT(*) as locks_count
+    FROM pg_locks 
+    GROUP BY mode, locktype
+  metrics:
+    - mode:
+        usage: "LABEL"
+        description: "Lock mode"
+    - locktype:
+        usage: "LABEL"
+        description: "Lock type"
+    - locks_count:
+        usage: "GAUGE"
+        description: "Number of locks"
+
+# Метрики размера таблиц (важно для векторных данных)
+pg_table_sizes:
+  query: |
+    SELECT 
+      schemaname,
+      tablename,
+      pg_total_relation_size(schemaname||'.'||tablename) as table_size_bytes,
+      pg_relation_size(schemaname||'.'||tablename) as relation_size_bytes
+    FROM pg_tables 
+    WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
+    ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+    LIMIT 20
+  metrics:
+    - schemaname:
+        usage: "LABEL"
+        description: "Schema name"
+    - tablename:
+        usage: "LABEL"
+        description: "Table name"
+    - table_size_bytes:
+        usage: "GAUGE"
+        description: "Total size of table including indexes"
+    - relation_size_bytes:
+        usage: "GAUGE"
+        description: "Size of table data only"
+
+# Метрики индексов
+pg_stat_user_indexes:
+  query: |
+    SELECT 
+      schemaname,
+      tablename,
+      indexrelname,
+      idx_scan as index_scans,
+      idx_tup_read as index_tuples_read,
+      idx_tup_fetch as index_tuples_fetched
+    FROM pg_stat_user_indexes
+    ORDER BY idx_scan DESC
+    LIMIT 20
+  metrics:
+    - schemaname:
+        usage: "LABEL"
+        description: "Schema name"
+    - tablename:
+        usage: "LABEL"
+        description: "Table name"
+    - indexrelname:
+        usage: "LABEL"
+        description: "Index name"
+    - index_scans:
+        usage: "COUNTER"
+        description: "Number of index scans initiated on this index"
+    - index_tuples_read:
+        usage: "COUNTER"
+        description: "Number of index entries returned by scans on this index"
+    - index_tuples_fetched:
+        usage: "COUNTER"
+        description: "Number of live table rows fetched by simple index scans"
+
+# Метрики репликации (если используется)
+pg_stat_replication:
+  query: |
+    SELECT 
+      client_addr,
+      state,
+      sync_state,
+      pg_wal_lsn_diff(pg_current_wal_lsn(), sent_lsn) as sent_lag_bytes,
+      pg_wal_lsn_diff(pg_current_wal_lsn(), write_lsn) as write_lag_bytes,
+      pg_wal_lsn_diff(pg_current_wal_lsn(), flush_lsn) as flush_lag_bytes,
+      pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn) as replay_lag_bytes
+    FROM pg_stat_replication
+  metrics:
+    - client_addr:
+        usage: "LABEL"
+        description: "IP address of the client connected to this WAL sender"
+    - state:
+        usage: "LABEL"
+        description: "Current WAL sender state"
+    - sync_state:
+        usage: "LABEL"
+        description: "Synchronous state of this standby server"
+    - sent_lag_bytes:
+        usage: "GAUGE"
+        description: "Lag in bytes for sent WAL"
+    - write_lag_bytes:
+        usage: "GAUGE"
+        description: "Lag in bytes for written WAL"
+    - flush_lag_bytes:
+        usage: "GAUGE"
+        description: "Lag in bytes for flushed WAL"
+    - replay_lag_bytes:
+        usage: "GAUGE"
+        description: "Lag in bytes for replayed WAL"
+
+# Метрики WAL (Write-Ahead Logging)
+pg_stat_wal:
+  query: |
+    SELECT 
+      wal_records,
+      wal_fpi,
+      wal_bytes,
+      wal_buffers_full,
+      wal_write,
+      wal_sync,
+      wal_write_time,
+      wal_sync_time
+    FROM pg_stat_wal
+  metrics:
+    - wal_records:
+        usage: "COUNTER"
+        description: "Total number of WAL records generated"
+    - wal_fpi:
+        usage: "COUNTER"
+        description: "Total number of WAL full page images generated"
+    - wal_bytes:
+        usage: "COUNTER"
+        description: "Total amount of WAL generated in bytes"
+    - wal_buffers_full:
+        usage: "COUNTER"
+        description: "Number of times WAL data was written to disk because WAL buffers became full"
+    - wal_write:
+        usage: "COUNTER"
+        description: "Number of times WAL buffers were written out to disk"
+    - wal_sync:
+        usage: "COUNTER"
+        description: "Number of times WAL files were synced to disk"
+    - wal_write_time:
+        usage: "COUNTER"
+        description: "Total amount of time spent writing WAL buffers to disk"
+    - wal_sync_time:
+        usage: "COUNTER"
+        description: "Total amount of time spent syncing WAL files to disk"
+
+# Специальные метрики для pgvector (векторные операции)
+pg_vector_stats:
+  query: |
+    SELECT 
+      schemaname,
+      tablename,
+      attname as column_name,
+      n_distinct,
+      correlation
+    FROM pg_stats 
+    WHERE atttypid = (SELECT oid FROM pg_type WHERE typname = 'vector')
+    LIMIT 10
+  metrics:
+    - schemaname:
+        usage: "LABEL"
+        description: "Schema name"
+    - tablename:
+        usage: "LABEL"
+        description: "Table name with vector columns"
+    - column_name:
+        usage: "LABEL"
+        description: "Vector column name"
+    - n_distinct:
+        usage: "GAUGE"
+        description: "Number of distinct values in vector column"
+    - correlation:
+        usage: "GAUGE"
+        description: "Statistical correlation of vector column"

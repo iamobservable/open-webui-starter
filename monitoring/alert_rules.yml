@@ -105,7 +105,7 @@ groups:
 
       # Высокое использование GPU
       - alert: HighGPUUsage
-        expr: nvidia_gpu_utilization > 95
+        expr: nvidia_gpu_utilization_gpu > 95
         for: 10m
         labels:
           severity: warning
@@ -114,6 +114,30 @@ groups:
         annotations:
           summary: "High GPU usage"
           description: "GPU utilization is above 95% for more than 10 minutes."
+
+      # Высокая температура GPU
+      - alert: GPUHighTemperature
+        expr: nvidia_gpu_temperature_celsius > 85
+        for: 3m
+        labels:
+          severity: critical
+          service: ollama
+          category: hardware
+        annotations:
+          summary: "🔥 GPU temperature is critical"
+          description: "GPU temperature is {{ $value }}°C, which is above the safe threshold."
+
+      # Высокое использование памяти GPU
+      - alert: GPUHighMemoryUsage
+        expr: (nvidia_gpu_memory_used_bytes / nvidia_gpu_memory_total_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: ollama
+          category: hardware
+        annotations:
+          summary: "💾 GPU memory usage is high"
+          description: "GPU memory usage is {{ $value }}%."
 
       # Высокая температура GPU
       - alert: HighGPUTemperature
@@ -271,3 +295,171 @@ groups:
         annotations:
           summary: "High rate of forbidden requests"
           description: "High rate of 403 errors detected. Possible scanning or attack attempt."
+
+  # Правила для мониторинга доступности через Cloudflare
+  - name: cloudflare.rules
+    rules:
+      # Cloudflared туннель недоступен
+      - alert: CloudflaredTunnelDown
+        expr: up{job="cloudflared"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: cloudflared
+          category: network
+        annotations:
+          summary: "Cloudflare tunnel is down"
+          description: "Cloudflare tunnel has been down for more than 2 minutes. External access may be unavailable."
+
+      # Высокая задержка через Cloudflare туннель
+      - alert: CloudflareHighLatency
+        expr: probe_duration_seconds{job="blackbox-cloudflare"} > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: cloudflared
+          category: network
+        annotations:
+          summary: "High latency through Cloudflare tunnel"
+          description: "Cloudflare tunnel latency is above 5 seconds for more than 5 minutes."
+
+  # Правила для GPU мониторинга (расширенные)
+  - name: gpu-monitoring.rules
+    rules:
+      # GPU недоступен
+      - alert: GPUUnavailable
+        expr: up{job="nvidia-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: nvidia
+          category: ai
+        annotations:
+          summary: "GPU monitoring unavailable"
+          description: "NVIDIA GPU exporter has been down for more than 1 minute."
+
+      # Критически высокое использование GPU
+      - alert: CriticalGPUUsage
+        expr: nvidia_gpu_utilization > 98
+        for: 15m
+        labels:
+          severity: critical
+          service: ollama
+          category: ai
+        annotations:
+          summary: "Critical GPU usage"
+          description: "GPU utilization is above 98% for more than 15 minutes. Performance may be severely degraded."
+
+      # Высокое использование GPU памяти
+      - alert: HighGPUMemoryUsage
+        expr: (nvidia_gpu_memory_used_bytes / nvidia_gpu_memory_total_bytes) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+          service: ollama
+          category: ai
+        annotations:
+          summary: "High GPU memory usage"
+          description: "GPU memory usage is above 90% for more than 10 minutes."
+
+      # Критическая температура GPU
+      - alert: CriticalGPUTemperature
+        expr: nvidia_gpu_temperature > 90
+        for: 2m
+        labels:
+          severity: critical
+          service: ollama
+          category: ai
+        annotations:
+          summary: "Critical GPU temperature"
+          description: "GPU temperature is above 90°C for more than 2 minutes. Risk of hardware damage."
+
+      # Низкая производительность GPU
+      - alert: LowGPUPerformance
+        expr: nvidia_gpu_power_draw < 50
+        for: 30m
+        labels:
+          severity: warning
+          service: ollama
+          category: ai
+        annotations:
+          summary: "Low GPU performance"
+          description: "GPU power draw is below 50W for more than 30 minutes. GPU may be throttling."
+
+  # Правила для мониторинга производительности RAG
+  - name: rag-performance.rules
+    rules:
+      # Медленные RAG запросы
+      - alert: SlowRAGQueries
+        expr: histogram_quantile(0.95, rate(openwebui_rag_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: openwebui
+          category: performance
+        annotations:
+          summary: "Slow RAG queries detected"
+          description: "95th percentile RAG query time is above 2 seconds for more than 5 minutes."
+
+      # Критически медленные RAG запросы
+      - alert: CriticalSlowRAGQueries
+        expr: histogram_quantile(0.95, rate(openwebui_rag_duration_seconds_bucket[5m])) > 10
+        for: 2m
+        labels:
+          severity: critical
+          service: openwebui
+          category: performance
+        annotations:
+          summary: "Critical slow RAG queries"
+          description: "95th percentile RAG query time is above 10 seconds for more than 2 minutes."
+
+      # Высокий процент неудачных RAG запросов
+      - alert: HighRAGFailureRate
+        expr: rate(openwebui_rag_requests_total{status="error"}[5m]) / rate(openwebui_rag_requests_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          service: openwebui
+          category: performance
+        annotations:
+          summary: "High RAG failure rate"
+          description: "RAG failure rate is above 10% for more than 3 minutes."
+
+  # Правила для мониторинга SearXNG
+  - name: searxng-performance.rules
+    rules:
+      # SearXNG недоступен
+      - alert: SearXNGDown
+        expr: up{job="searxng"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: searxng
+          category: search
+        annotations:
+          summary: "SearXNG is down"
+          description: "SearXNG search service has been down for more than 1 minute."
+
+      # Медленные поисковые запросы SearXNG
+      - alert: SlowSearXNGQueries
+        expr: histogram_quantile(0.95, rate(searxng_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: searxng
+          category: performance
+        annotations:
+          summary: "Slow SearXNG queries"
+          description: "95th percentile SearXNG query time is above 5 seconds for more than 5 minutes."
+
+      # Высокий процент неудачных поисковых запросов
+      - alert: HighSearXNGFailureRate
+        expr: rate(searxng_requests_total{status=~"4..|5.."}[5m]) / rate(searxng_requests_total[5m]) > 0.2
+        for: 3m
+        labels:
+          severity: warning
+          service: searxng
+          category: search
+        annotations:
+          summary: "High SearXNG failure rate"
+          description: "SearXNG failure rate is above 20% for more than 3 minutes."

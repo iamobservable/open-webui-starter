@@ -1,0 +1,155 @@
+# LiteLLM Environment Configuration для ERNI-KI
+# Скопировать в env/litellm.env и настроить значения
+
+# === ОСНОВНЫЕ НАСТРОЙКИ ===
+# Master key для администрирования LiteLLM (обязательно начинается с sk-)
+LITELLM_MASTER_KEY=sk-CHANGE_THIS_MASTER_KEY_BEFORE_PRODUCTION
+
+# Salt key для шифрования API ключей (НЕ МЕНЯТЬ после первого запуска!)
+# Генерировать через: openssl rand -hex 32
+LITELLM_SALT_KEY=CHANGE_THIS_SALT_KEY_64_CHARS_LONG_NEVER_CHANGE_AFTER_FIRST_RUN
+
+# === DATABASE INTEGRATION ===
+# PostgreSQL connection для metadata storage
+DATABASE_URL=postgresql://postgres:postgres@db:5432/openwebui
+
+# Включить хранение моделей в БД
+STORE_MODEL_IN_DB=True
+
+# Database schema для изоляции данных LiteLLM
+DATABASE_SCHEMA=litellm
+
+# === REDIS INTEGRATION ===
+# Redis для кэширования и rate limiting
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=1
+
+# === OLLAMA INTEGRATION ===
+# Ollama API base URL для local LLM
+OLLAMA_API_BASE=http://ollama:11434
+
+# === EXTERNAL LLM PROVIDERS ===
+# OpenAI API (опционально)
+OPENAI_API_KEY=sk-your-openai-api-key-here
+OPENAI_API_BASE=https://api.openai.com/v1
+
+# Anthropic Claude API (опционально)
+ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
+
+# Google Gemini API (опционально)
+GOOGLE_API_KEY=your-google-api-key-here
+
+# === SECURITY SETTINGS ===
+# Отключить spend логирование для безопасности
+LITELLM_LOG_LEVEL=INFO
+DISABLE_SPEND_LOGS=True
+
+# Максимальный бюджет в USD
+MAX_BUDGET=1000
+
+# Включить аудит логи
+ENABLE_AUDIT_LOGS=True
+
+# === PERFORMANCE SETTINGS ===
+# Количество worker процессов
+NUM_WORKERS=4
+
+# Batch размер для записи в БД
+PROXY_BATCH_WRITE_AT=100
+
+# Timeout настройки (в секундах)
+REQUEST_TIMEOUT=600
+CONNECT_TIMEOUT=10
+
+# === MONITORING & HEALTH ===
+# Включить health checks
+ENABLE_HEALTH_CHECKS=True
+
+# Prometheus metrics endpoint
+ENABLE_PROMETHEUS_METRICS=True
+PROMETHEUS_PORT=9090
+
+# === CONTEXT ENGINEERING SETTINGS ===
+# Включить intelligent routing
+ENABLE_INTELLIGENT_ROUTING=True
+
+# Routing strategy (cost-based, latency-based, usage-based-routing-v2)
+ROUTING_STRATEGY=usage-based-routing-v2
+
+# Включить pre-call checks для оптимизации
+ENABLE_PRE_CALL_CHECK=True
+
+# Fallback модель при недоступности primary
+FALLBACK_MODEL=ollama/llama3.2:3b
+
+# === RATE LIMITING ===
+# Global rate limits (requests per minute)
+GLOBAL_RPM_LIMIT=1000
+GLOBAL_TPM_LIMIT=100000
+
+# Per-user rate limits
+USER_RPM_LIMIT=60
+USER_TPM_LIMIT=10000
+
+# === CACHING SETTINGS ===
+# Включить кэширование ответов
+ENABLE_CACHING=True
+
+# Cache TTL в секундах
+CACHE_TTL=3600
+
+# Cache type (redis, memory)
+CACHE_TYPE=redis
+
+# === LOGGING CONFIGURATION ===
+# Log level (DEBUG, INFO, WARNING, ERROR)
+LOG_LEVEL=INFO
+
+# Log format (json, text)
+LOG_FORMAT=json
+
+# Отключить verbose логирование для production
+LITELLM_LOG=INFO
+
+# === INTEGRATION SETTINGS ===
+# OpenWebUI integration
+OPENWEBUI_BASE_URL=http://openwebui:8080
+
+# Auth server integration
+AUTH_SERVER_URL=http://auth:9090
+
+# === BACKUP & RECOVERY ===
+# Backup конфигурации в S3/GCS (опционально)
+# LITELLM_CONFIG_BUCKET_TYPE=s3
+# LITELLM_CONFIG_BUCKET_NAME=erni-ki-backups
+# LITELLM_CONFIG_BUCKET_OBJECT_KEY=litellm/config.yaml
+
+# === DEVELOPMENT SETTINGS ===
+# Включить только для разработки
+# DETAILED_DEBUG=False
+# DROP_PARAMS=True
+
+# === CUSTOM HEADERS ===
+# Добавить custom headers для всех requests
+CUSTOM_HEADERS='{"X-ERNI-KI-Version": "1.0", "X-Service": "LiteLLM"}'
+
+# === WEBHOOK NOTIFICATIONS ===
+# Webhook URL для уведомлений о событиях
+# WEBHOOK_URL=https://your-webhook-endpoint.com/litellm
+
+# === SSL/TLS SETTINGS ===
+# SSL настройки для production (если нужны)
+# SSL_KEYFILE_PATH=/app/ssl/keyfile.key
+# SSL_CERTFILE_PATH=/app/ssl/certfile.crt
+
+# === ENVIRONMENT ===
+# Environment type
+ENV=production
+
+# Service name для логирования
+SERVICE_NAME=litellm-erni-ki
+
+# Version для мониторинга
+SERVICE_VERSION=main-stable

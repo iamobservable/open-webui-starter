@@ -91,7 +91,7 @@
     "editor.insertSpaces": true
   },
   "[markdown]": {
-    "editor.defaultFormatter": "vscode.markdown-language-features",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.wordWrap": "on",
     "editor.quickSuggestions": {
       "comments": "off",
@@ -239,6 +239,9 @@
     "background": "#FFFFFF",
     "opacity": 50,
     "iconColour": "#0000FF"
+  },
+  "[nginx]": {
+    "editor.defaultFormatter": "raynigon.nginx-formatter"
   },
 
   // Настройки для работы с REST API удалены - требуют установки расширения

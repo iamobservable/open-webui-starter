@@ -11,6 +11,7 @@ global:
 # Правила алертинга
 rule_files:
   - "alert_rules.yml"
+  - "rules/erni-ki-alerts.yml"
 
 # Конфигурация Alertmanager
 alerting:
@@ -41,14 +42,15 @@ scrape_configs:
       - targets: ["cadvisor:8080"]
     scrape_interval: 30s
     metrics_path: /metrics
-
-  # Auth service метрики
-  - job_name: "auth-service"
-    static_configs:
-      - targets: ["auth:9090"]
-    scrape_interval: 15s
-    metrics_path: /metrics
     scrape_timeout: 10s
+
+  # Auth service метрики - отключено (нет /metrics endpoint)
+  # - job_name: "auth-service"
+  #   static_configs:
+  #     - targets: ["auth:9090"]
+  #   scrape_interval: 15s
+  #   metrics_path: /metrics
+  #   scrape_timeout: 10s
 
   # Nginx метрики
   - job_name: "nginx"
@@ -63,6 +65,7 @@ scrape_configs:
       - targets: ["postgres-exporter:9187"]
     scrape_interval: 30s
     metrics_path: /metrics
+    scrape_timeout: 10s
 
   # Redis метрики
   - job_name: "redis"
@@ -70,6 +73,7 @@ scrape_configs:
       - targets: ["redis-exporter:9121"]
     scrape_interval: 30s
     metrics_path: /metrics
+    scrape_timeout: 10s
 
   # Ollama метрики (если доступны)
   - job_name: "ollama"
@@ -87,37 +91,37 @@ scrape_configs:
     metrics_path: /metrics
     scrape_timeout: 15s
 
-  # SearXNG метрики (если доступны)
-  - job_name: "searxng"
-    static_configs:
-      - targets: ["searxng:8080"]
-    scrape_interval: 60s
-    metrics_path: /stats
-    scrape_timeout: 15s
+  # SearXNG метрики - отключено (возвращает HTML вместо метрик)
+  # - job_name: "searxng"
+  #   static_configs:
+  #     - targets: ["searxng:8080"]
+  #   scrape_interval: 60s
+  #   metrics_path: /stats
+  #   scrape_timeout: 15s
 
-  # Docling метрики
-  - job_name: "docling"
-    static_configs:
-      - targets: ["docling:5001"]
-    scrape_interval: 60s
-    metrics_path: /metrics
-    scrape_timeout: 15s
+  # Docling метрики - отключено (нет /metrics endpoint)
+  # - job_name: "docling"
+  #   static_configs:
+  #     - targets: ["docling:5001"]
+  #   scrape_interval: 60s
+  #   metrics_path: /metrics
+  #   scrape_timeout: 15s
 
-  # EdgeTTS метрики
-  - job_name: "edgetts"
-    static_configs:
-      - targets: ["edgetts:5050"]
-    scrape_interval: 60s
-    metrics_path: /metrics
-    scrape_timeout: 15s
+  # EdgeTTS метрики - отключено (нет /metrics endpoint)
+  # - job_name: "edgetts"
+  #   static_configs:
+  #     - targets: ["edgetts:5050"]
+  #   scrape_interval: 60s
+  #   metrics_path: /metrics
+  #   scrape_timeout: 15s
 
-  # Tika метрики
-  - job_name: "tika"
-    static_configs:
-      - targets: ["tika:9998"]
-    scrape_interval: 60s
-    metrics_path: /metrics
-    scrape_timeout: 15s
+  # Tika метрики - отключено (нет /metrics endpoint)
+  # - job_name: "tika"
+  #   static_configs:
+  #     - targets: ["tika:9998"]
+  #   scrape_interval: 60s
+  #   metrics_path: /metrics
+  #   scrape_timeout: 15s
 
   # MCP Server метрики
   - job_name: "mcposerver"
@@ -174,17 +178,82 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox-exporter:9115
 
-# Конфигурация хранения данных
-storage:
-  tsdb:
-    retention.time: 30d
-    retention.size: 10GB
-    path: /prometheus/data
-    wal-compression: true
+  # NVIDIA GPU Exporter для мониторинга GPU
+  - job_name: "nvidia-exporter"
+    static_configs:
+      - targets: ["nvidia-exporter:9445"]
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
 
-# Конфигурация веб-интерфейса
-web:
-  console.libraries: /etc/prometheus/console_libraries
-  console.templates: /etc/prometheus/consoles
-  enable-lifecycle: true
-  enable-admin-api: true
+  # Webhook receiver метрики
+  - job_name: "webhook-receiver"
+    static_configs:
+      - targets: ["webhook-receiver:9093"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+
+  # Fluent Bit метрики
+  - job_name: "fluent-bit"
+    static_configs:
+      - targets: ["fluent-bit:2021"]
+    scrape_interval: 30s
+    metrics_path: /api/v1/metrics/prometheus
+    scrape_timeout: 10s
+
+  # Elasticsearch метрики
+  - job_name: "elasticsearch"
+    static_configs:
+      - targets: ["elasticsearch:9200"]
+    scrape_interval: 30s
+    metrics_path: /_prometheus/metrics
+    scrape_timeout: 10s
+
+  # Blackbox exporter для проверки Cloudflare tunnels
+  - job_name: "blackbox-cloudflare"
+    metrics_path: /probe
+    params:
+      module: [cloudflare_tunnel]
+    static_configs:
+      - targets:
+          - https://erni-ki.example.com
+          - https://api.erni-ki.example.com
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Blackbox exporter для проверки внутренних сервисов
+  - job_name: "blackbox-internal"
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://openwebui:8080/health
+          - http://ollama:11434/api/version
+          - http://auth:9090/health
+          - http://tika:9998/
+          - http://docling:5001/health
+          - http://edgetts:5050/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # NVIDIA GPU метрики
+  - job_name: "nvidia-gpu"
+    static_configs:
+      - targets: ["nvidia-exporter:9445"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+    scrape_timeout: 15s
+# Примечание: Конфигурация хранения данных и веб-интерфейса
+# задается через command line аргументы в docker-compose.monitoring.yml

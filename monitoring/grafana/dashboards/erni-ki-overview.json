@@ -1,11 +1,11 @@
 {
   "dashboard": {
     "id": null,
-    "title": "ERNI-KI Overview Dashboard",
-    "tags": ["erni-ki", "overview", "ai"],
+    "title": "ERNI-KI System Overview / Обзор системы ERNI-KI",
+    "tags": ["erni-ki", "overview", "ai", "monitoring"],
     "style": "dark",
     "timezone": "browser",
-    "refresh": "30s",
+    "refresh": "15s",
     "time": {
       "from": "now-1h",
       "to": "now"
@@ -13,12 +13,14 @@
     "panels": [
       {
         "id": 1,
-        "title": "Service Status",
-        "type": "stat",
+        "title": "🏥 Статус сервисов ERNI-KI / Service Status",
+        "type": "table",
         "targets": [
           {
-            "expr": "up",
-            "legendFormat": "{{job}}"
+            "expr": "up{job=~\"auth|db|redis|nginx|ollama|openwebui|searxng|docling|edgetts|tika|mcposerver|cloudflared|watchtower|backrest|litellm\"}",
+            "legendFormat": "{{job}}",
+            "format": "table",
+            "instant": true
           }
         ],
         "fieldConfig": {
@@ -33,25 +35,51 @@
               ]
             },
             "mappings": [
-              { "options": { "0": { "text": "DOWN" } }, "type": "value" },
-              { "options": { "1": { "text": "UP" } }, "type": "value" }
-            ]
+              { "options": { "0": { "text": "❌ Down", "color": "red" } }, "type": "value" },
+              { "options": { "1": { "text": "✅ Up", "color": "green" } }, "type": "value" }
+            ],
+            "custom": {
+              "align": "center",
+              "cellOptions": {
+                "type": "color-background"
+              }
+            }
           }
         },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true
+              },
+              "renameByName": {
+                "Value": "Status / Статус",
+                "instance": "Instance",
+                "job": "Service / Сервис"
+              }
+            }
+          }
+        ],
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
       },
       {
         "id": 2,
-        "title": "System Resources",
+        "title": "📊 Системные ресурсы / System Resources",
         "type": "timeseries",
         "targets": [
           {
-            "expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-            "legendFormat": "CPU Usage %"
+            "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "CPU Usage / Использование CPU (%)"
           },
           {
             "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
-            "legendFormat": "Memory Usage %"
+            "legendFormat": "Memory Usage / Использование памяти (%)"
+          },
+          {
+            "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"})) * 100",
+            "legendFormat": "Disk Usage / Использование диска (%)"
           }
         ],
         "fieldConfig": {
@@ -61,92 +89,180 @@
             "thresholds": {
               "steps": [
                 { "color": "green", "value": 0 },
-                { "color": "yellow", "value": 70 },
+                { "color": "yellow", "value": 75 },
                 { "color": "red", "value": 90 }
               ]
             }
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
           }
         },
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
       },
       {
         "id": 3,
-        "title": "Auth Service Metrics",
+        "title": "⚡ Производительность AI / AI Performance",
         "type": "timeseries",
         "targets": [
           {
-            "expr": "rate(auth_requests_total[5m])",
-            "legendFormat": "Requests/sec"
+            "expr": "histogram_quantile(0.95, rate(prometheus_http_request_duration_seconds_bucket{handler=~\"/api/v1/query.*\"}[5m]))",
+            "legendFormat": "RAG Query Time / Время RAG запроса (95th percentile)"
           },
           {
-            "expr": "rate(auth_requests_total{status=~\"4..\"}[5m])",
-            "legendFormat": "4xx Errors/sec"
+            "expr": "histogram_quantile(0.95, rate(prometheus_http_request_duration_seconds_bucket{job=\"openwebui\"}[5m]))",
+            "legendFormat": "OpenWebUI Response / Время ответа OpenWebUI (95th percentile)"
           },
           {
-            "expr": "rate(auth_requests_total{status=~\"5..\"}[5m])",
-            "legendFormat": "5xx Errors/sec"
+            "expr": "histogram_quantile(0.95, rate(prometheus_http_request_duration_seconds_bucket{job=\"ollama\"}[5m]))",
+            "legendFormat": "Ollama API Response / Время ответа Ollama API (95th percentile)"
           }
         ],
         "fieldConfig": {
           "defaults": {
-            "unit": "reqps"
+            "unit": "s",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": 0 },
+                { "color": "yellow", "value": 2 },
+                { "color": "red", "value": 5 }
+              ]
+            }
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
           }
         },
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
       },
       {
         "id": 4,
-        "title": "Ollama Performance",
+        "title": "🎮 GPU Мониторинг / GPU Monitoring",
         "type": "timeseries",
         "targets": [
           {
-            "expr": "ollama_requests_duration_seconds",
-            "legendFormat": "Request Duration"
+            "expr": "nvidia_gpu_temperature_celsius",
+            "legendFormat": "GPU {{gpu_id}} Temperature / Температура GPU {{gpu_id}} (°C)"
           },
           {
-            "expr": "ollama_active_models",
-            "legendFormat": "Active Models"
+            "expr": "nvidia_gpu_utilization_percent",
+            "legendFormat": "GPU {{gpu_id}} Utilization / Использование GPU {{gpu_id}} (%)"
+          },
+          {
+            "expr": "(nvidia_gpu_memory_used_bytes / nvidia_gpu_memory_total_bytes) * 100",
+            "legendFormat": "GPU {{gpu_id}} Memory / Память GPU {{gpu_id}} (%)"
           }
         ],
         "fieldConfig": {
           "defaults": {
-            "unit": "s"
+            "unit": "short",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": 0 },
+                { "color": "yellow", "value": 80 },
+                { "color": "red", "value": 85 }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": { "id": "byRegexp", "options": "Temperature" },
+              "properties": [
+                { "id": "unit", "value": "celsius" },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "steps": [
+                      { "color": "green", "value": 0 },
+                      { "color": "yellow", "value": 80 },
+                      { "color": "red", "value": 85 }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
           }
         },
         "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
       },
       {
         "id": 5,
-        "title": "Database Connections",
+        "title": "🗄️ База данных / Database Metrics",
         "type": "timeseries",
         "targets": [
           {
             "expr": "pg_stat_activity_count",
-            "legendFormat": "PostgreSQL Connections"
+            "legendFormat": "PostgreSQL Connections / Подключения PostgreSQL"
           },
           {
             "expr": "redis_connected_clients",
-            "legendFormat": "Redis Connections"
+            "legendFormat": "Redis Connections / Подключения Redis"
+          },
+          {
+            "expr": "pg_stat_database_tup_inserted{datname=\"postgres\"}",
+            "legendFormat": "PostgreSQL Inserts / Вставки PostgreSQL"
+          },
+          {
+            "expr": "redis_keyspace_hits_total",
+            "legendFormat": "Redis Cache Hits / Попадания в кеш Redis"
           }
         ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": 0 },
+                { "color": "yellow", "value": 50 },
+                { "color": "red", "value": 100 }
+              ]
+            }
+          }
+        },
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        },
         "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
       },
       {
         "id": 6,
-        "title": "Network Traffic",
+        "title": "🌐 Nginx & Сеть / Network & Nginx",
         "type": "timeseries",
         "targets": [
           {
             "expr": "rate(nginx_http_requests_total[5m])",
-            "legendFormat": "HTTP Requests/sec"
+            "legendFormat": "Nginx Requests/sec / Запросы Nginx/сек"
           },
           {
-            "expr": "rate(node_network_receive_bytes_total[5m])",
-            "legendFormat": "Network In"
+            "expr": "rate(nginx_http_requests_total{status=~\"4..\"}[5m])",
+            "legendFormat": "4xx Errors/sec / Ошибки 4xx/сек"
           },
           {
-            "expr": "rate(node_network_transmit_bytes_total[5m])",
-            "legendFormat": "Network Out"
+            "expr": "rate(nginx_http_requests_total{status=~\"5..\"}[5m])",
+            "legendFormat": "5xx Errors/sec / Ошибки 5xx/сек"
+          },
+          {
+            "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])",
+            "legendFormat": "Network In / Сеть входящая"
+          },
+          {
+            "expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])",
+            "legendFormat": "Network Out / Сеть исходящая"
           }
         ],
         "fieldConfig": {

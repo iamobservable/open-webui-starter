@@ -1,0 +1,19 @@
+# Python зависимости для Performance Metrics Exporter
+
+# Prometheus клиент
+prometheus-client==0.19.0
+
+# HTTP клиент
+requests==2.31.0
+
+# Системные метрики
+psutil==5.9.6
+
+# Логирование
+colorlog==6.8.0
+
+# Обработка JSON
+simplejson==3.19.2
+
+# Переменные окружения
+python-dotenv==1.0.0

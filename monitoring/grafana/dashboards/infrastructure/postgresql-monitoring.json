@@ -1,0 +1,321 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "🐘 ERNI-KI PostgreSQL Monitoring / Мониторинг PostgreSQL",
+    "tags": ["erni-ki", "postgresql", "database", "pgvector", "performance"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "🔗 Database Connections / Подключения к БД",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "pg_stat_database_numbackends{datname!~\"template.*|postgres\"}",
+            "legendFormat": "{{datname}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": 0 },
+                { "color": "yellow", "value": 50 },
+                { "color": "red", "value": 80 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "📊 Transaction Rate / Скорость транзакций",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_xact_commit[5m]) + rate(pg_stat_database_xact_rollback[5m])",
+            "legendFormat": "{{datname}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": 0 },
+                { "color": "yellow", "value": 100 },
+                { "color": "red", "value": 500 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 }
+      },
+      {
+        "id": 3,
+        "title": "💾 Cache Hit Ratio / Коэффициент попаданий в кэш",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "pg_stat_database_blks_hit / (pg_stat_database_blks_hit + pg_stat_database_blks_read) * 100",
+            "legendFormat": "{{datname}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                { "color": "red", "value": 0 },
+                { "color": "yellow", "value": 90 },
+                { "color": "green", "value": 95 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 }
+      },
+      {
+        "id": 4,
+        "title": "🔒 Active Locks / Активные блокировки",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "pg_locks_count",
+            "legendFormat": "{{mode}} {{locktype}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": 0 },
+                { "color": "yellow", "value": 10 },
+                { "color": "red", "value": 50 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 }
+      },
+      {
+        "id": 5,
+        "title": "📈 Database Activity / Активность БД",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_xact_commit[5m])",
+            "legendFormat": "{{datname}} Commits"
+          },
+          {
+            "expr": "rate(pg_stat_database_xact_rollback[5m])",
+            "legendFormat": "{{datname}} Rollbacks"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops"
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+      },
+      {
+        "id": 6,
+        "title": "🔍 Query Performance / Производительность запросов",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_tup_returned[5m])",
+            "legendFormat": "{{datname}} Rows Returned"
+          },
+          {
+            "expr": "rate(pg_stat_database_tup_fetched[5m])",
+            "legendFormat": "{{datname}} Rows Fetched"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops"
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+      },
+      {
+        "id": 7,
+        "title": "💿 I/O Performance / Производительность I/O",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_blks_read[5m])",
+            "legendFormat": "{{datname}} Disk Reads"
+          },
+          {
+            "expr": "rate(pg_stat_database_blks_hit[5m])",
+            "legendFormat": "{{datname}} Cache Hits"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops"
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
+      },
+      {
+        "id": 8,
+        "title": "📊 Table Sizes / Размеры таблиц",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "pg_table_size_bytes",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes",
+            "custom": {
+              "align": "left"
+            }
+          }
+        },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true,
+                "job": true,
+                "instance": true
+              },
+              "renameByName": {
+                "schemaname": "Schema / Схема",
+                "tablename": "Table / Таблица",
+                "Value": "Size / Размер"
+              }
+            }
+          }
+        ],
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
+      },
+      {
+        "id": 9,
+        "title": "🔄 Connection States / Состояния подключений",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "pg_stat_activity_connections",
+            "legendFormat": "{{state}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 }
+      },
+      {
+        "id": 10,
+        "title": "🚨 Database Issues / Проблемы БД",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(pg_stat_database_deadlocks[5m])",
+            "legendFormat": "{{datname}} Deadlocks"
+          },
+          {
+            "expr": "rate(pg_stat_database_conflicts[5m])",
+            "legendFormat": "{{datname}} Conflicts"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops"
+          }
+        },
+        "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 }
+      },
+      {
+        "id": 11,
+        "title": "🧠 Vector Operations (pgvector) / Векторные операции",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "pg_vector_stats_n_distinct",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "left"
+            }
+          }
+        },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true
+              },
+              "renameByName": {
+                "schemaname": "Schema / Схема",
+                "tablename": "Table / Таблица",
+                "column_name": "Vector Column / Векторная колонка",
+                "Value": "Distinct Values / Уникальные значения"
+              }
+            }
+          }
+        ],
+        "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 }
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "database",
+          "type": "query",
+          "query": "label_values(pg_stat_database_numbackends, datname)",
+          "refresh": 1,
+          "includeAll": true,
+          "allValue": ".*"
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "High Connection Count",
+          "datasource": "Prometheus",
+          "expr": "pg_stat_database_numbackends > 50",
+          "titleFormat": "High Connections: {{datname}}",
+          "textFormat": "Database {{datname}} has {{value}} active connections"
+        },
+        {
+          "name": "Low Cache Hit Ratio",
+          "datasource": "Prometheus",
+          "expr": "pg_stat_database_blks_hit / (pg_stat_database_blks_hit + pg_stat_database_blks_read) * 100 < 90",
+          "titleFormat": "Low Cache Hit: {{datname}}",
+          "textFormat": "Database {{datname}} cache hit ratio is {{value}}%"
+        }
+      ]
+    }
+  }
+}

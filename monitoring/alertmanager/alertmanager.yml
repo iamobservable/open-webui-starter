@@ -1,0 +1,192 @@
+# Alertmanager Configuration для ERNI-KI
+# Конфигурация обработки алертов и уведомлений
+
+global:
+  # SMTP настройки для email уведомлений (опционально)
+  smtp_smarthost: "localhost:587"
+  smtp_from: "alerts@erni-ki.local"
+  smtp_auth_username: ""
+  smtp_auth_password: ""
+  smtp_require_tls: false
+
+  # Глобальные настройки
+  resolve_timeout: 5m
+  http_config:
+    follow_redirects: true
+
+# Шаблоны для уведомлений
+templates:
+  - "/etc/alertmanager/templates/*.tmpl"
+
+# Маршрутизация алертов
+route:
+  # Группировка алертов
+  group_by: ["alertname", "cluster", "service"]
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+
+  # Получатель по умолчанию
+  receiver: "erni-ki-webhook"
+
+  # Маршруты для разных типов алертов
+  routes:
+    # Критические алерты - немедленное уведомление
+    - match:
+        severity: critical
+      receiver: "erni-ki-critical"
+      group_wait: 0s
+      group_interval: 5s
+      repeat_interval: 15m
+
+    # Предупреждения - стандартная обработка
+    - match:
+        severity: warning
+      receiver: "erni-ki-warning"
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1h
+
+    # GPU алерты - специальная обработка
+    - match:
+        service: gpu
+      receiver: "erni-ki-gpu"
+      group_wait: 10s
+      group_interval: 2m
+      repeat_interval: 30m
+
+    # AI сервисы алерты
+    - match_re:
+        service: "(ollama|openwebui|searxng|litellm)"
+      receiver: "erni-ki-ai"
+      group_wait: 15s
+      group_interval: 3m
+      repeat_interval: 45m
+
+    # База данных алерты
+    - match_re:
+        service: "(postgresql|redis)"
+      receiver: "erni-ki-database"
+      group_wait: 20s
+      group_interval: 5m
+      repeat_interval: 1h
+
+# Получатели уведомлений
+receivers:
+  # Webhook получатель по умолчанию
+  - name: "erni-ki-webhook"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook"
+        send_resolved: true
+        http_config:
+          follow_redirects: true
+
+  # Критические алерты - множественные каналы
+  - name: "erni-ki-critical"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/critical"
+        send_resolved: true
+        title: "🚨 CRITICAL ALERT / КРИТИЧЕСКИЙ АЛЕРТ"
+        text: |
+          🚨 **КРИТИЧЕСКИЙ АЛЕРТ / CRITICAL ALERT** 🚨
+
+          {{ range .Alerts }}
+          **Alert:** {{ .Annotations.summary }}
+          **Description:** {{ .Annotations.description }}
+          **Severity:** {{ .Labels.severity }}
+          **Service:** {{ .Labels.service }}
+          **Component:** {{ .Labels.component }}
+          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          **Runbook:** {{ .Annotations.runbook_url }}
+          {{ end }}
+
+          **Action Required:** Immediate attention needed / Требуется немедленное внимание
+
+  # Предупреждения
+  - name: "erni-ki-warning"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/warning"
+        send_resolved: true
+        title: "⚠️ Warning Alert / Предупреждение"
+        text: |
+          ⚠️ **WARNING / ПРЕДУПРЕЖДЕНИЕ** ⚠️
+
+          {{ range .Alerts }}
+          **Alert:** {{ .Annotations.summary }}
+          **Description:** {{ .Annotations.description }}
+          **Service:** {{ .Labels.service }}
+          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+  # GPU специфичные алерты
+  - name: "erni-ki-gpu"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/gpu"
+        send_resolved: true
+        title: "🎮 GPU Alert / GPU Алерт"
+        text: |
+          🎮 **GPU ALERT / GPU АЛЕРТ** 🎮
+
+          {{ range .Alerts }}
+          **Alert:** {{ .Annotations.summary }}
+          **Description:** {{ .Annotations.description }}
+          **GPU ID:** {{ .Labels.gpu_id }}
+          **Component:** {{ .Labels.component }}
+          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+          **Note:** GPU performance may be affected / Производительность GPU может быть снижена
+
+  # AI сервисы алерты
+  - name: "erni-ki-ai"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/ai"
+        send_resolved: true
+        title: "🤖 AI Services Alert / Алерт AI сервисов"
+        text: |
+          🤖 **AI SERVICES ALERT / АЛЕРТ AI СЕРВИСОВ** 🤖
+
+          {{ range .Alerts }}
+          **Alert:** {{ .Annotations.summary }}
+          **Description:** {{ .Annotations.description }}
+          **Service:** {{ .Labels.service }}
+          **Component:** {{ .Labels.component }}
+          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+          **Impact:** AI functionality may be limited / Функциональность AI может быть ограничена
+
+  # База данных алерты
+  - name: "erni-ki-database"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/database"
+        send_resolved: true
+        title: "🗄️ Database Alert / Алерт базы данных"
+        text: |
+          🗄️ **DATABASE ALERT / АЛЕРТ БАЗЫ ДАННЫХ** 🗄️
+
+          {{ range .Alerts }}
+          **Alert:** {{ .Annotations.summary }}
+          **Description:** {{ .Annotations.description }}
+          **Service:** {{ .Labels.service }}
+          **Component:** {{ .Labels.component }}
+          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+
+          **Impact:** Data operations may be affected / Операции с данными могут быть затронуты
+
+# Подавление алертов (inhibit rules)
+inhibit_rules:
+  # Подавлять предупреждения если есть критические алерты для того же сервиса
+  - source_match:
+      severity: "critical"
+    target_match:
+      severity: "warning"
+    equal: ["service", "component"]
+
+  # Подавлять алерты о недоступности если сервис уже помечен как down
+  - source_match:
+      alertname: "CriticalServiceDown"
+    target_match_re:
+      alertname: ".*ServiceDown"
+    equal: ["service"]

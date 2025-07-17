@@ -1,0 +1,571 @@
+# Docker Compose конфигурация для системы мониторинга ERNI-KI
+# Включает Prometheus, Grafana, Alertmanager, Fluent Bit, Elasticsearch
+
+version: "3.8"
+
+# Общие настройки для мониторинга
+x-monitoring-common: &monitoring-common
+  restart: unless-stopped
+  networks:
+    - monitoring
+    - erni-ki_default
+
+# Ограничения ресурсов для мониторинга
+x-monitoring-resources: &monitoring-resources
+  deploy:
+    resources:
+      limits:
+        memory: 512M
+        cpus: "0.5"
+      reservations:
+        memory: 256M
+        cpus: "0.25"
+
+services:
+  # ============================================================================
+  # FLUENT BIT - Централизованный сбор логов
+  # ============================================================================
+  fluent-bit:
+    <<: *monitoring-common
+    image: fluent/fluent-bit:3.0
+    container_name: erni-ki-fluent-bit
+
+    # Конфигурация
+    volumes:
+      # Конфигурационные файлы
+      - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - ./fluent-bit/scripts:/fluent-bit/scripts:ro
+
+      # Docker логи контейнеров - необходимо для tail input
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+
+      # Системные логи (только доступные)
+      - /var/log:/var/log:ro
+
+      # Локальное хранение логов
+      - ../data/fluent-bit/db:/fluent-bit/db
+      - ../.config-backup/logs:/backup-logs
+      - ./logs/critical:/logs/critical
+
+    # Переменные окружения
+    environment:
+      - FLB_LOG_LEVEL=info
+      - FLB_HTTP_SERVER=On
+      - FLB_HTTP_LISTEN=0.0.0.0
+      - FLB_HTTP_PORT=2020
+      - FLB_HEALTH_CHECK=On
+
+    # Порты
+    ports:
+      - "2020:2020"
+      - "24224:24224" # HTTP API
+      - "2021:2021" # Prometheus metrics
+
+    # Health check отключен - минималистичный образ без утилит
+    # Сервис функционально работает, API доступен на порту 2020
+    healthcheck:
+      disable: true
+
+    # Зависимости
+    depends_on:
+      - elasticsearch
+
+    # Ограничения ресурсов
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.3"
+        reservations:
+          memory: 128M
+          cpus: "0.1"
+
+  # ============================================================================
+  # ELASTICSEARCH - Хранение и поиск логов
+  # ============================================================================
+  elasticsearch:
+    <<: *monitoring-common
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.15
+    container_name: erni-ki-elasticsearch
+
+    # Конфигурация Elasticsearch 7.17.15 - минимальные настройки для стабильной работы
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+
+    # Тома для данных - только data директория, без config для избежания keystore проблем
+    volumes:
+      - ../data/elasticsearch:/usr/share/elasticsearch/data
+
+    # Порты
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+    # Настройки памяти
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+    # Ограничения ресурсов
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+        reservations:
+          memory: 512M
+          cpus: "0.5"
+
+  # ============================================================================
+  # KIBANA - Веб-интерфейс для логов
+  # ============================================================================
+  kibana:
+    <<: *monitoring-common
+    image: docker.elastic.co/kibana/kibana:7.17.15
+    container_name: erni-ki-kibana
+
+    # Конфигурация
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=kibana.erni-ki.local
+      - SERVER_BASEPATH=/kibana
+
+    # Порты
+    ports:
+      - "5601:5601"
+
+    # Зависимости
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ============================================================================
+  # PROMETHEUS - Сбор метрик
+  # ============================================================================
+  prometheus:
+    <<: *monitoring-common
+    image: prom/prometheus:v2.48.0
+    container_name: erni-ki-prometheus
+
+    # Команда запуска с настройками
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--storage.tsdb.retention.size=10GB"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+      - "--web.external-url=http://prometheus.erni-ki.local"
+
+    # Конфигурация
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - ../data/prometheus:/prometheus
+
+    # Порты
+    ports:
+      - "9091:9090"
+
+    # Health check
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ============================================================================
+  # GRAFANA - Dashboard и визуализация
+  # ============================================================================
+  grafana:
+    <<: *monitoring-common
+    image: grafana/grafana:10.2.0
+    container_name: erni-ki-grafana
+
+    # Конфигурация
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://grafana.erni-ki.local
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+
+    # Тома
+    volumes:
+      - ../data/grafana:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+
+    # Порты
+    ports:
+      - "3000:3000"
+
+    # Зависимости
+    depends_on:
+      - prometheus
+      - elasticsearch
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ============================================================================
+  # ALERTMANAGER - Управление алертами
+  # ============================================================================
+  alertmanager:
+    <<: *monitoring-common
+    image: prom/alertmanager:v0.26.0
+    container_name: erni-ki-alertmanager
+
+    # Команда запуска
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+      - "--web.external-url=http://alertmanager.erni-ki.local"
+      - "--cluster.listen-address=0.0.0.0:9094"
+
+    # Конфигурация
+    volumes:
+      - ./alertmanager/alertmanager-simple.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ../data/alertmanager:/alertmanager
+
+    # Порты
+    ports:
+      - "9093:9093"
+      - "9094:9094"
+
+    # Health check
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:9093/-/healthy || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ============================================================================
+  # NODE EXPORTER - Системные метрики
+  # ============================================================================
+  node-exporter:
+    <<: *monitoring-common
+    image: prom/node-exporter:v1.7.0
+    container_name: erni-ki-node-exporter
+
+    # Команда с дополнительными коллекторами
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+      - "--collector.systemd"
+      - "--collector.processes"
+
+    # Доступ к системным ресурсам
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - /run/systemd/private:/run/systemd/private:ro
+
+    # Порты
+    ports:
+      - "9101:9100"
+
+    # Привилегированный режим для системных метрик
+    pid: host
+
+    # Health check
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:9100/metrics || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ============================================================================
+  # WEBHOOK SERVER - Обработка уведомлений
+  # ============================================================================
+  webhook-receiver:
+    <<: *monitoring-common
+    build:
+      context: ./webhook-receiver
+      dockerfile: Dockerfile
+    container_name: erni-ki-webhook-receiver
+
+    # Переменные окружения
+    environment:
+      - WEBHOOK_PORT=9093
+      - PYTHONUNBUFFERED=1
+      - FLASK_ENV=production
+
+    # Тома
+    volumes:
+      - ./logs/webhook:/app/logs
+      - ./webhook-receiver/scripts:/app/scripts:ro
+
+    # Порты
+    ports:
+      - "9095:9093"
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9093/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Ограничения ресурсов
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.2"
+        reservations:
+          memory: 64M
+          cpus: "0.1"
+
+  # ============================================================================
+  # NVIDIA GPU EXPORTER - Мониторинг GPU
+  # ============================================================================
+  nvidia-exporter:
+    <<: *monitoring-common
+    image: mindprince/nvidia_gpu_prometheus_exporter:0.1
+    container_name: erni-ki-nvidia-exporter
+
+    # Доступ к GPU
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+
+    # Порты
+    ports:
+      - "9445:9445"
+
+    # Health check - проверяем процесс nvidia_gpu_prometheus_exporter
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f nvidia_gpu_prometheus_exporter > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+    # Ограничения ресурсов
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: "0.1"
+        reservations:
+          memory: 32M
+          cpus: "0.05"
+
+  # ============================================================================
+  # POSTGRES EXPORTER - Мониторинг PostgreSQL
+  # ============================================================================
+  postgres-exporter:
+    <<: *monitoring-common
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: erni-ki-postgres-exporter
+
+    # Конфигурация подключения к PostgreSQL
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:password@db:5432/postgres?sslmode=disable
+      - PG_EXPORTER_EXTEND_QUERY_PATH=/etc/postgres_exporter/queries.yaml
+
+    # Конфигурационные файлы
+    volumes:
+      - ./postgres-exporter/queries.yaml:/etc/postgres_exporter/queries.yaml:ro
+
+    # Порты
+    ports:
+      - "9187:9187"
+
+    # Зависимости
+    depends_on:
+      - prometheus
+
+    # Health check
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:9187/metrics || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+    # Ограничения ресурсов
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.2"
+        reservations:
+          memory: 64M
+          cpus: "0.1"
+
+  # ============================================================================
+  # REDIS EXPORTER - Мониторинг Redis
+  # ============================================================================
+  redis-exporter:
+    <<: *monitoring-common
+    image: oliver006/redis_exporter:v1.55.0
+    container_name: erni-ki-redis-exporter
+
+    # Конфигурация подключения к Redis
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+      - REDIS_EXPORTER_INCL_SYSTEM_METRICS=true
+
+    # Порты
+    ports:
+      - "9121:9121"
+
+    # Зависимости
+    depends_on:
+      - prometheus
+
+    # Health check отключен - минимальный контейнер без утилит для проверки
+    # Сервис работает корректно, метрики доступны на порту 9121
+    healthcheck:
+      disable: true
+
+    # Ограничения ресурсов
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: "0.1"
+        reservations:
+          memory: 32M
+          cpus: "0.05"
+
+  # ============================================================================
+  # CADVISOR - Мониторинг контейнеров
+  # ============================================================================
+  cadvisor:
+    <<: *monitoring-common
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: erni-ki-cadvisor
+
+    # Команда запуска по умолчанию
+    # command: []
+
+    # Минимальные volumes для работы cAdvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+
+    # Порты
+    ports:
+      - "8081:8080"
+
+    # Безопасный режим без privileged
+    # privileged: true
+
+    # Health check
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8080/healthz || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    # Ограничения ресурсов
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.3"
+        reservations:
+          memory: 128M
+          cpus: "0.1"
+
+  # ============================================================================
+  # BLACKBOX EXPORTER - Мониторинг доступности
+  # ============================================================================
+  blackbox-exporter:
+    <<: *monitoring-common
+    image: prom/blackbox-exporter:v0.24.0
+    container_name: erni-ki-blackbox-exporter
+
+    # Конфигурация
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+
+    # Порты
+    ports:
+      - "9115:9115"
+
+    # Health check
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:9115/-/healthy || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+networks:
+  monitoring:
+    driver: bridge
+    name: erni-ki-monitoring
+    external: true
+  erni-ki_default:
+    external: true

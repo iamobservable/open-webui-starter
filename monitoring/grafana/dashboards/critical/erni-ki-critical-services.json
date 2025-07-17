@@ -1,0 +1,267 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "🚨 ERNI-KI Critical Services / Критические сервисы ERNI-KI",
+    "tags": ["erni-ki", "critical", "monitoring"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "15s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "🔴 Критические сервисы / Critical Services Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=~\"db|redis|nginx|auth\"}",
+            "legendFormat": "{{job}}",
+            "instant": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                { "color": "red", "value": 0 },
+                { "color": "green", "value": 1 }
+              ]
+            },
+            "mappings": [
+              { "options": { "0": { "text": "❌ DOWN", "color": "red" } }, "type": "value" },
+              { "options": { "1": { "text": "✅ UP", "color": "green" } }, "type": "value" }
+            ],
+            "custom": {
+              "displayMode": "basic"
+            }
+          }
+        },
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          },
+          "orientation": "horizontal",
+          "textMode": "value_and_name",
+          "colorMode": "background"
+        },
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 }
+      },
+      {
+        "id": 2,
+        "title": "💾 PostgreSQL Метрики / PostgreSQL Metrics",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "pg_stat_activity_count",
+            "legendFormat": "Active Connections / Активные подключения"
+          },
+          {
+            "expr": "rate(pg_stat_database_tup_inserted{datname=\"postgres\"}[5m])",
+            "legendFormat": "Inserts/sec / Вставки/сек"
+          },
+          {
+            "expr": "rate(pg_stat_database_tup_updated{datname=\"postgres\"}[5m])",
+            "legendFormat": "Updates/sec / Обновления/сек"
+          },
+          {
+            "expr": "rate(pg_stat_database_tup_deleted{datname=\"postgres\"}[5m])",
+            "legendFormat": "Deletes/sec / Удаления/сек"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": 0 },
+                { "color": "yellow", "value": 50 },
+                { "color": "red", "value": 100 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+      },
+      {
+        "id": 3,
+        "title": "⚡ Redis Метрики / Redis Metrics",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "redis_connected_clients",
+            "legendFormat": "Connected Clients / Подключенные клиенты"
+          },
+          {
+            "expr": "rate(redis_keyspace_hits_total[5m])",
+            "legendFormat": "Cache Hits/sec / Попадания в кеш/сек"
+          },
+          {
+            "expr": "rate(redis_keyspace_misses_total[5m])",
+            "legendFormat": "Cache Misses/sec / Промахи кеша/сек"
+          },
+          {
+            "expr": "redis_memory_used_bytes",
+            "legendFormat": "Memory Used / Использованная память"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": 0 },
+                { "color": "yellow", "value": 1000 },
+                { "color": "red", "value": 5000 }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": { "id": "byRegexp", "options": "Memory" },
+              "properties": [
+                { "id": "unit", "value": "bytes" }
+              ]
+            }
+          ]
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+      },
+      {
+        "id": 4,
+        "title": "🌐 Nginx Производительность / Nginx Performance",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(nginx_http_requests_total[5m])",
+            "legendFormat": "Requests/sec / Запросы/сек"
+          },
+          {
+            "expr": "rate(nginx_http_requests_total{status=~\"2..\"}[5m])",
+            "legendFormat": "2xx Success/sec / Успешные 2xx/сек"
+          },
+          {
+            "expr": "rate(nginx_http_requests_total{status=~\"4..\"}[5m])",
+            "legendFormat": "4xx Client Errors/sec / Ошибки клиента 4xx/сек"
+          },
+          {
+            "expr": "rate(nginx_http_requests_total{status=~\"5..\"}[5m])",
+            "legendFormat": "5xx Server Errors/sec / Ошибки сервера 5xx/сек"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": 0 },
+                { "color": "yellow", "value": 100 },
+                { "color": "red", "value": 500 }
+              ]
+            }
+          }
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 }
+      },
+      {
+        "id": 5,
+        "title": "🔐 Auth Service Метрики / Auth Service Metrics",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(auth_requests_total[5m])",
+            "legendFormat": "Auth Requests/sec / Запросы аутентификации/сек"
+          },
+          {
+            "expr": "rate(auth_requests_total{status=\"success\"}[5m])",
+            "legendFormat": "Successful Auth/sec / Успешная аутентификация/сек"
+          },
+          {
+            "expr": "rate(auth_requests_total{status=\"failed\"}[5m])",
+            "legendFormat": "Failed Auth/sec / Неудачная аутентификация/сек"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(auth_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "Auth Response Time 95th / Время ответа аутентификации 95th"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "steps": [
+                { "color": "green", "value": 0 },
+                { "color": "yellow", "value": 10 },
+                { "color": "red", "value": 50 }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": { "id": "byRegexp", "options": "Response Time" },
+              "properties": [
+                { "id": "unit", "value": "s" }
+              ]
+            }
+          ]
+        },
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 }
+      },
+      {
+        "id": 6,
+        "title": "⚠️ Критические алерты / Critical Alerts",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "ALERTS{alertstate=\"firing\", severity=\"critical\"}",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "left",
+              "cellOptions": {
+                "type": "color-background"
+              }
+            },
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                { "color": "red", "value": 0 }
+              ]
+            }
+          }
+        },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true
+              },
+              "renameByName": {
+                "alertname": "Alert / Алерт",
+                "instance": "Instance",
+                "severity": "Severity / Важность",
+                "summary": "Summary / Описание"
+              }
+            }
+          }
+        ],
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 }
+      }
+    ]
+  }
+}

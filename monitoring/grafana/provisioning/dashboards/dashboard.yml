@@ -1,0 +1,38 @@
+# Grafana Dashboard Provisioning для ERNI-KI
+# Автоматический импорт dashboard при запуске
+
+apiVersion: 1
+
+providers:
+  # ERNI-KI Main Dashboards
+  - name: 'erni-ki-dashboards'
+    orgId: 1
+    folder: 'ERNI-KI'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+
+  # ERNI-KI Critical Services
+  - name: 'erni-ki-critical'
+    orgId: 1
+    folder: 'ERNI-KI Critical'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/critical
+
+  # ERNI-KI AI Services
+  - name: 'erni-ki-ai'
+    orgId: 1
+    folder: 'ERNI-KI AI'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/ai
