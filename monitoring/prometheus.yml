@@ -12,6 +12,7 @@ global:
 rule_files:
   - "alert_rules.yml"
   - "rules/erni-ki-alerts.yml"
+  - "security_alerts.yml"
 
 # Конфигурация Alertmanager
 alerting:

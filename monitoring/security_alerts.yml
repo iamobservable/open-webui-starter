@@ -1,0 +1,141 @@
+# Security Alerts для ERNI-KI
+# Алерты безопасности и мониторинга подозрительной активности
+
+groups:
+- name: security
+  rules:
+  # Высокий уровень 5xx ошибок - возможная атака или проблема
+  - alert: HighErrorRate
+    expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) > 0.1
+    for: 2m
+    labels:
+      severity: critical
+      category: security
+    annotations:
+      summary: "Высокий уровень 5xx ошибок обнаружен"
+      description: "Обнаружен высокий уровень серверных ошибок ({{ $value }} запросов/сек) в течение последних 5 минут. Возможна атака или критическая проблема системы."
+      
+  # Подозрительные попытки входа
+  - alert: SuspiciousLoginAttempts
+    expr: rate(nginx_http_requests_total{status="401"}[5m]) > 5
+    for: 1m
+    labels:
+      severity: warning
+      category: security
+    annotations:
+      summary: "Множественные неудачные попытки аутентификации"
+      description: "Обнаружено {{ $value }} неудачных попыток аутентификации в минуту. Возможна брутфорс атака."
+      
+  # Неавторизованный доступ к API
+  - alert: UnauthorizedAPIAccess
+    expr: rate(nginx_http_requests_total{status="403"}[5m]) > 10
+    for: 2m
+    labels:
+      severity: warning
+      category: security
+    annotations:
+      summary: "Высокий уровень запрещенных запросов к API"
+      description: "Обнаружено {{ $value }} запрещенных запросов/сек к API. Возможна попытка несанкционированного доступа."
+
+  # Rate limiting срабатывает слишком часто
+  - alert: RateLimitingTriggered
+    expr: rate(nginx_http_requests_total{status="429"}[5m]) > 20
+    for: 1m
+    labels:
+      severity: warning
+      category: security
+    annotations:
+      summary: "Частое срабатывание rate limiting"
+      description: "Rate limiting срабатывает {{ $value }} раз/сек. Возможна DDoS атака или неправильная настройка лимитов."
+
+  # Подозрительно высокий трафик
+  - alert: HighTrafficVolume
+    expr: rate(nginx_http_requests_total[5m]) > 100
+    for: 5m
+    labels:
+      severity: info
+      category: security
+    annotations:
+      summary: "Необычно высокий объем трафика"
+      description: "Обнаружен высокий объем трафика: {{ $value }} запросов/сек в течение 5 минут."
+
+  # Проблемы с SSL/TLS
+  - alert: SSLCertificateExpiring
+    expr: (nginx_ssl_certificate_expiry_seconds - time()) / 86400 < 30
+    for: 1h
+    labels:
+      severity: warning
+      category: security
+    annotations:
+      summary: "SSL сертификат скоро истечет"
+      description: "SSL сертификат истекает через {{ $value }} дней. Необходимо обновление."
+
+- name: system_security
+  rules:
+  # Высокое использование CPU - возможна атака
+  - alert: HighCPUUsage
+    expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+    for: 5m
+    labels:
+      severity: warning
+      category: system
+    annotations:
+      summary: "Высокое использование CPU"
+      description: "Использование CPU составляет {{ $value }}% на {{ $labels.instance }}. Возможна атака или проблема производительности."
+
+  # Высокое использование памяти
+  - alert: HighMemoryUsage
+    expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+    for: 5m
+    labels:
+      severity: warning
+      category: system
+    annotations:
+      summary: "Высокое использование памяти"
+      description: "Использование памяти составляет {{ $value }}% на {{ $labels.instance }}."
+
+  # Подозрительная сетевая активность
+  - alert: HighNetworkTraffic
+    expr: rate(node_network_receive_bytes_total[5m]) > 100000000  # 100MB/s
+    for: 2m
+    labels:
+      severity: info
+      category: network
+    annotations:
+      summary: "Высокий входящий сетевой трафик"
+      description: "Входящий трафик составляет {{ $value | humanize }}B/s на {{ $labels.instance }}."
+
+- name: application_security
+  rules:
+  # Проблемы с базой данных
+  - alert: DatabaseConnectionsHigh
+    expr: pg_stat_database_numbackends > 150
+    for: 5m
+    labels:
+      severity: warning
+      category: database
+    annotations:
+      summary: "Высокое количество подключений к БД"
+      description: "Количество подключений к базе данных: {{ $value }}. Возможна атака или проблема с пулом соединений."
+
+  # Проблемы с Redis
+  - alert: RedisMemoryHigh
+    expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+    for: 5m
+    labels:
+      severity: warning
+      category: cache
+    annotations:
+      summary: "Высокое использование памяти Redis"
+      description: "Использование памяти Redis составляет {{ $value | humanizePercentage }}."
+
+  # Ollama недоступен
+  - alert: OllamaDown
+    expr: up{job="ollama"} == 0
+    for: 1m
+    labels:
+      severity: critical
+      category: ai
+    annotations:
+      summary: "Ollama сервис недоступен"
+      description: "Ollama сервис недоступен более 1 минуты. AI функции могут не работать."

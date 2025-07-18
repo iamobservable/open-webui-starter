@@ -37,8 +37,8 @@ services:
       - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
       - ./fluent-bit/scripts:/fluent-bit/scripts:ro
 
-      # Docker логи контейнеров - необходимо для tail input
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      # Docker логи контейнеров - отключено из-за проблем с read-only FS
+      # - /var/lib/docker/containers:/var/lib/docker/containers:ro
 
       # Системные логи (только доступные)
       - /var/log:/var/log:ro
@@ -62,8 +62,8 @@ services:
       - "24224:24224" # HTTP API
       - "2021:2021" # Prometheus metrics
 
-    # Health check отключен - минималистичный образ без утилит
-    # Сервис функционально работает, API доступен на порту 2020
+    # Health check отключен - минималистичный образ без базовых утилит (wget, curl, ps, pgrep)
+    # Сервис функционально работает, HTTP API доступен на порту 2020, логи обрабатываются
     healthcheck:
       disable: true
 
@@ -429,11 +429,7 @@ services:
 
     # Health check
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:9187/metrics || exit 1",
-        ]
+      test: ["CMD-SHELL", "curl -f http://localhost:9187/metrics || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -493,8 +489,14 @@ services:
     image: gcr.io/cadvisor/cadvisor:v0.47.2
     container_name: erni-ki-cadvisor
 
-    # Команда запуска по умолчанию
-    # command: []
+    # Оптимизированная команда для ускорения отклика
+    command:
+      - "--housekeeping_interval=10s"
+      - "--max_housekeeping_interval=15s"
+      - "--docker_only=true"
+      - "--disable_metrics=disk,network,tcp,udp,percpu,sched,process"
+      - "--store_container_labels=false"
+      - "--whitelisted_container_labels=io.kubernetes.container.name,io.kubernetes.pod.name"
 
     # Минимальные volumes для работы cAdvisor
     volumes:
