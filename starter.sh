@@ -1,84 +1,58 @@
 #!/usr/bin/env bash
 
+VERBOSE=0
 TEMPLATES_DIR="$HOME/.starter-templates"
 TEMPLATE_ID="4b35c72a-6775-41cb-a717-26276f7ae56e"
 
+declare -gA USER_INPUTS
+
 shopt -s nullglob
 
-define_environment_variables () {
-  if [ -z "$EMBEDDING_MODEL" ]; then
-    EMBEDDING_MODEL=nomic-embed-text:latest
-  fi
+collect_user_inputs () {
+  local locker_file="$1"
+  
+  print_message "\nConfiguration inputs [\e[1;35menter for default value\e[0m]\n"
+  
+  # Get all input keys from YAML
+  local keys=($(yq eval '.inputs[].key' "$locker_file"))
+  
+  # Process each input
+  for key in "${keys[@]}"; do
+    local title=$(yq eval ".inputs[] | select(.key == \"$key\") | .title" "$locker_file")
+    local default=$(yq eval ".inputs[] | select(.key == \"$key\") | .default" "$locker_file")
+    local input_type=$(yq eval ".inputs[] | select(.key == \"$key\") | .type" "$locker_file")
 
-  if [ -z "$DECISION_MODEL" ]; then
-    DECISION_MODEL=qwen3:0.6b
-  fi
+    # Handle dynamic inputs
+    if [[ $input_type == "dynamic:RandStr "* ]]; then
+      # Extract length from "dynamic:RandStr 16"
+      local length=${input_type##*RandStr }
+      local random_value=$(openssl rand -hex $((length/2)) | cut -c1-$length)
+      USER_INPUTS[${key^^}]="$random_value"
+      
+    # Handle timezone lookup
+    elif [[ $input_type == "dynamic:Timezone" ]]; then
+      USER_INPUTS[${key^^}]="$(cat /etc/timezone)"
 
-  print_message "\ngenerating secret key"
-  if [ -z $SECRET_KEY ]; then
-    SECRET_KEY=$(openssl rand -hex 32)
-  else
-    print_message "Using provided SECRET_KEY"
-  fi
-
-  print_message "\ncollecting database credentials"
-  if [ -z "$POSTGRES_DB" ]; then
-    POSTGRES_DB=owui$(openssl rand -hex 6)
-  else
-    print_message "Using provided POSTGRES_DB"
-  fi
-  if [ -z "$POSTGRES_HOST" ]; then
-    POSTGRES_HOST=postgres
-  else
-    print_message "Using provided POSTGRES_HOST"
-  fi
-  if [ -z "$POSTGRES_USER" ]; then
-    POSTGRES_USER=user$(openssl rand -hex 6)
-  else
-    print_message "Using provided POSTGRES_USER"
-  fi
-  if [ -z "$POSTGRES_PASSWORD" ]; then
-    POSTGRES_PASSWORD=$(openssl rand -hex 12)
-  else
-    print_message "Using provided POSTGRES_PASSWORD"
-  fi
-
-  DATABASE_URL="postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB"
-  PGVECTOR_DB_URL="postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB"
-
-  print_message "collecting timezone information"
-  if [ -z $TIMEZONE ]; then
-    TIMEZONE=$(cat /etc/timezone)
-  else
-    print_message "Using provided TIMEZONE"
-  fi
-
-  print_message "collecting host credentials"
-  if [ -z "$HOST_PORT" ]; then
-    HOST_PORT=3000
-  else
-    print_message "Using provided HOST_PORT"
-  fi
-
-  print_message "collecting nginx proxy credentials"
-  if [ -z "$NGINX_HOST" ]; then
-    NGINX_HOST=localhost
-  else
-    print_message "Using provided NGINX_HOST"
-  fi
+    # Handle regular inputs with user prompts
+    elif [[ $input_type == "null" || -z $input_type ]]; then
+      echo -e -n "$title [\e[1;35m$default\e[0m]? "
+      read user_input
+      USER_INPUTS[${key^^}]="${user_input:-$default}"
+    fi
+  done
 }
 
 define_setup_variables () {
   if [ -z "$INSTALL_PATH" ]; then
     INSTALL_PATH="$HOME/MyStarters"
   else
-    print_message "Using provided INSTALL_PATH"
+    print_verbose_message "Using provided INSTALL_PATH"
   fi
 
   if [ -z "$TEMPLATES_URL" ]; then
     TEMPLATES_URL="https://codeload.github.com/iamobservable/starter-templates/zip/refs/heads/main"
   else
-    print_message "Using provided TEMPLATE_URL"
+    print_verbose_message "Using provided TEMPLATE_URL"
   fi
 }
 
@@ -100,9 +74,131 @@ fail_if_project_directory_exists () {
   fi
 }
 
-open_browser () {
-  print_message "\nopening $1 (OWUI) in the browser"
-  open $1
+generate_from_template () {
+  local template_dir="$1"
+  local template_id="$2"
+  local install_path="$3"
+  local project_name="$4"
+  local template_path="$template_dir/$template_id"
+  local locker_file="$template_path/locker.yaml.template"
+
+  # 1. create array for template file paths
+  local template_files=()
+
+  # 2. find list of files ending in .template
+  # 3. trim template path prefix from the files found
+  # 4. insert trimmed value into template file paths array
+  while IFS= read -r FULL_PATH; do
+    template_files+=("${FULL_PATH#${template_path}/}")
+  done < <(find "$template_path" -name "*.template" | sort)
+
+  # 5. create a directory in the install_path with the name of the project_name variable
+  print_message "\ncreating new project from template $template_id"
+  print_verbose_message "--> install directory $install_path/$project_name"
+  mkdir -p "$install_path/$project_name"
+
+  # 6. iterate the template file paths array
+  print_message "\ncreating template files"
+  for template_file in "${template_files[@]}"; do
+    # 7. parse the iteration file path value creating a variable for both the file name and basename directory
+    local file_name=$(basename "$template_file")
+    local file_directory=$(dirname "$template_file")
+    
+    # 8. create a directory based on the basename directory, keep in mind the directory may be multiple levels of directories
+    mkdir -p "$install_path/$project_name/$file_directory"
+    
+    # 9. copy the file from the template_path directory into the newly created project directory, remove .template from the end of the file path
+    local source_file="$template_path/$template_file"
+    local dest_file="$install_path/$project_name/${template_file%.*}"
+
+    print_verbose_message "--> template file $dest_file"
+    cp "$source_file" "$dest_file"
+  done
+
+  # 10. fetch all assignments from locker.yaml inside the install_path
+  local assignment_count=$(yq eval '.assignments | length' "$locker_file")
+
+  # 11. iterate all assignments from step #10
+  print_message "\napplying assignments"
+  for ((i=0; i<assignment_count; i++)); do
+    # 12a. create a local variables path, name, format, inputs
+    local path=$(yq eval ".assignments[$i].path" "$locker_file")
+    local file_path="$install_path/$project_name/$path"
+    local name=$(yq eval ".assignments[$i].name" "$locker_file")
+    local uppercase_name="${name^^}"
+    local format=$(yq eval ".assignments[$i].format" "$locker_file")
+    local inputs=($(yq eval ".assignments[$i].inputs[]?" "$locker_file"))
+
+    print_verbose_message "--> updating $path"
+
+    # 12e. create a local variable value that uses printf with the format and inputs to generate a dynamic value
+    local format_args=()
+    for input_key in "${inputs[@]}"; do
+      local uppercase_key="${input_key^^}"
+      format_args+=("${USER_INPUTS[$uppercase_key]}")
+    done
+
+    local value
+    if [[ ${#format_args[@]} -gt 0 ]]; then
+      value=$(printf "$format" "${format_args[@]}")
+    else
+      value="$format"  # No substitution needed
+    fi
+
+    # 13. check if path does not exist in the install path
+    # 13a. if the path does not exist, create a new file based on the path name
+    if [[ $path != "null" ]]; then
+      mkdir -p "$(dirname "$file_path")"
+
+      if [[ ! -f "$file_path" ]]; then
+        touch "$file_path"
+      fi
+
+        # 14. append a new value to the newly created file. the line should be in the format $name="$value"
+      # 15. check if any lines in the file $file_path start with the value $name=. If there are no lines that start with $name=, then append a new line to file_path that is in the format $name="$value" using the uppercased value of $name
+      # only when the file is an environment variable file (.env)
+      if [[ $name == "null" ]]; then
+        echo "$value" >> "$file_path"
+      else
+        if ! grep -q "^$uppercase_name=" "$file_path" && [ "${file_path##*.}" == "env" ]; then
+          echo "$uppercase_name=\"$value\"" >> "$file_path"
+        else
+          echo "$value" >> "$file_path"
+        fi
+      fi
+
+      # 16. use the $name as an environment variable name and $value as the value to substitute
+      # only when the uppercase name is not a comment
+      if ! [ "${uppercase_name:0:1}" == "#" ]; then
+        declare "$uppercase_name=$value"
+        env -i "$uppercase_name=$value" envsubst < "$file_path" > "$file_path.tmp"
+        unset "$uppercase_name"
+        mv "$file_path.tmp" "$file_path"
+      fi
+    fi
+  done
+}
+
+install_yq() {
+  if command -v yq &> /dev/null; then
+    return 0
+  fi
+
+  print_message "\ninstalling yq..."
+  
+  ARCH=$(uname -m)
+  [[ $ARCH == "x86_64" ]] && ARCH="amd64"
+
+  if [[ "$OSTYPE" == "linux-gnu"* ]] || [[ "$OSTYPE" == "linux-musl"* ]]; then
+    curl -fsSL "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_${ARCH}" -o "$HOME/bin/yq"
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    curl -fsSL "https://github.com/mikefarah/yq/releases/latest/download/yq_darwin_${ARCH}" -o "$HOME/bin/yq"
+  else
+    print_error_and_exit "unsupported operating system: $OSTYPE"
+  fi
+
+  chmod +x "$HOME/bin/yq"
+  print_message "yq installed"
 }
 
 print_error () {
@@ -117,8 +213,14 @@ print_error_and_exit () {
   exit
 }
 
+print_verbose_message () {
+  if [ VERBOSE == 1 ]; then
+    echo -e "\e[3;22m\e[2m$1\e[0m"
+  fi
+}
+
 print_message () {
-  echo -e "\033[22m$1\033[0m"
+  echo -e "\e[22m$1\e[0m"
 }
 
 print_usage () {
@@ -146,21 +248,34 @@ print_usage () {
 }
 
 project_boot () {
-  pushd "$1/$2" > /dev/null
-    print_message "\nstarting Ollama container"
-    docker compose up ollama -d
+  local INSTALL_PATH="$1"
+  local PROJECT_NAME="$2"
+  local TEMPLATE_PATH="$3"
 
-    print_message "\ndownloading nomic-embed-text model"
-    docker compose exec ollama ollama pull $EMBEDDING_MODEL
-
-    print_message "\ndownloading $DECISION_MODEL model"
-    docker compose exec ollama ollama pull $DECISION_MODEL
-
-    print_message "\nstarting Postgres container"
-    docker compose up postgres -d
-
-    print_message "\nstarting Openwebui and dependency containers"
-    docker compose up -d
+  pushd "$INSTALL_PATH/$PROJECT_NAME" > /dev/null
+    
+    # Read commands from locker.yaml.template
+    local command_count=$(yq eval '.commands | length' "$TEMPLATE_PATH/locker.yaml.template")
+    
+    # Only proceed if there are commands to execute
+    if [ "$command_count" -gt 0 ]; then
+      print_message "\nexecuting commands from template"
+      
+      # Execute each command
+      for ((i=0; i<command_count; i++)); do
+        local name=$(yq eval ".commands[$i].name" "$TEMPLATE_PATH/locker.yaml.template")
+        local command=$(yq eval ".commands[$i].command" "$TEMPLATE_PATH/locker.yaml.template")
+        
+        print_verbose_message "--> $name ($command)"
+        
+        # Substitute variables in command
+        local executed_command=$(echo "$command" | envsubst)
+        
+        # Execute the command
+        bash -c "$executed_command"
+      done
+    fi
+    
   popd > /dev/null
 }
 
@@ -174,65 +289,26 @@ project_containers () {
 }
 
 project_create () {
-  local TEMPLATE_PATH="$1"
-  local INSTALL_PATH="$2/$3"
+  local PROJECT_NAME="$1"
+  local INSTALL_PATH="$2"
+  local TEMPLATE_DIR="$3"
+  local TEMPLATE_ID="$4"
+  local TEMPLATE_PATH="$TEMPLATE_DIR/$TEMPLATE_ID"
 
-  pushd $TEMPLATE_PATH > /dev/null
-    local PATHS=()
+  fail_if_no_project $PROJECT_NAME
+  fail_if_project_directory_exists "$INSTALL_PATH/$PROJECT_NAME"
 
-    while IFS= read -r FULLPATH; do
-      PATHS+=("${FULLPATH#${TEMPLATE_PATH}/}")
-    done < <(find $TEMPLATE_PATH -name "*.template" | sort)
+  templates_pull "$TEMPLATES_DIR" "$TEMPLATES_URL"
 
-    print_message "\ncreating new project from template $TEMPLATE_ID"
-    print_message "--> install directory $INSTALL_PATH"
+  install_yq
 
-    mkdir -p $1
+  print_message "\nLet's get started building the new environment!"
 
-    print_message "\ncreating template files"
+  collect_user_inputs "$TEMPLATE_PATH/locker.yaml.template"
 
-    for p in "${PATHS[@]}"
-    do
-      local PATHS_FILE_NAME=$(basename $p)
-      local PATHS_TEMPLATE_PATH=$(dirname $p)
+  set_environment_overrides_or_defaults
 
-      if [ -f $p ]; then
-        print_message "--> ${p%.*}"
-
-        mkdir -p "$INSTALL_PATH/$PATHS_TEMPLATE_PATH"
-
-        if [ $PATHS_FILE_NAME == "compose.yaml.template" ]; then
-          cat "$p" | \
-            HOST_PORT=$HOST_PORT \
-            envsubst \
-            '$HOST_PORT' \
-            > "$INSTALL_PATH/${p%.*}"
-        else
-          cat "$p" | \
-            DATABASE_URL=$DATABASE_URL \
-            HOST_PORT=$HOST_PORT \
-            JWT_SECRET=$SECRET_KEY \
-            NGINX_HOST=$NGINX_HOST \
-            PGVECTOR_DB_URL=$PGVECTOR_DB_URL \
-            POSTGRES_DB=$POSTGRES_DB \
-            POSTGRES_HOST=$POSTGRES_HOST \
-            POSTGRES_USER=$POSTGRES_USER \
-            POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
-            RAG_EMBEDDING_MODEL=$EMBEDDING_MODEL \
-            SEARXNG_SECRET=$SECRET_KEY \
-            SEARXNG_BASE_URL="https://$NGINX_HOST:$HOST_PORT/searxng" \
-            TIMEZONE=$TIMEZONE \
-            WEBUI_SECRET_KEY=$SECRET_KEY \
-            WEBUI_URL="https://$NGINX_HOST:$HOST_PORT" \
-            envsubst \
-              '$DATABASE_URL,$HOST_PORT,$JWT_SECRET,$NGINX_HOST,$PGVECTOR_DB_URL,$POSTGRES_DB,$POSTGRES_HOST,$POSTGRES_USER,$POSTGRES_PASSWORD,$RAG_EMBEDDING_MODEL,$SEARXNG_SECRET,$SEARXNG_BASE_URL,$TIMEZONE,$WEBUI_SECRET_KEY,$WEBUI_URL' \
-            > "$INSTALL_PATH/${p%.*}"
-        fi
-      else
-        print_message "skipping $p"
-      fi
-    done
-  popd > /dev/null
+  generate_from_template "$TEMPLATE_DIR" "$TEMPLATE_ID" "$INSTALL_PATH" "$PROJECT_NAME"
 }
 
 project_remove () {
@@ -274,7 +350,6 @@ projects_list () {
       local PROJECT_NAME="$(basename ${FULLPATH#${INSTALL_DIR}/})"
       
       print_message "\n\033[1m$FULLPATH\033[0m"
-      # print_message "   \033[1m$PROJECT_NAME -> \033[3m$FULLPATH"
 
       if [ -f "$FULLPATH/locker.yaml" ]; then
         print_message "\e[1;35;3m$(head -n4 "$FULLPATH/locker.yaml" | tail -n +2)\033[0m"
@@ -289,6 +364,26 @@ set_action_or_fail () {
   else
     print_error_and_exit "command \"$ACTION\" already set. cannot set again to \"$1\""
   fi
+}
+
+set_environment_overrides_or_defaults () {
+  EMBEDDING_MODEL="${EMBEDDING_MODEL:-nomic-embed-text:latest}"
+  DECISION_MODEL="${DECISION_MODEL:-qwen3:0.6b}"
+
+  SECRET_KEY="${SECRET_KEY:-$(openssl rand -hex 32)}"
+
+  POSTGRES_DB="${POSTGRES_DB:-owui$(openssl rand -hex 6)}"
+  POSTGRES_HOST="${POSTGRES_HOST:-postgres}"
+  POSTGRES_USER="${POSTGRES_USER:-user$(openssl rand -hex 6)}"
+  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-$(openssl rand -hex 12)}"
+
+  DATABASE_URL="postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB"
+  PGVECTOR_DB_URL="postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB"
+
+  TIMEZONE="${TIMEZONE:-$(cat /etc/timezone)}"
+
+  HOST_PORT="${HOST_PORT:-${USER_INPUTS[PORT]:-3000}}"
+  NGINX_HOST="${NGINX_HOST:-${USER_INPUTS[HOST]:-localhost}}"
 }
 
 template_copy () {
@@ -326,7 +421,7 @@ templates_pull () {
   local PULLTMP=`mktemp -d /tmp/open-webui-starter.XXXXXXXXXXX` || exit 1
 
   pushd $PULLTMP > /dev/null
-    print_message "\npulling latest templates"
+    print_verbose_message "\npulling latest templates"
     curl -fsSL $2 > templates.zip
 
     local SHABASE="$(basename $2)"
@@ -334,13 +429,13 @@ templates_pull () {
     mkdir -p --mode 750 ./unzip
     unzip -q templates.zip -d ./unzip
 
-    while IFS= read -r FULLPATH; do
-      ITEM_NAME=$(basename $FULLPATH)
+    while IFS= read -r FULL_PATH; do
+      ITEM_NAME=$(basename $FULL_PATH)
 
-      if !(diff $HOME/.starter-templates/$ITEM_NAME $FULLPATH > /dev/null 2>&1); then
-        echo "updating template $ITEM_NAME"
-        rm -rfv $HOME/.starter-templates/$ITEM_NAME
-        cp -rf $FULLPATH $HOME/.starter-templates/$ITEM_NAME
+      if !(diff $HOME/.starter-templates/$ITEM_NAME $FULL_PATH > /dev/null 2>&1); then
+        print_verbose_message "\nupdating template $ITEM_NAME"
+        rm -rf $HOME/.starter-templates/$ITEM_NAME
+        cp -rf $FULL_PATH $HOME/.starter-templates/$ITEM_NAME
       fi
     done < <(find ./unzip/starter-templates-$SHABASE/* -maxdepth 0 -mindepth 0 | sort)
   popd > /dev/null
@@ -359,7 +454,7 @@ update_starter () {
 
 set -e
 
-options=$(getopt -l "containers,copytemplate,create,remove,nopull,projects,pull,stop,start,template,templates,update,help" -o "cpruh" -- "$@")
+options=$(getopt -l "containers,copytemplate,create,remove,nopull,projects,pull,stop,start,template,templates,update,verbose,help" -o "cpruvh" -- "$@")
 eval set -- "$options"
 
 define_setup_variables 
@@ -404,6 +499,9 @@ while [ $# -gt 0 ]; do
   -u|--update)
     set_action_or_fail "update"
     ;;
+  -v|--verbose)
+    VERBOSE=1
+    ;;
   -h|--help)
     set_action_or_fail "help"
     ;;
@@ -429,14 +527,9 @@ copytemplate)
   ;;
 create)
   PROJECT_NAME="$1"
-  fail_if_no_project $PROJECT_NAME
-  fail_if_project_directory_exists "$INSTALL_PATH/$PROJECT_NAME"
-
-  templates_pull "$TEMPLATES_DIR" "$TEMPLATES_URL"
-
-  define_environment_variables
-  project_create "$TEMPLATES_DIR/$TEMPLATE_ID" "$INSTALL_PATH" "$PROJECT_NAME"
-  project_boot "$INSTALL_PATH" "$PROJECT_NAME"
+  project_create "$PROJECT_NAME" "$INSTALL_PATH" "$TEMPLATES_DIR" "$TEMPLATE_ID"
+  exit
+  project_boot "$INSTALL_PATH" "$PROJECT_NAME" "$TEMPLATES_DIR/$TEMPLATE_ID"
   ;;
 projects)
   projects_list "$INSTALL_PATH"
