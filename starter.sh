@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERBOSE=0
+VERBOSE=1
 TEMPLATES_DIR="$HOME/.starter-templates"
 TEMPLATE_ID="4b35c72a-6775-41cb-a717-26276f7ae56e"
 
@@ -29,7 +29,7 @@ collect_user_inputs () {
       local random_value=$(openssl rand -hex $((length/2)) | cut -c1-$length)
       USER_INPUTS[${key^^}]="$random_value"
       
-    # Handle timezone lookup
+    # Handle Timezone lookup
     elif [[ $input_type == "dynamic:Timezone" ]]; then
       USER_INPUTS[${key^^}]="$(cat /etc/timezone)"
 
@@ -82,32 +82,31 @@ generate_from_template () {
   local template_path="$template_dir/$template_id"
   local locker_file="$template_path/locker.yaml.template"
 
-  # 1. create array for template file paths
+  # create array for template file paths
   local template_files=()
 
-  # 2. find list of files ending in .template
-  # 3. trim template path prefix from the files found
-  # 4. insert trimmed value into template file paths array
+  # find list of files ending in .template
+  # trim template path prefix from the files found
   while IFS= read -r FULL_PATH; do
     template_files+=("${FULL_PATH#${template_path}/}")
   done < <(find "$template_path" -name "*.template" | sort)
 
-  # 5. create a directory in the install_path with the name of the project_name variable
+  # create a directory in the install_path with the name of the project_name variable
   print_message "\ncreating new project from template $template_id"
   print_verbose_message "--> install directory $install_path/$project_name"
   mkdir -p "$install_path/$project_name"
 
-  # 6. iterate the template file paths array
+  # iterate the template file paths array
   print_message "\ncreating template files"
   for template_file in "${template_files[@]}"; do
-    # 7. parse the iteration file path value creating a variable for both the file name and basename directory
+    # parse the iteration file path value creating a variable for both the file name and basename directory
     local file_name=$(basename "$template_file")
     local file_directory=$(dirname "$template_file")
     
-    # 8. create a directory based on the basename directory, keep in mind the directory may be multiple levels of directories
+    # create a directory based on the basename directory, keep in mind the directory may be multiple levels of directories
     mkdir -p "$install_path/$project_name/$file_directory"
     
-    # 9. copy the file from the template_path directory into the newly created project directory, remove .template from the end of the file path
+    # copy the file from the template_path directory into the newly created project directory, remove .template from the end of the file path
     local source_file="$template_path/$template_file"
     local dest_file="$install_path/$project_name/${template_file%.*}"
 
@@ -115,14 +114,15 @@ generate_from_template () {
     cp "$source_file" "$dest_file"
   done
 
-  # 10. fetch all assignments from locker.yaml inside the install_path
+  # fetch all assignments from locker.yaml inside the install_path
   local assignment_count=$(yq eval '.assignments | length' "$locker_file")
 
-  # 11. iterate all assignments from step #10
+  # iterate all assignments from step #10
   print_message "\napplying assignments"
   for ((i=0; i<assignment_count; i++)); do
-    # 12a. create a local variables path, name, format, inputs
+    # create a local variables path, name, format, inputs
     local path=$(yq eval ".assignments[$i].path" "$locker_file")
+    local service=$(yq eval ".assignments[$i].service" "$locker_file")
     local file_path="$install_path/$project_name/$path"
     local name=$(yq eval ".assignments[$i].name" "$locker_file")
     local uppercase_name="${name^^}"
@@ -131,7 +131,7 @@ generate_from_template () {
 
     print_verbose_message "--> updating $path"
 
-    # 12e. create a local variable value that uses printf with the format and inputs to generate a dynamic value
+    # create a local variable value that uses printf with the format and inputs to generate a dynamic value
     local format_args=()
     for input_key in "${inputs[@]}"; do
       local uppercase_key="${input_key^^}"
@@ -145,8 +145,8 @@ generate_from_template () {
       value="$format"  # No substitution needed
     fi
 
-    # 13. check if path does not exist in the install path
-    # 13a. if the path does not exist, create a new file based on the path name
+    # check if path does not exist in the install path
+    # if the path does not exist, create a new file based on the path name
     if [[ $path != "null" ]]; then
       mkdir -p "$(dirname "$file_path")"
 
@@ -154,24 +154,21 @@ generate_from_template () {
         touch "$file_path"
       fi
 
-        # 14. append a new value to the newly created file. the line should be in the format $name="$value"
-      # 15. check if any lines in the file $file_path start with the value $name=. If there are no lines that start with $name=, then append a new line to file_path that is in the format $name="$value" using the uppercased value of $name
-      # only when the file is an environment variable file (.env)
+      # append a new value to the newly created file. the line should be in the format $name="$value"
+      # check if any lines in the file $file_path start with the value $name=. If there are no lines that start with $name=, then append a new line to file_path that is in the format $name="$value" using the uppercased value of $name
       if [[ $name == "null" ]]; then
-        echo "$value" >> "$file_path"
+        echo "$value" > "$file_path"
       else
         if ! grep -q "^$uppercase_name=" "$file_path" && [ "${file_path##*.}" == "env" ]; then
           echo "$uppercase_name=\"$value\"" >> "$file_path"
-        else
-          echo "$value" >> "$file_path"
         fi
       fi
 
-      # 16. use the $name as an environment variable name and $value as the value to substitute
+      # use the $name as an environment variable name and $value as the value to substitute
       # only when the uppercase name is not a comment
       if ! [ "${uppercase_name:0:1}" == "#" ]; then
         declare "$uppercase_name=$value"
-        env -i "$uppercase_name=$value" envsubst < "$file_path" > "$file_path.tmp"
+        env -i "$uppercase_name=$value" envsubst '$'"$uppercase_name" < "$file_path" > "$file_path.tmp"
         unset "$uppercase_name"
         mv "$file_path.tmp" "$file_path"
       fi
@@ -214,7 +211,7 @@ print_error_and_exit () {
 }
 
 print_verbose_message () {
-  if [ VERBOSE == 1 ]; then
+  if [ $VERBOSE == 1 ]; then
     echo -e "\e[3;22m\e[2m$1\e[0m"
   fi
 }
@@ -247,38 +244,6 @@ print_usage () {
   echo
 }
 
-project_boot () {
-  local INSTALL_PATH="$1"
-  local PROJECT_NAME="$2"
-  local TEMPLATE_PATH="$3"
-
-  pushd "$INSTALL_PATH/$PROJECT_NAME" > /dev/null
-    
-    # Read commands from locker.yaml.template
-    local command_count=$(yq eval '.commands | length' "$TEMPLATE_PATH/locker.yaml.template")
-    
-    # Only proceed if there are commands to execute
-    if [ "$command_count" -gt 0 ]; then
-      print_message "\nexecuting commands from template"
-      
-      # Execute each command
-      for ((i=0; i<command_count; i++)); do
-        local name=$(yq eval ".commands[$i].name" "$TEMPLATE_PATH/locker.yaml.template")
-        local command=$(yq eval ".commands[$i].command" "$TEMPLATE_PATH/locker.yaml.template")
-        
-        print_verbose_message "--> $name ($command)"
-        
-        # Substitute variables in command
-        local executed_command=$(echo "$command" | envsubst)
-        
-        # Execute the command
-        bash -c "$executed_command"
-      done
-    fi
-    
-  popd > /dev/null
-}
-
 project_containers () {
   fail_if_no_project $2
   fail_if_project_directory_does_not_exist "$1/$2"
@@ -293,7 +258,7 @@ project_create () {
   local INSTALL_PATH="$2"
   local TEMPLATE_DIR="$3"
   local TEMPLATE_ID="$4"
-  local TEMPLATE_PATH="$TEMPLATE_DIR/$TEMPLATE_ID"
+  local LOCKER_YAML="$TEMPLATE_DIR/$TEMPLATE_ID/locker.yaml.template"
 
   fail_if_no_project $PROJECT_NAME
   fail_if_project_directory_exists "$INSTALL_PATH/$PROJECT_NAME"
@@ -302,13 +267,62 @@ project_create () {
 
   install_yq
 
-  print_message "\nLet's get started building the new environment!"
+  print_message "\nLet's get started building a new environment!"
 
-  collect_user_inputs "$TEMPLATE_PATH/locker.yaml.template"
+  collect_user_inputs "$LOCKER_YAML"
 
   set_environment_overrides_or_defaults
 
   generate_from_template "$TEMPLATE_DIR" "$TEMPLATE_ID" "$INSTALL_PATH" "$PROJECT_NAME"
+}
+
+project_initiate () {
+  local INSTALL_PATH="$1"
+  local PROJECT_NAME="$2"
+  local LOCKER_YAML="$INSTALL_PATH/$PROJECT_NAME/locker.yaml"
+
+  print_message "\ninitiating project"
+
+  pushd "$INSTALL_PATH/$PROJECT_NAME" > /dev/null
+    
+    # Read commands from locker.yaml.template
+    local command_count=$(yq eval '.commands | length' "$LOCKER_YAML")
+    
+    # Only proceed if there are commands to execute
+    if [ "$command_count" -gt 0 ]; then
+      print_message "\nexecuting commands from template"
+      
+      # Execute each command
+      for ((i=0; i<command_count; i++)); do
+        local name=$(yq eval ".commands[$i].name" "$LOCKER_YAML")
+        local command=$(yq eval ".commands[$i].command" "$LOCKER_YAML")
+        local inputs=($(yq eval ".commands[$i].inputs[]?" "$LOCKER_YAML"))
+
+        # create a local variable value that uses printf with the format and inputs to generate a dynamic value
+        local command_args=()
+
+        for input_key in "${inputs[@]}"; do
+          local uppercase_key="${input_key^^}"
+          command_args+=("${USER_INPUTS[$uppercase_key]}")
+        done
+
+        local value
+        if [[ ${#command_args[@]} -gt 0 ]]; then
+          command_with_subst=$(printf "$command" "${command_args[@]}")
+        else
+          command_with_subst="$command"  # No substitution needed
+        fi
+
+        print_verbose_message "--> $name ($command_with_subst)"
+        
+        # Execute the command
+        bash -c "$command_with_subst"
+      done
+    fi
+    
+  popd > /dev/null
+
+  print_message "\ninitiation complete"
 }
 
 project_remove () {
@@ -321,7 +335,7 @@ project_remove () {
   popd > /dev/null
 
   print_message "\nremoving files and directory"
-  rm -rfv "$1/$2"
+  rm -rf "$1/$2"
 }
 
 project_start () {
@@ -346,13 +360,13 @@ projects_list () {
   local INSTALL_DIR="$1"
 
   pushd $INSTALL_DIR > /dev/null
-    while IFS= read -r FULLPATH; do
-      local PROJECT_NAME="$(basename ${FULLPATH#${INSTALL_DIR}/})"
+    while IFS= read -r FULL_PATH; do
+      local PROJECT_NAME="$(basename ${FULL_PATH#${INSTALL_DIR}/})"
       
-      print_message "\n\033[1m$FULLPATH\033[0m"
+      print_message "\n\033[1m$FULL_PATH\033[0m"
 
-      if [ -f "$FULLPATH/locker.yaml" ]; then
-        print_message "\e[1;35;3m$(head -n4 "$FULLPATH/locker.yaml" | tail -n +2)\033[0m"
+      if [ -f "$FULL_PATH/locker.yaml" ]; then
+        print_message "\e[1;35;3m$(head -n4 "$FULL_PATH/locker.yaml" | tail -n +2)\033[0m"
       fi
     done < <(find $INSTALL_DIR -maxdepth 1 -mindepth 1 -type d | sort)
   popd > /dev/null
@@ -382,8 +396,8 @@ set_environment_overrides_or_defaults () {
 
   TIMEZONE="${TIMEZONE:-$(cat /etc/timezone)}"
 
-  HOST_PORT="${HOST_PORT:-${USER_INPUTS[PORT]:-3000}}"
-  NGINX_HOST="${NGINX_HOST:-${USER_INPUTS[HOST]:-localhost}}"
+  HOST_PORT="${HOST_PORT:-${USER_INPUTS[HOST_PORT]:-3000}}"
+  NGINX_HOST="${NGINX_HOST:-${USER_INPUTS[NGINX_HOST]:-localhost}}"
 }
 
 template_copy () {
@@ -398,10 +412,10 @@ template_copy () {
 
 templates_list () {
   pushd $1 > /dev/null
-    while IFS= read -r FULLPATH; do
-      local UUID="$(basename ${FULLPATH#${INSTALL_DIR}/})"
+    while IFS= read -r FULL_PATH; do
+      local UUID="$(basename ${FULL_PATH#${INSTALL_DIR}/})"
       
-      print_message "\n\033[1m$FULLPATH\033[0m"
+      print_message "\n\033[1m$FULL_PATH\033[0m"
 
       if [ -f "$UUID/locker.yaml.template" ]; then
         print_message "\e[1;35;3m$(head -n4 "$UUID/locker.yaml.template" | tail -n +2)\033[0m"
@@ -454,7 +468,7 @@ update_starter () {
 
 set -e
 
-options=$(getopt -l "containers,copytemplate,create,remove,nopull,projects,pull,stop,start,template,templates,update,verbose,help" -o "cpruvh" -- "$@")
+options=$(getopt -l "containers,copytemplate,create,nopull,projects,pull,remove,stop,start,template,templates,update,verbose,help" -o "cpruvh" -- "$@")
 eval set -- "$options"
 
 define_setup_variables 
@@ -499,9 +513,6 @@ while [ $# -gt 0 ]; do
   -u|--update)
     set_action_or_fail "update"
     ;;
-  -v|--verbose)
-    VERBOSE=1
-    ;;
   -h|--help)
     set_action_or_fail "help"
     ;;
@@ -528,8 +539,7 @@ copytemplate)
 create)
   PROJECT_NAME="$1"
   project_create "$PROJECT_NAME" "$INSTALL_PATH" "$TEMPLATES_DIR" "$TEMPLATE_ID"
-  exit
-  project_boot "$INSTALL_PATH" "$PROJECT_NAME" "$TEMPLATES_DIR/$TEMPLATE_ID"
+  project_initiate "$INSTALL_PATH" "$PROJECT_NAME"
   ;;
 projects)
   projects_list "$INSTALL_PATH"
