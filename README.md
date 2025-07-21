@@ -15,8 +15,7 @@ and available [Starter Templates](https://github.com/iamobservable/starter-templ
 
 ## 👷 Project Overview
 
-The Open WebUI Starter project is an entry point into using the open-source project Open WebUI. The goal is to simplify setup and configuration. Open WebUI 
-integrates with various Large Language Models (LLMs) and provides a private, user-friendly, and local interface for interacting with computer intelligence.
+The Open WebUI Starter project is an entry point into using the open-source project Open WebUI. The goal is to simplify setup and configuration. Open WebUI integrates with various Large Language Models (LLMs) and provides a private, user-friendly, and local interface for interacting with computer intelligence.
 
 Here is a link to follow 🔗[project development](https://github.com/users/iamobservable/projects/1).
 
@@ -141,34 +140,9 @@ starter
 - A powershell script has not yet been created for Windows
 
 
-#### Environment variables
+#### Configuration Inputs
 
-A more detailed configuration can be used with the script by providing one or
-more of the following environment variables.
-
-```
-EMBEDDING_MODEL
-DECISION_MODEL
-HOST_PORT
-INSTALL_PATH
-NGINX_HOST
-POSTGRES_DB
-POSTGRES_HOST
-POSTGRES_USER
-POSTGRES_PASSWORD
-SECRET_KEY
-TEMPLATES_URL
-TIMEZONE
-```
-
-e.g.
-
-```bash
-DECISION_MODEL=qwen3:4b starter -c project-name
-```
-
-
-Once the installation script is complete, [open OWUI in your browser](http://localhost:3000/).
+After starting the installation, some configurations will be requested. Default values are already set, so just press enter/return if you want to accept the default values.
 
 
 ---
