@@ -28,16 +28,27 @@ collect_user_inputs () {
       local length=${input_type##*RandStr }
       local random_value=$(openssl rand -hex $((length/2)) | cut -c1-$length)
       USER_INPUTS[${key^^}]="$random_value"
+      print_verbose_message "--> dynamic:RandStr ${key^^} $random_value"
       
     # Handle Timezone lookup
     elif [[ $input_type == "dynamic:Timezone" ]]; then
-      USER_INPUTS[${key^^}]="$(cat /etc/timezone)"
+      system_timezone="$(cat /etc/timezone)"
+      USER_INPUTS[${key^^}]="$system_timezone"
+      print_verbose_message "--> dynamic:Timezone ${key^^} $system_timezone"
+
+    # Handle static string
+    elif [[ $input_type == "static:Str "* ]]; then
+      # Extract static string from "static:String a static string"
+      local static_string=${input_type##*String }
+      USER_INPUTS[${key^^}]="$static_string"
+      print_verbose_message "--> static:Str ${key^^} $static_string"
 
     # Handle regular inputs with user prompts
     elif [[ $input_type == "null" || -z $input_type ]]; then
       echo -e -n "$title [\e[1;35m$default\e[0m]? "
       read user_input
       USER_INPUTS[${key^^}]="${user_input:-$default}"
+      print_verbose_message "--> human:input ${key^^} ${user_input:-$default}"
     fi
   done
 }

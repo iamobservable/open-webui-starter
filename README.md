@@ -144,6 +144,17 @@ starter
 
 After starting the installation, some configurations will be requested. Default values are already set, so just press enter/return if you want to accept the default values.
 
+##### Input Types
+
+The starter script supports several input types for dynamic configuration:
+
+- **User Input**: Standard prompts that ask for user input with default values
+- **Dynamic Inputs**:
+  - `dynamic:RandStr N` - Generates a random string of length N (e.g., `dynamic:RandStr 16`)
+  - `dynamic:Timezone` - Automatically detects and uses the system timezone
+- **Static Inputs**:
+  - `static:Str value` - Sets a static string value without user prompt (e.g., `static:Str hello world`)
+
 
 ---
 
