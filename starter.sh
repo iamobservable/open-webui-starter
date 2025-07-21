@@ -39,7 +39,8 @@ collect_user_inputs () {
     # Handle static string
     elif [[ $input_type == "static:Str "* ]]; then
       # Extract static string from "static:String a static string"
-      local static_string=${input_type##*String }
+      local static_string=${input_type##*Str }
+      print_verbose_message "----> $static_string"
       USER_INPUTS[${key^^}]="$static_string"
       print_verbose_message "--> static:Str ${key^^} $static_string"
 
