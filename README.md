@@ -28,12 +28,13 @@ Here is a link to follow 🔗[project development](https://github.com/users/iamo
 4. [Dependencies](#dependencies)
 5. [Installation](#installation)
 6. [Starter Templates](https://github.com/iamobservable/starter-templates)
-7. [JWT Auth Validator Purpose](https://github.com/iamobservable/starter-templates/tree/main/4b35c72a-6775-41cb-a717-26276f7ae56e#jwt-auth-validator-purpose)
-8. [Additional Setup](https://github.com/iamobservable/starter-templates/tree/main/4b35c72a-6775-41cb-a717-26276f7ae56e#additional-setup)
-9. [Service Examples](https://github.com/iamobservable/starter-templates/tree/main/4b35c72a-6775-41cb-a717-26276f7ae56e#service-examples)
-10. [Contribution](#-contribution)
-11. [Star History](#-star-history)
-12. [License](#license)
+7. [Learn About Templates](https://github.com/iamobservable/starter-templates#locker-yaml-definition)
+8. [JWT Auth Validator Purpose](https://github.com/iamobservable/starter-templates/tree/main/4b35c72a-6775-41cb-a717-26276f7ae56e#jwt-auth-validator-purpose)
+9. [Additional Setup](https://github.com/iamobservable/starter-templates/tree/main/4b35c72a-6775-41cb-a717-26276f7ae56e#additional-setup)
+10. [Service Examples](https://github.com/iamobservable/starter-templates/tree/main/4b35c72a-6775-41cb-a717-26276f7ae56e#service-examples)
+11. [Contribution](#-contribution)
+12. [Star History](#-star-history)
+13. [License](#license)
 
 ---
 
@@ -138,22 +139,6 @@ starter
 - This script has been tested in a linux environment
 - This script has not yet been tested in a macOS environment
 - A powershell script has not yet been created for Windows
-
-
-#### Configuration Inputs
-
-After starting the installation, some configurations will be requested. Default values are already set, so just press enter/return if you want to accept the default values.
-
-##### Input Types
-
-The starter script supports several input types for dynamic configuration:
-
-- **User Input**: Standard prompts that ask for user input with default values
-- **Dynamic Inputs**:
-  - `dynamic:RandStr N` - Generates a random string of length N (e.g., `dynamic:RandStr 16`)
-  - `dynamic:Timezone` - Automatically detects and uses the system timezone
-- **Static Inputs**:
-  - `static:Str value` - Sets a static string value without user prompt (e.g., `static:Str hello world`)
 
 
 ---
