@@ -55,7 +55,7 @@ how small—would go a long way. Together, we can keep this community thriving!
 
 ## Tooling and Applications
 
-The starter project includes the following tooling and applications. A [Service Architecture Diagram](https://github.com/iamobservable/open-webui-starter/blob/main/docs/service-architecture-diagram.md) is also available that describes how the components are connected.
+The starter project includes the following tooling and applications. A [Service Architecture Diagram](https://github.com/iamobservable/starter-templates/blob/main/4b35c72a-6775-41cb-a717-26276f7ae56e/docs/service-architecture-diagram.md) is also available that describes how the components are connected.
 
 - **[JWT Auth Validator](https://github.com/iamobservable/jwt-auth-validator)**: Provides a service for the Nginx proxy to validate the OWUI token signature for restricting access
 - **[Docling](https://github.com/docling-project/docling-serve)**: Simplifies document processing, parsing diverse formats — including advanced PDF understanding — and providing seamless integrations with the gen AI ecosystem (created by IBM)
