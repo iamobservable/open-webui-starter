@@ -59,7 +59,7 @@ The starter project includes the following tooling and applications. A [Service 
 
 - **[JWT Auth Validator](https://github.com/iamobservable/jwt-auth-validator)**: Provides a service for the Nginx proxy to validate the OWUI token signature for restricting access
 - **[Docling](https://github.com/docling-project/docling-serve)**: Simplifies document processing, parsing diverse formats — including advanced PDF understanding — and providing seamless integrations with the gen AI ecosystem (created by IBM)
-- **[Edge TTS](https://github.com/rany2/edge-tts)**: Python module that using Microsoft Edge's online text-to-speech service
+- **[Edge TTS](https://github.com/rany2/edge-tts)**: Python module that uses Microsoft Edge's online text-to-speech service
 - **[MCP Server](https://modelcontextprotocol.io/introduction)**: Open protocol that standardizes how applications provide context to LLMs
 - **[Nginx](https://nginx.org/)**: Web server, reverse proxy, load balancer, mail proxy, and HTTP cache
 - **[Ollama](https://ollama.com/)**: Local service API serving open source large language models
