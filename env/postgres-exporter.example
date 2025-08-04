@@ -1,0 +1,60 @@
+# PostgreSQL Exporter Configuration для ERNI-KI
+# Экспортер метрик PostgreSQL для Prometheus
+
+# === Подключение к базе данных ===
+# URL подключения к PostgreSQL
+DATA_SOURCE_NAME=postgresql://postgres:your-password-here@db:5432/openwebui?sslmode=disable
+# Имя базы данных для мониторинга
+PG_EXPORTER_DATABASE=openwebui
+# Пользователь для подключения
+PG_EXPORTER_USER=postgres
+
+# === Веб-сервер ===
+# Адрес для привязки
+PG_EXPORTER_WEB_LISTEN_ADDRESS=0.0.0.0:9187
+# Путь к метрикам
+PG_EXPORTER_WEB_TELEMETRY_PATH=/metrics
+
+# === Запросы и метрики ===
+# Путь к файлу с пользовательскими запросами
+PG_EXPORTER_EXTEND_QUERY_PATH=/etc/postgres_exporter/queries.yaml
+# Включить сбор метрик по умолчанию
+PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
+# Исключить системные базы данных
+PG_EXPORTER_EXCLUDE_DATABASES=template0,template1
+
+# === Производительность ===
+# Таймаут для запросов к базе данных
+PG_EXPORTER_QUERY_TIMEOUT=5
+# Максимальное количество открытых соединений
+PG_EXPORTER_MAX_OPEN_CONNECTIONS=3
+# Максимальное количество idle соединений
+PG_EXPORTER_MAX_IDLE_CONNECTIONS=3
+
+# === Логирование ===
+# Уровень логирования
+PG_EXPORTER_LOG_LEVEL=info
+# Формат логов
+PG_EXPORTER_LOG_FORMAT=logfmt
+
+# === Безопасность ===
+# Отключить SSL для внутренней сети
+PG_EXPORTER_DISABLE_DEFAULT_METRICS=false
+# Отключить сбор настроек (может содержать чувствительную информацию)
+PG_EXPORTER_DISABLE_SETTINGS_METRICS=true
+
+# === Специфичные метрики ===
+# Включить метрики по таблицам
+PG_EXPORTER_INCLUDE_TABLE_METRICS=true
+# Включить метрики по индексам
+PG_EXPORTER_INCLUDE_INDEX_METRICS=true
+# Включить метрики блокировок
+PG_EXPORTER_INCLUDE_LOCK_METRICS=true
+# Включить метрики репликации
+PG_EXPORTER_INCLUDE_REPLICATION_METRICS=false
+
+# === Кэширование ===
+# Время кэширования метрик (секунды)
+PG_EXPORTER_CACHE_SECONDS=30
+# Включить кэширование
+PG_EXPORTER_ENABLE_CACHE=true

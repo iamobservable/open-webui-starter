@@ -1,0 +1,62 @@
+# Kibana Configuration для ERNI-KI
+# Веб-интерфейс для анализа логов Elasticsearch
+
+# === Основные настройки ===
+# Имя сервера
+SERVER_NAME=kibana.your-domain.com
+# Хост для привязки
+SERVER_HOST=0.0.0.0
+# Порт
+SERVER_PORT=5601
+
+# === Elasticsearch подключение ===
+# URL Elasticsearch сервера
+ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+# Таймаут подключения к Elasticsearch
+ELASTICSEARCH_REQUESTTIMEOUT=30000
+# Интервал проверки доступности Elasticsearch
+ELASTICSEARCH_PINGINTERVAL=1500
+
+# === Безопасность ===
+# Отключить SSL для внутренней сети
+SERVER_SSL_ENABLED=false
+# Отключить проверку SSL сертификатов Elasticsearch
+ELASTICSEARCH_SSL_VERIFICATIONMODE=none
+
+# === Логирование ===
+# Уровень логирования
+LOGGING_LEVEL=info
+# Формат логов
+LOGGING_JSON=false
+# Путь к файлу логов
+LOGGING_DEST=/var/log/kibana/kibana.log
+
+# === Интерфейс ===
+# Базовый путь для URL
+SERVER_BASEPATH=/kibana
+# Переписывание базового пути
+SERVER_REWRITEBASEPATH=true
+
+# === Производительность ===
+# Максимальный размер payload
+SERVER_MAXPAYLOADBYTES=1048576
+# Таймаут сокета
+SERVER_SOCKETTIMEOUT=120000
+
+# === Мониторинг ===
+# Включить мониторинг состояния
+MONITORING_ENABLED=true
+# Интервал сбора метрик мониторинга
+MONITORING_COLLECTION_INTERVAL=10000
+
+# === Индексы ===
+# Паттерн индекса по умолчанию
+KIBANA_INDEX=.kibana
+# Автоматическое создание индекса паттернов
+KIBANA_DEFAULTAPPID=discover
+
+# === Оптимизация ===
+# Размер кэша запросов
+ELASTICSEARCH_REQUESTHEADERSWHITELIST=["authorization", "content-type"]
+# Максимальное количество одновременных запросов
+ELASTICSEARCH_MAXSOCKETS=1024

@@ -1,0 +1,56 @@
+# cAdvisor Configuration для ERNI-KI
+# Мониторинг контейнеров Docker
+
+# === Основные настройки ===
+# Порт для веб-интерфейса
+CADVISOR_PORT=8080
+# Интервал сбора метрик (секунды)
+CADVISOR_HOUSEKEEPING_INTERVAL=10s
+# Максимальное количество хранимых точек данных
+CADVISOR_MAX_HOUSEKEEPING_INTERVAL=15s
+
+# === Хранение данных ===
+# Время хранения данных в памяти (2 минуты)
+CADVISOR_STORAGE_DURATION=2m0s
+# Отключить локальное хранение (используем Prometheus)
+CADVISOR_DISABLE_METRICS=disk,network,tcp,udp,percpu,sched,process
+
+# === Docker настройки ===
+# Путь к Docker socket
+CADVISOR_DOCKER_SOCKET=/var/run/docker.sock
+# Только Docker контейнеры
+CADVISOR_DOCKER_ONLY=true
+# Включить Docker labels в метрики
+CADVISOR_STORE_CONTAINER_LABELS=true
+
+# === Производительность ===
+# Отключить сбор метрик файловой системы для производительности
+CADVISOR_DISABLE_ROOT_CGROUP_STATS=false
+# Включить профилирование
+CADVISOR_PROFILING=false
+# Максимальное количество процессов для мониторинга
+CADVISOR_MAX_PROCS=5000
+
+# === Логирование ===
+# Уровень логирования
+CADVISOR_LOG_LEVEL=INFO
+# Логировать в stderr
+CADVISOR_LOGTOSTDERR=true
+
+# === Безопасность ===
+# Отключить аутентификацию для внутренней сети
+CADVISOR_HTTP_AUTH_FILE=
+# Отключить HTTPS
+CADVISOR_HTTP_DIGEST_FILE=
+
+# === Метрики ===
+# Включить метрики Prometheus
+CADVISOR_PROMETHEUS_ENDPOINT=/metrics
+# Отключить метрики, которые не нужны
+CADVISOR_DISABLE_METRICS=percpu,sched,tcp,udp,disk,diskIO,accelerator
+
+# === Ресурсы ===
+# Ограничение памяти для cAdvisor
+CADVISOR_MEMORY_LIMIT=256M
+# CPU лимит
+CADVISOR_CPU_LIMIT=0.5

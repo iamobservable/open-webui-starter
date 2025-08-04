@@ -1,0 +1,62 @@
+# Grafana Configuration для ERNI-KI
+# Система визуализации метрик и дашбордов
+
+# === Основные настройки ===
+# Режим установки (production для стабильной работы)
+GF_INSTALL_PLUGINS=
+# Отключить проверку обновлений
+GF_INSTALL_PLUGINS_CHECK_FOR_UPDATES=false
+
+# === Безопасность ===
+# Секретный ключ для подписи cookies (сгенерируйте уникальный)
+GF_SECURITY_SECRET_KEY=your-grafana-secret-key-here
+# Админ пользователь
+GF_SECURITY_ADMIN_USER=admin
+# Админ пароль (измените на безопасный)
+GF_SECURITY_ADMIN_PASSWORD=your-admin-password-here
+# Отключить регистрацию новых пользователей
+GF_USERS_ALLOW_SIGN_UP=false
+# Отключить анонимный доступ
+GF_AUTH_ANONYMOUS_ENABLED=false
+
+# === Сервер ===
+# Домен для доступа
+GF_SERVER_DOMAIN=grafana.your-domain.com
+# Корневой URL
+GF_SERVER_ROOT_URL=http://grafana.your-domain.com:3000
+# HTTP порт
+GF_SERVER_HTTP_PORT=3000
+# Протокол
+GF_SERVER_PROTOCOL=http
+
+# === База данных ===
+# Тип базы данных (sqlite3 для простоты)
+GF_DATABASE_TYPE=sqlite3
+# Путь к файлу базы данных
+GF_DATABASE_PATH=/var/lib/grafana/grafana.db
+
+# === Логирование ===
+# Уровень логирования
+GF_LOG_LEVEL=info
+# Режим логирования
+GF_LOG_MODE=console,file
+# Путь к файлу логов
+GF_LOG_FILE_PATH=/var/log/grafana/grafana.log
+
+# === Аналитика ===
+# Отключить отправку аналитики
+GF_ANALYTICS_REPORTING_ENABLED=false
+# Отключить проверку обновлений
+GF_ANALYTICS_CHECK_FOR_UPDATES=false
+
+# === Плагины ===
+# Разрешить загрузку неподписанных плагинов
+GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=
+# Путь к плагинам
+GF_PATHS_PLUGINS=/var/lib/grafana/plugins
+
+# === Dashboards ===
+# Путь к провайдерам дашбордов
+GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+# Автоматическое обновление дашбордов
+GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/home.json

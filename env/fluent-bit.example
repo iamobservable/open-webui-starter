@@ -1,0 +1,68 @@
+# Fluent Bit Configuration для ERNI-KI
+# Система сбора и пересылки логов
+
+# === Основные настройки ===
+# Уровень логирования Fluent Bit
+FLB_LOG_LEVEL=info
+# Интервал flush буферов (секунды)
+FLB_FLUSH_INTERVAL=5
+# Размер буфера для чтения логов
+FLB_BUFFER_SIZE=32k
+
+# === HTTP сервер для метрик ===
+# Включить HTTP сервер для мониторинга
+FLB_HTTP_SERVER=On
+# Хост для HTTP сервера
+FLB_HTTP_LISTEN=0.0.0.0
+# Порт для HTTP сервера
+FLB_HTTP_PORT=2020
+
+# === Elasticsearch выход ===
+# Хост Elasticsearch
+ELASTICSEARCH_HOST=elasticsearch
+# Порт Elasticsearch
+ELASTICSEARCH_PORT=9200
+# Индекс для логов (с датой)
+ELASTICSEARCH_INDEX=erni-ki-logs
+# Тип документа
+ELASTICSEARCH_TYPE=_doc
+
+# === Парсинг логов ===
+# Включить парсинг JSON логов
+FLB_PARSER_JSON=On
+# Сохранять исходное сообщение
+FLB_PARSER_PRESERVE_KEY=On
+# Ключ для времени
+FLB_PARSER_TIME_KEY=@timestamp
+# Формат времени
+FLB_PARSER_TIME_FORMAT=%Y-%m-%dT%H:%M:%S.%L
+
+# === Фильтрация ===
+# Добавлять метаданные Kubernetes
+FLB_KUBERNETES_ANNOTATIONS=On
+# Добавлять метки Kubernetes
+FLB_KUBERNETES_LABELS=On
+# Исключать системные namespace
+FLB_KUBERNETES_EXCLUDE_NAMESPACES=kube-system,kube-public
+
+# === Производительность ===
+# Количество worker потоков
+FLB_WORKERS=2
+# Максимальный размер chunk
+FLB_STORAGE_MAX_CHUNKS_UP=128
+# Путь к временным файлам
+FLB_STORAGE_PATH=/tmp/fluent-bit-storage
+
+# === Мониторинг ===
+# Включить метрики Prometheus
+FLB_PROMETHEUS_METRICS=On
+# Хост для метрик Prometheus
+FLB_PROMETHEUS_HOST=0.0.0.0
+# Порт для метрик Prometheus
+FLB_PROMETHEUS_PORT=2021
+
+# === Безопасность ===
+# Отключить TLS для внутренней сети
+FLB_TLS=Off
+# Проверка SSL сертификатов
+FLB_TLS_VERIFY=Off

@@ -1,0 +1,52 @@
+# Node Exporter Configuration для ERNI-KI
+# Экспортер системных метрик для Prometheus
+
+# === Основные настройки ===
+# Адрес для привязки веб-сервера
+NODE_EXPORTER_WEB_LISTEN_ADDRESS=0.0.0.0:9100
+# Путь к метрикам
+NODE_EXPORTER_WEB_TELEMETRY_PATH=/metrics
+
+# === Коллекторы (включенные) ===
+# Системная информация
+NODE_EXPORTER_COLLECTOR_UNAME=true
+# Информация о CPU
+NODE_EXPORTER_COLLECTOR_CPU=true
+# Информация о памяти
+NODE_EXPORTER_COLLECTOR_MEMINFO=true
+# Информация о дисках
+NODE_EXPORTER_COLLECTOR_DISKSTATS=true
+# Информация о файловых системах
+NODE_EXPORTER_COLLECTOR_FILESYSTEM=true
+# Сетевая статистика
+NODE_EXPORTER_COLLECTOR_NETSTAT=true
+# Информация о сетевых интерфейсах
+NODE_EXPORTER_COLLECTOR_NETDEV=true
+# Средняя нагрузка системы
+NODE_EXPORTER_COLLECTOR_LOADAVG=true
+# Время работы системы
+NODE_EXPORTER_COLLECTOR_UPTIME=true
+
+# === Коллекторы (отключенные для безопасности) ===
+# Отключить коллектор процессов (может быть ресурсоемким)
+NODE_EXPORTER_COLLECTOR_PROCESSES=false
+# Отключить коллектор systemd (не нужен в Docker)
+NODE_EXPORTER_COLLECTOR_SYSTEMD=false
+
+# === Фильтры файловых систем ===
+# Игнорировать временные файловые системы
+NODE_EXPORTER_COLLECTOR_FILESYSTEM_IGNORED_FS_TYPES=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$
+# Игнорировать системные точки монтирования
+NODE_EXPORTER_COLLECTOR_FILESYSTEM_IGNORED_MOUNT_POINTS=^/(dev|proc|run|sys|var/lib/docker/.+)($|/)
+
+# === Логирование ===
+# Уровень логирования
+NODE_EXPORTER_LOG_LEVEL=info
+# Формат логов
+NODE_EXPORTER_LOG_FORMAT=logfmt
+
+# === Производительность ===
+# Максимальное количество одновременных запросов
+NODE_EXPORTER_WEB_MAX_REQUESTS=40
+# Таймаут для коллекторов
+NODE_EXPORTER_COLLECTOR_TIMEOUT=10s

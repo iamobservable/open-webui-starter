@@ -1,0 +1,60 @@
+# Elasticsearch Configuration для ERNI-KI
+# Система хранения и поиска логов
+
+# === Основные настройки ===
+# Тип кластера (single-node для одного узла)
+discovery.type=single-node
+# Имя кластера
+cluster.name=erni-ki-logs
+# Имя узла
+node.name=erni-ki-elasticsearch-node
+
+# === Безопасность ===
+# Отключить X-Pack Security для упрощения
+xpack.security.enabled=false
+# Отключить мониторинг X-Pack
+xpack.monitoring.collection.enabled=false
+
+# === Память и производительность ===
+# Java heap size (настройте под вашу систему: 1GB для средних нагрузок)
+ES_JAVA_OPTS=-Xms1g -Xmx1g
+# Отключить swap
+bootstrap.memory_lock=true
+
+# === Сеть ===
+# Привязка к всем интерфейсам
+network.host=0.0.0.0
+# HTTP порт
+http.port=9200
+# Transport порт
+transport.tcp.port=9300
+
+# === Индексы ===
+# Количество шардов по умолчанию
+index.number_of_shards=1
+# Количество реплик по умолчанию
+index.number_of_replicas=0
+# Автоматическое создание индексов
+action.auto_create_index=true
+
+# === Логирование ===
+# Уровень логирования
+logger.level=INFO
+# Логирование медленных запросов (>1s)
+index.search.slowlog.threshold.query.warn=1s
+# Логирование медленной индексации (>1s)
+index.indexing.slowlog.threshold.index.warn=1s
+
+# === Хранение ===
+# Путь к данным
+path.data=/usr/share/elasticsearch/data
+# Путь к логам
+path.logs=/usr/share/elasticsearch/logs
+
+# === Оптимизация ===
+# Интервал обновления индексов
+index.refresh_interval=5s
+# Максимальный размер сегмента для merge
+index.merge.policy.max_merged_segment=2gb
+# Политика удаления старых данных (30 дней)
+indices.lifecycle.poll_interval=10m

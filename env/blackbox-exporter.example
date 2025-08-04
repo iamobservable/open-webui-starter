@@ -1,0 +1,66 @@
+# Blackbox Exporter Configuration для ERNI-KI
+# Мониторинг доступности внешних сервисов
+
+# === Основные настройки ===
+# Порт для веб-интерфейса
+BLACKBOX_EXPORTER_WEB_LISTEN_ADDRESS=0.0.0.0:9115
+# Путь к конфигурационному файлу
+BLACKBOX_EXPORTER_CONFIG_FILE=/etc/blackbox_exporter/config.yml
+
+# === HTTP проверки ===
+# Таймаут для HTTP запросов
+BLACKBOX_HTTP_TIMEOUT=10s
+# Следовать редиректам
+BLACKBOX_HTTP_FOLLOW_REDIRECTS=true
+# Максимальное количество редиректов
+BLACKBOX_HTTP_MAX_REDIRECTS=3
+# Проверять SSL сертификаты
+BLACKBOX_HTTP_TLS_INSECURE_SKIP_VERIFY=false
+
+# === ICMP проверки ===
+# Таймаут для ICMP пингов
+BLACKBOX_ICMP_TIMEOUT=5s
+# Размер ICMP пакета
+BLACKBOX_ICMP_PACKET_SIZE=64
+# Количество пакетов для отправки
+BLACKBOX_ICMP_PACKET_COUNT=3
+
+# === TCP проверки ===
+# Таймаут для TCP соединений
+BLACKBOX_TCP_TIMEOUT=5s
+# Проверять TLS соединения
+BLACKBOX_TCP_TLS=false
+
+# === DNS проверки ===
+# Таймаут для DNS запросов
+BLACKBOX_DNS_TIMEOUT=5s
+# DNS сервер для запросов
+BLACKBOX_DNS_SERVER=8.8.8.8:53
+# Тип DNS записи
+BLACKBOX_DNS_QUERY_TYPE=A
+
+# === Логирование ===
+# Уровень логирования
+BLACKBOX_EXPORTER_LOG_LEVEL=info
+# Формат логов
+BLACKBOX_EXPORTER_LOG_FORMAT=logfmt
+
+# === Производительность ===
+# Максимальное количество одновременных проверок
+BLACKBOX_EXPORTER_MAX_CONCURRENT_REQUESTS=20
+# Интервал между проверками
+BLACKBOX_EXPORTER_SCRAPE_INTERVAL=30s
+
+# === Мониторируемые цели ===
+# URL для проверки основного сайта
+BLACKBOX_TARGET_MAIN_URL=https://your-domain.com
+# URL для проверки API
+BLACKBOX_TARGET_API_URL=http://localhost:8080/health
+# URL для проверки SearXNG
+BLACKBOX_TARGET_SEARXNG_URL=http://localhost:8080/searxng/healthz
+
+# === SSL мониторинг ===
+# Предупреждать за N дней до истечения сертификата
+BLACKBOX_SSL_EXPIRY_WARNING_DAYS=30
+# Проверять цепочку сертификатов
+BLACKBOX_SSL_CHECK_CHAIN=true

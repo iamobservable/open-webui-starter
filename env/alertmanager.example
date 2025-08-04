@@ -1,0 +1,65 @@
+# Alertmanager Configuration для ERNI-KI
+# Система управления алертами от Prometheus
+
+# === Основные настройки ===
+# Путь к конфигурационному файлу
+ALERTMANAGER_CONFIG_FILE=/etc/alertmanager/alertmanager.yml
+# Путь к данным
+ALERTMANAGER_STORAGE_PATH=/alertmanager
+# Время хранения данных (120 часов = 5 дней)
+ALERTMANAGER_DATA_RETENTION=120h
+
+# === Веб-интерфейс ===
+# Адрес для привязки
+ALERTMANAGER_WEB_LISTEN_ADDRESS=0.0.0.0:9093
+# Внешний URL
+ALERTMANAGER_WEB_EXTERNAL_URL=http://alertmanager.your-domain.com:9093
+# Путь к статическим файлам
+ALERTMANAGER_WEB_ROUTE_PREFIX=/
+
+# === Кластеризация ===
+# Адрес для кластерного взаимодействия
+ALERTMANAGER_CLUSTER_LISTEN_ADDRESS=0.0.0.0:9094
+# Отключить кластеризацию (single node)
+ALERTMANAGER_CLUSTER_PEER=
+# Время жизни кластерных сообщений
+ALERTMANAGER_CLUSTER_GOSSIP_INTERVAL=200ms
+
+# === Логирование ===
+# Уровень логирования
+ALERTMANAGER_LOG_LEVEL=info
+# Формат логов
+ALERTMANAGER_LOG_FORMAT=logfmt
+
+# === Производительность ===
+# Интервал группировки алертов
+ALERTMANAGER_GROUP_INTERVAL=10s
+# Время ожидания перед отправкой группы алертов
+ALERTMANAGER_GROUP_WAIT=10s
+# Интервал повторной отправки алертов
+ALERTMANAGER_REPEAT_INTERVAL=12h
+
+# === Webhook настройки ===
+# URL для webhook уведомлений
+ALERTMANAGER_WEBHOOK_URL=http://webhook-receiver:9093/webhook
+# Таймаут для webhook запросов
+ALERTMANAGER_WEBHOOK_TIMEOUT=10s
+
+# === Email настройки (опционально) ===
+# SMTP сервер
+ALERTMANAGER_SMTP_SMARTHOST=your-smtp-server:587
+# От кого отправлять письма
+ALERTMANAGER_SMTP_FROM=alerts@your-domain.com
+# Требовать TLS
+ALERTMANAGER_SMTP_REQUIRE_TLS=true
+# Пользователь SMTP
+ALERTMANAGER_SMTP_AUTH_USERNAME=your-smtp-username
+# Пароль SMTP
+ALERTMANAGER_SMTP_AUTH_PASSWORD=your-smtp-password
+
+# === Безопасность ===
+# Отключить аутентификацию для внутренней сети
+ALERTMANAGER_WEB_CONFIG_FILE=
+# Отключить HTTPS
+ALERTMANAGER_WEB_CERT_FILE=
+ALERTMANAGER_WEB_KEY_FILE=
