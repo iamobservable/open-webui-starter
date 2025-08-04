@@ -1,36 +1,121 @@
+# OpenWebUI Configuration для ERNI-KI
+# Основной веб-интерфейс для AI ассистента с RAG и GPU ускорением
+
+# === Основные настройки ===
+# Секретный ключ для подписи сессий (сгенерируйте уникальный)
+WEBUI_SECRET_KEY=your-secret-key-here
+# Внешний URL для доступа
+WEBUI_URL=https://your-domain.com
+# Отключить анонимную телеметрию
 ANONYMIZED_TELEMETRY=false
-AUDIO_TTS_API_KEY=your_api_key_here
-AUDIO_TTS_ENGINE=openai
-AUDIO_TTS_MODEL=tts-1-hd
-AUDIO_TTS_OPENAI_API_BASE_URL=http://edgetts:5050/v1
-AUDIO_TTS_OPENAI_API_KEY=your_api_key_here
-AUDIO_TTS_VOICE=en-US-EmmaMultilingualNeural
-CONTENT_EXTRACTION_ENGINE=docling
-DATABASE_URL="postgresql://postgres:postgres@db:5432/openwebui"
-DOCLING_SERVER_URL=http://docling:5001
-ENABLE_EVALUATION_ARENA_MODELS=false
-ENABLE_IMAGE_GENERATION=false
-ENABLE_OLLAMA_API=true
-ENABLE_OPENAI_API=false
-ENABLE_RAG_WEB_SEARCH=true
-ENABLE_WEB_SEARCH=true
+# Режим окружения
 ENV=dev
+# Уровень логирования
 GLOBAL_LOG_LEVEL=info
+
+# === База данных PostgreSQL ===
+# Подключение к PostgreSQL с векторным расширением
+DATABASE_URL="postgresql://postgres:your-password-here@db:5432/openwebui"
+
+# === Ollama интеграция (AI модели) ===
+# Базовые URL для Ollama API
 OLLAMA_BASE_URLS=http://ollama:11434
-PDF_EXTRACT_IMAGES=true
-PGVECTOR_DB_URL=postgresql://postgres:postgres@db:5432/openwebui
-RAG_EMBEDDING_ENGINE=ollama
-RAG_EMBEDDING_MODEL=nomic-embed-text:latest
-RAG_OLLAMA_BASE_URL=http://ollama:11434
-RAG_TEXT_SPLITTER=token
-RAG_WEB_SEARCH_ENGINE=searxng
-RAG_WEB_SEARCH_RESULT_COUNT=6
-RAG_WEB_SEARCH_CONCURRENT_REQUESTS=10
-SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
-TIKA_SERVER_URL=http://tika:9998
-TOOL_SERVER_CONNECTIONS=["http://mcposerver:8000/time", "http://mcposerver:8000/postgres"]
+# Включить Ollama API
+ENABLE_OLLAMA_API=true
+# Использовать CUDA для GPU ускорения
 USE_CUDA_DOCKER=true
-VECTOR_DB=pgvector
+
+# === OpenAI API совместимость ===
+# Включить OpenAI API для совместимости
+ENABLE_OPENAI_API=true
+# API ключ OpenAI (опционально)
+OPENAI_API_KEY=your-openai-api-key-here
+# Базовый URL OpenAI API
+OPENAI_API_BASE_URL=https://api.openai.com/v1
+# === RAG (Retrieval-Augmented Generation) настройки ===
+# Движок для эмбеддингов
+RAG_EMBEDDING_ENGINE=ollama
+# Модель для создания эмбеддингов
+RAG_EMBEDDING_MODEL=nomic-embed-text:latest
+# Ollama URL для RAG операций
+RAG_OLLAMA_BASE_URL=http://ollama:11434
+# API ключ для RAG (оставить пустым для локального использования)
+RAG_OLLAMA_API_KEY=""
+# Способ разделения текста
+RAG_TEXT_SPLITTER=token
+# Включить веб-поиск для RAG
+ENABLE_RAG_WEB_SEARCH=true
+# Движок веб-поиска
+RAG_WEB_SEARCH_ENGINE=searxng
+# Количество результатов поиска
+RAG_WEB_SEARCH_RESULT_COUNT=6
+# Количество одновременных запросов
+RAG_WEB_SEARCH_CONCURRENT_REQUESTS=10
+# Таймаут веб-поиска
+RAG_WEB_SEARCH_TIMEOUT=10
+
+# === Интеграции сервисов ===
+# SearXNG для веб-поиска (через nginx proxy)
+SEARXNG_QUERY_URL=http://nginx:8080/api/searxng/search?q=<query>
+# Включить веб-поиск
+ENABLE_WEB_SEARCH=true
 WEB_SEARCH_ENGINE=searxng
-WEBUI_SECRET_KEY=CHANGE_BEFORE_GOING_LIVE
-WEBUI_URL=https://<domain-name>
+
+# === Обработка документов ===
+# Движок извлечения контента
+CONTENT_EXTRACTION_ENGINE=docling
+# URL сервера Docling (через nginx proxy)
+DOCLING_SERVER_URL=http://nginx:8080/api/docling
+# URL сервера Tika
+TIKA_SERVER_URL=http://tika:9998
+# Извлекать изображения из PDF
+PDF_EXTRACT_IMAGES=true
+
+# === TTS (Text-to-Speech) настройки ===
+# Движок TTS
+AUDIO_TTS_ENGINE=openai
+# Модель TTS
+AUDIO_TTS_MODEL=tts-1-hd
+# URL EdgeTTS сервиса
+AUDIO_TTS_OPENAI_API_BASE_URL=http://edgetts:5050/v1
+# API ключ для TTS
+AUDIO_TTS_API_KEY=your-tts-api-key-here
+AUDIO_TTS_OPENAI_API_KEY=your-tts-api-key-here
+# Голос для синтеза речи
+AUDIO_TTS_VOICE=en-US-EmmaMultilingualNeural
+
+# === Векторная база данных ===
+# Использовать pgvector для векторного поиска
+VECTOR_DB=pgvector
+# URL подключения к pgvector
+PGVECTOR_DB_URL=postgresql://postgres:your-password-here@db:5432/openwebui
+
+# === Дополнительные функции ===
+# Отключить генерацию изображений
+ENABLE_IMAGE_GENERATION=false
+# Отключить arena модели
+ENABLE_EVALUATION_ARENA_MODELS=false
+# Пользовательский User-Agent
+USER_AGENT=ERNI-KI-OpenWebUI/1.0 (RAG-enabled AI assistant)
+
+# === Tool Server подключения ===
+# MCP сервер подключения (пустой массив по умолчанию)
+TOOL_SERVER_CONNECTIONS=[]
+
+# === Производительность ===
+# Размер загружаемых файлов (100MB для RAG документов)
+FILE_UPLOAD_MAX_SIZE=104857600
+# Включить метрики
+ENABLE_METRICS=true
+# Интервал проверки здоровья
+HEALTH_CHECK_INTERVAL=30
+# Размер chunk для RAG
+RAG_CHUNK_SIZE=1000
+# Перекрытие chunk
+RAG_CHUNK_OVERLAP=200
+
+# === Connection pooling для PostgreSQL ===
+DATABASE_POOL_SIZE=20
+DATABASE_POOL_MAX_OVERFLOW=10
+DATABASE_POOL_TIMEOUT=30
+DATABASE_POOL_RECYCLE=3600

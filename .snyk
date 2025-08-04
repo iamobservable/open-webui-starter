@@ -8,12 +8,20 @@ version: v1.0.0
 exclude:
   # Данные Docker контейнеров (создаются с правами root)
   - data/**
-  - data/postgres/**
+
+  # Специальные исключения для сервисов с ограниченными правами
+  - data/postgres/**          # PostgreSQL требует строгие права доступа (700/750)
+  - data/postgres/base/**     # База данных PostgreSQL - критически важные данные
+  - data/postgres/global/**   # Глобальные объекты PostgreSQL
+  - data/postgres/pg_*/**     # Системные директории PostgreSQL (pg_multixact, pg_stat, etc.)
+  - data/postgres/*/          # Все поддиректории PostgreSQL
+
+  # Другие сервисы данных
   - data/redis/**
   - data/ollama/**
   - data/openwebui/**
+  - data/grafana/alerting/**  # Исправлено, но может быть чувствительным
   - cache/backrest/restic/**
-  - data/postgres/**
   - .git/**
 
   # Временные файлы и логи

@@ -1,7 +1,6 @@
 # Docker Compose конфигурация для системы мониторинга ERNI-KI
 # Включает Prometheus, Grafana, Alertmanager, Fluent Bit, Elasticsearch
-
-version: "3.8"
+# Версия Docker Compose: современный формат без атрибута version
 
 # Общие настройки для мониторинга
 x-monitoring-common: &monitoring-common
@@ -93,7 +92,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
 
     # Тома для данных - только data директория, без config для избежания keystore проблем
     volumes:
@@ -125,10 +124,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 2G
           cpus: "1.0"
         reservations:
-          memory: 512M
+          memory: 1G
           cpus: "0.5"
 
   # ============================================================================
@@ -139,11 +138,9 @@ services:
     image: docker.elastic.co/kibana/kibana:7.17.15
     container_name: erni-ki-kibana
 
-    # Конфигурация
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - SERVER_NAME=kibana.erni-ki.local
-      - SERVER_BASEPATH=/kibana
+    # Конфигурация через файл
+    volumes:
+      - ./kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
 
     # Порты
     ports:
@@ -412,12 +409,15 @@ services:
 
     # Конфигурация подключения к PostgreSQL
     environment:
-      - DATA_SOURCE_NAME=postgresql://postgres:password@db:5432/postgres?sslmode=disable
-      - PG_EXPORTER_EXTEND_QUERY_PATH=/etc/postgres_exporter/queries.yaml
+      - DATA_SOURCE_NAME=postgresql://postgres:aEnbxS4MrXqzurHNGxkcEgCBm@db:5432/openwebui?sslmode=disable
+      - PG_EXPORTER_DISABLE_DEFAULT_METRICS=false
+      - PG_EXPORTER_DISABLE_SETTINGS_METRICS=true
+      - PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
+      - PG_EXPORTER_EXCLUDE_DATABASES=template0,template1,postgres
 
     # Конфигурационные файлы
     volumes:
-      - ./postgres-exporter/queries.yaml:/etc/postgres_exporter/queries.yaml:ro
+      - ../conf/postgres-exporter/postgres_exporter.yml:/postgres_exporter.yml:ro
 
     # Порты
     ports:
@@ -429,7 +429,7 @@ services:
 
     # Health check
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9187/metrics || exit 1"]
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9187/metrics || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

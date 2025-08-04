@@ -1,3 +1,44 @@
+# PostgreSQL Configuration для ERNI-KI
+# Конфигурация базы данных с векторным расширением для AI/RAG операций
+
+# === Основные настройки ===
+# База данных для OpenWebUI
 POSTGRES_DB=openwebui
+# Пользователь PostgreSQL
 POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
+# Пароль (замените на безопасный пароль)
+POSTGRES_PASSWORD=your-secure-password-here
+
+# === Производительность и память ===
+# Размер разделяемых буферов (256MB для оптимальной работы)
+POSTGRES_SHARED_BUFFERS=256MB
+# Эффективный размер кэша (1GB для системы с достаточной RAM)
+POSTGRES_EFFECTIVE_CACHE_SIZE=1GB
+# Память для операций обслуживания (VACUUM, CREATE INDEX)
+POSTGRES_MAINTENANCE_WORK_MEM=64MB
+# Рабочая память для сортировки и хэширования
+POSTGRES_WORK_MEM=4MB
+# Буферы WAL (Write-Ahead Logging)
+POSTGRES_WAL_BUFFERS=16MB
+
+# === Соединения ===
+# Максимальное количество одновременных соединений
+POSTGRES_MAX_CONNECTIONS=200
+
+# === Автовакуум (автоматическая очистка) ===
+# Количество worker процессов для автовакуума
+POSTGRES_AUTOVACUUM_MAX_WORKERS=3
+# Интервал между запусками автовакуума
+POSTGRES_AUTOVACUUM_NAPTIME=20s
+
+# === Checkpoint (контрольные точки) ===
+# Целевое время завершения checkpoint (90%)
+POSTGRES_CHECKPOINT_COMPLETION_TARGET=0.9
+
+# === Логирование ===
+# Логировать запросы длиннее 1 секунды
+POSTGRES_LOG_MIN_DURATION_STATEMENT=1000
+
+# === Расширения ===
+# Предзагружаемые библиотеки (статистика + векторное расширение для RAG)
+POSTGRES_SHARED_PRELOAD_LIBRARIES=pg_stat_statements,vector

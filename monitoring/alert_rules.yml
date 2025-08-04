@@ -49,6 +49,65 @@ groups:
           summary: "Low disk space on {{ $labels.instance }}"
           description: "Disk usage is above 90% on {{ $labels.instance }} ({{ $labels.mountpoint }})."
 
+  # Правила для контейнеров Docker
+  - name: container.rules
+    rules:
+      # Критическое использование памяти контейнером
+      - alert: ContainerHighMemoryUsage
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          category: container
+        annotations:
+          summary: "Container {{ $labels.name }} high memory usage"
+          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit for more than 2 minutes."
+
+      # Предупреждение о высоком использовании памяти контейнером
+      - alert: ContainerWarningMemoryUsage
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container {{ $labels.name }} warning memory usage"
+          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit for more than 5 minutes."
+
+      # Специфичные алерты для критических сервисов
+      - alert: ElasticsearchCriticalMemory
+        expr: (container_memory_usage_bytes{name=~".*elasticsearch.*"} / container_spec_memory_limit_bytes{name=~".*elasticsearch.*"}) * 100 > 95
+        for: 1m
+        labels:
+          severity: critical
+          category: elasticsearch
+          service: elasticsearch
+        annotations:
+          summary: "Elasticsearch critical memory usage"
+          description: "Elasticsearch container is using {{ $value | humanizePercentage }} of memory limit. Risk of OOM kill!"
+
+      - alert: LiteLLMCriticalMemory
+        expr: (container_memory_usage_bytes{name=~".*litellm.*"} / container_spec_memory_limit_bytes{name=~".*litellm.*"}) * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          category: litellm
+          service: litellm
+        annotations:
+          summary: "LiteLLM critical memory usage"
+          description: "LiteLLM container is using {{ $value | humanizePercentage }} of memory limit. Risk of OOM kill!"
+
+      # Контейнер перезапускается слишком часто
+      - alert: ContainerRestartingTooOften
+        expr: increase(container_start_time_seconds[1h]) > 3
+        for: 0m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container {{ $labels.name }} restarting too often"
+          description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last hour."
+
   # Правила для Auth сервиса
   - name: auth-service.rules
     rules:

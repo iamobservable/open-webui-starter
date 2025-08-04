@@ -1,8 +1,8 @@
 # SearXNG Rate Limiter Configuration
-# Минимальная конфигурация для интеграции с OpenWebUI
+# Оптимизированная конфигурация для интеграции с OpenWebUI
 
 [botdetection.ip_limit]
-# Отключить все ограничения для внутренних запросов
+# Мягкие ограничения для предотвращения блокировок поисковых движков
 filter_link_local = false
 link_token = false
 
