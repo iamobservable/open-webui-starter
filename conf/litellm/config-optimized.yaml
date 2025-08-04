@@ -1,0 +1,213 @@
+# LiteLLM Proxy Configuration - Оптимизированная сетевая конфигурация
+# Конфигурация для Context Engineering Gateway с высокой производительностью
+
+# Модели и провайдеры
+model_list:
+  # Ollama модели (локальные с GPU ускорением)
+  - model_name: llama3.2
+    litellm_params:
+      model: ollama/llama3.2
+      api_base: http://172.21.0.90:11434  # Статический IP Ollama в backend сети
+      rpm: 120  # Увеличенный лимит для локальных моделей
+      tpm: 50000  # Высокий лимит токенов для GPU ускорения
+      timeout: 300  # Увеличенный timeout для больших запросов
+      stream: true
+      
+  - model_name: llama3.2:3b
+    litellm_params:
+      model: ollama/llama3.2:3b
+      api_base: http://172.21.0.90:11434
+      rpm: 150  # Больше запросов для меньшей модели
+      tpm: 60000
+      timeout: 180
+      stream: true
+      
+  - model_name: codellama
+    litellm_params:
+      model: ollama/codellama
+      api_base: http://172.21.0.90:11434
+      rpm: 100  # Специализированная модель для кода
+      tpm: 40000
+      timeout: 400  # Больше времени для генерации кода
+      stream: true
+
+  # OpenAI модели (внешние API)
+  - model_name: gpt-4o
+    litellm_params:
+      model: gpt-4o
+      api_key: os.environ/OPENAI_API_KEY
+      rpm: 500  # Высокий лимит для production
+      tpm: 150000
+      timeout: 120
+      stream: true
+      
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: gpt-4o-mini
+      api_key: os.environ/OPENAI_API_KEY
+      rpm: 1000  # Очень высокий лимит для быстрой модели
+      tpm: 200000
+      timeout: 60
+      stream: true
+
+# Настройки роутера для оптимальной производительности
+router_settings:
+  # Стратегия маршрутизации - приоритет локальным моделям
+  routing_strategy: "latency-based-routing"
+  
+  # Алиасы моделей для совместимости
+  model_group_alias:
+    "gpt-3.5-turbo": "llama3.2:3b"  # Перенаправляем на быструю локальную модель
+    "gpt-4": "llama3.2"  # Перенаправляем на основную локальную модель
+    "claude-3": "llama3.2"  # Fallback на локальную модель
+  
+  # Количество повторных попыток
+  num_retries: 3
+  
+  # Общий timeout
+  timeout: 300
+  
+  # Redis для координации между инстансами
+  redis_host: "172.21.0.50"  # Статический IP Redis в backend сети
+  redis_port: 6379
+  redis_password: os.environ/REDIS_PASSWORD
+  
+  # Настройки для высокой нагрузки
+  allowed_fails: 5  # Больше разрешенных ошибок перед отключением
+  cooldown_time: 60  # Время восстановления после ошибок
+
+# Общие настройки LiteLLM
+litellm_settings:
+  # Повторные попытки на уровне модели
+  num_retries: 2
+  
+  # Timeout для запросов
+  request_timeout: 300
+  
+  # Fallback цепочки для отказоустойчивости
+  fallbacks:
+    - "llama3.2": ["gpt-4o-mini", "gpt-4o"]  # Локальная -> внешние API
+    - "gpt-4o": ["llama3.2", "gpt-4o-mini"]  # Внешние -> локальная
+    - "codellama": ["llama3.2", "gpt-4o"]  # Код -> универсальные модели
+  
+  # Context window fallbacks для больших запросов
+  context_window_fallbacks:
+    - "llama3.2:3b": ["llama3.2", "gpt-4o"]
+    - "gpt-4o-mini": ["gpt-4o", "llama3.2"]
+  
+  # Разрешенные ошибки перед cooldown
+  allowed_fails: 3
+  
+  # Включить кэширование ответов
+  cache: true
+  cache_params:
+    type: "redis"
+    host: "172.21.0.50"
+    port: 6379
+    password: os.environ/REDIS_PASSWORD
+    ttl: 3600  # 1 час кэширования
+
+# Общие настройки прокси
+general_settings:
+  # Мастер ключ для администрирования
+  master_key: os.environ/LITELLM_MASTER_KEY
+  
+  # Включить детальное логирование
+  set_verbose: true
+  
+  # Включить метрики
+  enable_prometheus_metrics: true
+  
+  # Настройки базы данных для логирования
+  database_url: "postgresql://postgres:aEnbxS4MrXqzurHNGxkcEgCBm@172.21.0.40:5432/litellm"
+  
+  # Настройки безопасности
+  enforce_user_param: false  # Отключено для внутреннего использования
+  
+  # Настройки производительности
+  max_budget: 1000  # Максимальный бюджет в долларах
+  budget_duration: "1mo"  # Период бюджета
+  
+  # Настройки для высокой нагрузки
+  max_parallel_requests: 100  # Максимум параллельных запросов
+  max_retries: 3
+  
+  # Включить CORS для веб-интерфейса
+  enable_cors: true
+  
+  # Настройки логирования
+  log_level: "INFO"
+  
+  # Отключить телеметрию для приватности
+  disable_spend_logs: false
+  disable_master_key_return: true
+
+# Настройки для интеграции с OpenWebUI
+openai_route_settings:
+  # Совместимость с OpenAI API
+  enable_openai_proxy: true
+  
+  # Поддержка streaming
+  enable_streaming: true
+  
+  # Настройки для больших контекстов
+  max_tokens: 32768
+  
+  # Настройки для Context Engineering
+  enable_function_calling: true
+  enable_json_mode: true
+
+# Настройки мониторинга и здоровья
+health_check_settings:
+  # Интервал проверки здоровья моделей
+  health_check_interval: 300  # 5 минут
+  
+  # Timeout для health check
+  health_check_timeout: 30
+  
+  # Включить детальные health checks
+  detailed_health_checks: true
+
+# Настройки для Context Engineering
+context_engineering:
+  # Максимальный размер контекста
+  max_context_length: 128000
+  
+  # Стратегия сжатия контекста
+  context_compression: "smart_truncation"
+  
+  # Включить векторный поиск для RAG
+  enable_vector_search: true
+  
+  # Настройки для работы с документами
+  document_processing:
+    max_file_size: "100MB"
+    supported_formats: ["pdf", "docx", "txt", "md", "html"]
+    
+  # Интеграция с SearXNG для веб-поиска
+  web_search:
+    enabled: true
+    api_base: "http://172.21.0.60:8080"  # Статический IP SearXNG
+    max_results: 10
+    timeout: 30
+
+# Настройки безопасности и аутентификации
+security_settings:
+  # Разрешенные IP адреса (внутренние сети)
+  allowed_ips:
+    - "172.20.0.0/16"  # Frontend сеть
+    - "172.21.0.0/16"  # Backend сеть
+    - "172.23.0.0/16"  # Internal сеть
+    - "127.0.0.1"      # Localhost
+  
+  # Настройки rate limiting
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 1000
+    tokens_per_minute: 500000
+  
+  # Настройки CORS
+  cors_settings:
+    allow_origins: ["*"]
+    allow_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_headers: ["*"]

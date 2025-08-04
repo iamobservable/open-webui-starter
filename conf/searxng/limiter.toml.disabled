@@ -1,0 +1,18 @@
+# SearXNG Rate Limiter Configuration
+# Минимальная конфигурация для устранения warnings в логах
+
+[botdetection.ip_limit]
+# Отключить все ограничения
+filter_link_local = false
+link_token = false
+
+[botdetection.ip_lists]
+# Разрешить все запросы без логирования
+pass_searxng_org = true
+pass_ip = [
+    "0.0.0.0/0"
+]
+
+[real_ip]
+# Настройки для получения реального IP через прокси
+x_for = 1

@@ -1,0 +1,63 @@
+# ERNI-KI Log Rotation Configuration
+# Автоматическая ротация логов с 7-дневным retention
+
+# Локальные логи системы мониторинга
+/home/konstantin/Documents/augment-projects/erni-ki/logs/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 konstantin konstantin
+    copytruncate
+    
+    # Перезапуск сервисов после ротации (если необходимо)
+    postrotate
+        # Отправить сигнал HUP nginx для переоткрытия логов
+        /usr/bin/docker-compose -f /home/konstantin/Documents/augment-projects/erni-ki/compose.yml exec nginx nginx -s reopen >/dev/null 2>&1 || true
+    endscript
+}
+
+# Логи резервного копирования
+/home/konstantin/Documents/augment-projects/erni-ki/.config-backup/logs/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 konstantin konstantin
+    copytruncate
+}
+
+# Критические логи (более длительное хранение)
+/home/konstantin/Documents/augment-projects/erni-ki/monitoring/logs/critical/*.log {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 konstantin konstantin
+    copytruncate
+    
+    # Уведомление о критических ошибках
+    postrotate
+        if [ -s "$1" ]; then
+            echo "Critical errors found in rotated log: $1" | logger -t erni-ki-logrotate
+        fi
+    endscript
+}
+
+# Fluent Bit database файлы (ограничение размера)
+/home/konstantin/Documents/augment-projects/erni-ki/data/fluent-bit/db/*.db-wal {
+    size 50M
+    rotate 3
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 root root
+    copytruncate
+}
