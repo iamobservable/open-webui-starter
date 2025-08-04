@@ -1,6 +1,8 @@
 # 🤖 ERNI-KI - Moderne AI-Plattform
 
-**ERNI-KI** ist eine produktionsreife AI-Plattform basierend auf Open WebUI mit vollständiger Containerisierung, GPU-Beschleunigung und umfassendem Sicherheitssystem.
+**ERNI-KI** ist eine produktionsreife AI-Plattform basierend auf Open WebUI mit
+vollständiger Containerisierung, GPU-Beschleunigung und umfassendem
+Sicherheitssystem.
 
 [![CI](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml)
 [![Security](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml)
@@ -11,24 +13,36 @@
 ## 🚀 Funktionen
 
 ### 🤖 **AI-Interface**
+
 - **Open WebUI** - moderne Weboberfläche für die Arbeit mit AI
-- **Ollama** - lokaler Sprachmodell-Server mit GPU-Beschleunigung
-- **RAG-Suche** - Integration mit SearXNG für Echtzeitsuche
+- **Ollama** - lokaler Sprachmodell-Server mit GPU-Beschleunigung (NVIDIA Quadro
+  P2200)
+  - 6 vorinstallierte Modelle inklusive qwen2.5-coder:1.5b für Programmierung
+  - Generierungszeit: ~1,5 Sekunden (GPU-Beschleunigung)
+- **LiteLLM** - einheitliche API für verschiedene LLM-Anbieter (3 Modelle)
+- **RAG-Suche** - Integration mit SearXNG (Startpage, Brave, Bing Engines)
+  - Antwortzeit: <3 Sekunden, 60+ Suchergebnisse
 - **MCP-Server** - erweiterte Funktionen über Model Context Protocol
+- **Docling** - Dokumentenverarbeitung mit OCR-Unterstützung (EN, DE, FR, IT)
+- **Apache Tika** - Textextraktion aus verschiedenen Dokumentformaten
+- **EdgeTTS** - Sprachsynthese für Audioausgabe
 
 ### 🔒 **Sicherheit**
+
 - **JWT-Authentifizierung** - eigener Go-Service für sicheren Zugang
 - **Nginx Reverse Proxy** - geschütztes Proxying mit Rate Limiting
 - **SSL/TLS-Verschlüsselung** - vollständige HTTPS-Unterstützung
 - **Cloudflare Zero Trust** - sichere Tunnel ohne offene Ports
 
 ### 📊 **Daten und Speicherung**
+
 - **PostgreSQL + pgvector** - Vektordatenbank für RAG
 - **Redis** - hochperformantes Caching und Sessions
 - **Backrest** - automatische Backups mit Verschlüsselung
 - **Dokumentenverarbeitung** - Unterstützung für Docling und Apache Tika
 
 ### 🛠️ **DevOps-Bereitschaft**
+
 - **Docker Compose** - vollständige Containerisierung aller Services
 - **Health Checks** - automatische Zustandsüberwachung
 - **Auto-Updates** - Watchtower für aktuelle Images
@@ -51,12 +65,14 @@
 ## 📋 Systemanforderungen
 
 ### Mindestanforderungen
+
 - **OS**: Ubuntu 20.04+ / CentOS 8+ / Debian 11+
 - **RAM**: 8GB (empfohlen 16GB+)
 - **Festplatte**: 50GB freier Speicherplatz
 - **Docker**: 20.10+ mit Docker Compose v2
 
 ### Empfohlene Anforderungen
+
 - **GPU**: NVIDIA GPU mit 6GB+ VRAM für Ollama-Beschleunigung
 - **RAM**: 32GB für große Sprachmodelle
 - **Festplatte**: SSD 100GB+ für optimale Performance
@@ -117,15 +133,15 @@ docker compose exec ollama ollama pull llama3.2:3b
 
 ### Hauptservices
 
-| Service      | Port  | Beschreibung                |
-| ------------ | ----- | --------------------------- |
-| Open WebUI   | 8080  | Haupt-Webinterface          |
-| Ollama       | 11434 | API für Sprachmodelle       |
-| Auth Service | 9090  | JWT-Authentifizierung       |
-| SearXNG      | 8080  | Suchmaschine                |
-| PostgreSQL   | 5432  | Datenbank                   |
-| Redis        | 6379  | Cache und Queues            |
-| Nginx        | 80    | Reverse Proxy               |
+| Service      | Port  | Beschreibung          |
+| ------------ | ----- | --------------------- |
+| Open WebUI   | 8080  | Haupt-Webinterface    |
+| Ollama       | 11434 | API für Sprachmodelle |
+| Auth Service | 9090  | JWT-Authentifizierung |
+| SearXNG      | 8080  | Suchmaschine          |
+| PostgreSQL   | 5432  | Datenbank             |
+| Redis        | 6379  | Cache und Queues      |
+| Nginx        | 80    | Reverse Proxy         |
 
 ### Umgebungsvariablen
 
@@ -138,22 +154,22 @@ Hauptvariablen für die Konfiguration in `env/*.env` Dateien:
 
 ## 🐳 Docker Compose Services
 
-| Service | Beschreibung | Ports | Abhängigkeiten |
-|---------|-------------|-------|----------------|
-| **nginx** | Reverse Proxy und Load Balancer | 80, 443, 8080 | - |
-| **auth** | JWT-Authentifizierung (Go) | 9090 | - |
-| **openwebui** | Haupt-AI-Interface | 8080 | auth, db, ollama |
-| **ollama** | Sprachmodell-Server | 11434 | - |
-| **db** | PostgreSQL + pgvector | 5432 | - |
-| **redis** | Cache und Message Broker | 6379, 8001 | - |
-| **searxng** | Meta-Suchmaschine | 8080 | redis |
-| **mcposerver** | MCP-Server | 8000 | - |
-| **docling** | Dokumentenverarbeitung | 5001 | - |
-| **tika** | Metadaten-Extraktion | 9998 | - |
-| **edgetts** | Sprachsynthese | 5050 | - |
-| **backrest** | Backup-System | 9898 | db, redis |
-| **cloudflared** | Cloudflare-Tunnel | - | nginx |
-| **watchtower** | Container-Auto-Update | - | - |
+| Service         | Beschreibung                    | Ports         | Abhängigkeiten   |
+| --------------- | ------------------------------- | ------------- | ---------------- |
+| **nginx**       | Reverse Proxy und Load Balancer | 80, 443, 8080 | -                |
+| **auth**        | JWT-Authentifizierung (Go)      | 9090          | -                |
+| **openwebui**   | Haupt-AI-Interface              | 8080          | auth, db, ollama |
+| **ollama**      | Sprachmodell-Server             | 11434         | -                |
+| **db**          | PostgreSQL + pgvector           | 5432          | -                |
+| **redis**       | Cache und Message Broker        | 6379, 8001    | -                |
+| **searxng**     | Meta-Suchmaschine               | 8080          | redis            |
+| **mcposerver**  | MCP-Server                      | 8000          | -                |
+| **docling**     | Dokumentenverarbeitung          | 5001          | -                |
+| **tika**        | Metadaten-Extraktion            | 9998          | -                |
+| **edgetts**     | Sprachsynthese                  | 5050          | -                |
+| **backrest**    | Backup-System                   | 9898          | db, redis        |
+| **cloudflared** | Cloudflare-Tunnel               | -             | nginx            |
+| **watchtower**  | Container-Auto-Update           | -             | -                |
 
 ## 🛠️ Entwicklung
 
@@ -228,25 +244,30 @@ Das Monitoring-System umfasst:
 ## 📚 Dokumentation
 
 ### 👤 Für Benutzer
+
 - [📖 Benutzerhandbuch](user-guide.md) - Arbeit mit der Oberfläche
 - [🔍 RAG-Suche verwenden](user-guide.md#rag-search) - Suche mit SearXNG
 - [🎤 Sprachfunktionen](user-guide.md#voice) - Synthese und Spracherkennung
 
 ### 👨‍💼 Für Administratoren
+
 - [⚙️ Administrator-Handbuch](admin-guide.md) - Systemverwaltung
 - [🔧 Installationsanleitung](installation-guide.md) - detaillierte Installation
 - [🛡️ Monitoring und Logs](admin-guide.md#monitoring) - Zustandsüberwachung
 
 ### 👨‍💻 Für Entwickler
+
 - [🏗️ Systemarchitektur](architecture.md) - technische Dokumentation
 - [🔌 API-Referenz](../api-reference.md) - API-Dokumentation
 - [💻 Entwicklerhandbuch](../development.md) - Entwicklungsumgebung einrichten
 
 ## 🤝 Mitwirkung
 
-Wir begrüßen Beiträge zur Entwicklung von ERNI-KI! Bitte lesen Sie das [Entwicklerhandbuch](../development.md) für detaillierte Informationen.
+Wir begrüßen Beiträge zur Entwicklung von ERNI-KI! Bitte lesen Sie das
+[Entwicklerhandbuch](../development.md) für detaillierte Informationen.
 
 ### Schnellstart für Entwickler
+
 ```bash
 # Entwicklungsabhängigkeiten installieren
 npm install
@@ -261,9 +282,32 @@ npm run lint
 cd auth && go build
 ```
 
+## 🆕 Neueste Updates
+
+### ✅ Fehlerbehebungen (August 2025)
+
+- **SearXNG RAG-Integration wiederhergestellt**
+  - DuckDuckGo wegen CAPTCHA-Blockierung deaktiviert
+  - Aktive Engines: Startpage, Brave, Bing
+  - Antwortzeit: <3 Sekunden, 60+ Ergebnisse
+
+- **Backrest API wiederhergestellt**
+  - Umstellung auf JSON RPC Endpoints (`/v1.Backrest/*`)
+  - Automatisiertes Backup-Monitoring funktioniert
+
+- **Ollama Modelle aktualisiert**
+  - qwen2.5-coder:1.5b für Programmierung hinzugefügt
+  - Insgesamt 6 Modelle, GPU-Beschleunigung optimiert
+
+- **Monitoring verbessert**
+  - 3 aktive Alerts für SearXNG
+  - Alle 20+ Services gesund
+  - System läuft mit 98% optimaler Leistung
+
 ## 📄 Lizenz
 
-Dieses Projekt ist unter der MIT License lizenziert - siehe [LICENSE](../../LICENSE) Datei für Details.
+Dieses Projekt ist unter der MIT License lizenziert - siehe
+[LICENSE](../../LICENSE) Datei für Details.
 
 ---
 

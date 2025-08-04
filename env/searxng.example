@@ -33,3 +33,8 @@ SEARXNG_DEBUG=false
 
 # Протокол HTTP (1.0 или 1.1)
 SEARXNG_HTTP_PROTOCOL_VERSION=1.1
+
+# === Примечания по поисковым движкам ===
+# ВНИМАНИЕ: DuckDuckGo отключен в conf/searxng/settings.yml из-за CAPTCHA блокировки
+# Активные движки: Startpage, Brave, Bing
+# Производительность: <3 секунды, 60+ результатов
