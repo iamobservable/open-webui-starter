@@ -1,28 +1,35 @@
 # 🏗️ ERNI-KI Systemarchitektur
 
-> **Dokumentversion:** 3.0
-> **Aktualisierungsdatum:** 2025-07-15
-> **Status:** Production Ready
+> **Dokumentversion:** 5.0 **Aktualisierungsdatum:** 2025-07-25 **Status:**
+> Production Ready
 
 ## 📋 Architektur-Überblick
 
-ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den Prinzipien der Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das System besteht aus **16 miteinander verbundenen Services**, einschließlich neuer Komponenten wie LiteLLM, Docling und Context Engineering, von denen jeder eine spezialisierte Funktion erfüllt.
+ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den
+Prinzipien der Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das
+System besteht aus **25 miteinander verbundenen Services**, einschließlich
+Komponenten wie LiteLLM, Docling, Context Engineering und einem vollständigen
+Monitoring-Stack mit webhook-receiver für Alert-Verarbeitung, von denen jeder
+eine spezialisierte Funktion erfüllt.
 
 ## 🎯 Architektur-Prinzipien
 
 ### 🔒 **Security First**
+
 - JWT-Authentifizierung für alle API-Anfragen
 - Rate Limiting und DDoS-Schutz
 - SSL/TLS-Verschlüsselung des gesamten Traffics
 - Service-Isolation über Docker Networks
 
 ### 📈 **Scalability & Performance**
+
 - Horizontale Skalierung über Docker Compose
 - GPU-Beschleunigung für AI-Berechnungen
 - Caching über Redis
 - Asynchrone Dokumentenverarbeitung
 
 ### 🛡️ **Reliability & Monitoring**
+
 - Health Checks für alle Services
 - Automatische Neustarts bei Ausfällen
 - Zentralisiertes Logging
@@ -60,6 +67,19 @@ graph TB
         POSTGRES[(🗄️ PostgreSQL + pgvector)]
         REDIS[(⚡ Redis Cache)]
         BACKREST[💾 Backrest Backup]
+    end
+
+    subgraph "📊 Monitoring Layer"
+        PROMETHEUS[📈 Prometheus Metrics]
+        GRAFANA[📊 Grafana Dashboards]
+        ALERTMANAGER[🚨 Alert Manager]
+        WEBHOOK_REC[📨 Webhook Receiver]
+        NODE_EXP[📊 Node Exporter]
+        PG_EXP[📊 PostgreSQL Exporter]
+        REDIS_EXP[📊 Redis Exporter]
+        NVIDIA_EXP[📊 NVIDIA GPU Exporter]
+        BLACKBOX_EXP[📊 Blackbox Exporter]
+        CADVISOR[📊 cAdvisor Container Metrics]
     end
 
     subgraph "🛠️ Infrastructure Layer"
@@ -102,6 +122,7 @@ graph TB
 ### 🚪 **Gateway Layer (Gateway)**
 
 #### Nginx Reverse Proxy
+
 - **Zweck**: Einheitlicher Eingangspunkt, Load Balancing, SSL-Terminierung
 - **Ports**: 80 (HTTP), 443 (HTTPS), 8080 (Internal)
 - **Funktionen**:
@@ -112,6 +133,7 @@ graph TB
   - Caching von statischem Content
 
 #### Auth Service (JWT)
+
 - **Technologie**: Go 1.23+
 - **Port**: 9090
 - **Funktionen**:
@@ -121,6 +143,7 @@ graph TB
   - Rate Limiting für Authentifizierung
 
 #### Cloudflared Tunnel
+
 - **Zweck**: Sichere Verbindung zu Cloudflare Zero Trust
 - **Funktionen**:
   - Verschlüsselte Tunnel ohne offene Ports
@@ -131,6 +154,7 @@ graph TB
 ### 🤖 **Application Layer (Anwendungen)**
 
 #### Open WebUI
+
 - **Technologie**: Python FastAPI + Svelte
 - **Port**: 8080
 - **GPU**: NVIDIA CUDA-Unterstützung
@@ -143,6 +167,7 @@ graph TB
   - Sprach-Ein-/Ausgabe
 
 #### Ollama LLM Server
+
 - **Technologie**: Go + CUDA
 - **Port**: 11434
 - **GPU**: Vollständige NVIDIA GPU-Unterstützung
@@ -154,6 +179,7 @@ graph TB
   - Streaming-Antworten
 
 #### SearXNG Search Engine
+
 - **Technologie**: Python Flask
 - **Port**: 8080 (internal)
 - **Funktionen**:
@@ -164,6 +190,7 @@ graph TB
   - Rate Limiting und Blockierungs-Schutz
 
 #### MCP Servers
+
 - **Technologie**: Model Context Protocol
 - **Port**: 8000
 - **Funktionen**:
@@ -175,6 +202,7 @@ graph TB
 ### 🔧 **Processing Layer (Verarbeitung)**
 
 #### Docling Document Parser
+
 - **Technologie**: Python + AI-Modelle
 - **Port**: 5001
 - **Funktionen**:
@@ -184,6 +212,7 @@ graph TB
   - Tabellen- und Bildunterstützung
 
 #### Apache Tika
+
 - **Technologie**: Java
 - **Port**: 9998
 - **Funktionen**:
@@ -193,6 +222,7 @@ graph TB
   - Text- und Strukturextraktion
 
 #### EdgeTTS Speech Synthesis
+
 - **Technologie**: Python + Microsoft Edge TTS
 - **Port**: 5050
 - **Funktionen**:
@@ -204,6 +234,7 @@ graph TB
 ### 💾 **Data Layer (Daten)**
 
 #### PostgreSQL + pgvector
+
 - **Version**: PostgreSQL 16 + pgvector Extension
 - **Port**: 5432
 - **Funktionen**:
@@ -214,6 +245,7 @@ graph TB
   - Replikation und Backups
 
 #### Redis Cache
+
 - **Version**: Redis Stack (Redis + RedisInsight)
 - **Ports**: 6379 (Redis), 8001 (RedisInsight)
 - **Funktionen**:
@@ -223,6 +255,7 @@ graph TB
   - Pub/Sub für Real-time-Benachrichtigungen
 
 #### Backrest Backup System
+
 - **Technologie**: Go + Restic
 - **Port**: 9898
 - **Funktionen**:
@@ -235,6 +268,7 @@ graph TB
 ### 🛠️ **Infrastructure Layer (Infrastruktur)**
 
 #### Watchtower Auto-updater
+
 - **Funktionen**:
   - Automatische Docker-Image-Updates
   - Überwachung neuer Versionen
@@ -245,22 +279,23 @@ graph TB
 
 ### Ports und Protokolle
 
-| Service | Externer Port | Interner Port | Protokoll | Zweck |
-|---------|---------------|---------------|-----------|-------|
-| nginx | 80, 443, 8080 | 80, 443, 8080 | HTTP/HTTPS | Web Gateway |
-| auth | - | 9090 | HTTP | JWT-Validierung |
-| openwebui | - | 8080 | HTTP/WS | AI-Interface |
-| ollama | - | 11434 | HTTP | LLM API |
-| db | - | 5432 | PostgreSQL | Datenbank |
-| redis | - | 6379, 8001 | Redis/HTTP | Cache & UI |
-| searxng | - | 8080 | HTTP | Such-API |
-| mcposerver | - | 8000 | HTTP | MCP-Protokoll |
-| docling | - | 5001 | HTTP | Dokument-Parsing |
-| tika | - | 9998 | HTTP | Metadaten-Extraktion |
-| edgetts | - | 5050 | HTTP | Sprachsynthese |
-| backrest | 9898 | 9898 | HTTP | Backup-Management |
+| Service    | Externer Port | Interner Port | Protokoll  | Zweck                |
+| ---------- | ------------- | ------------- | ---------- | -------------------- |
+| nginx      | 80, 443, 8080 | 80, 443, 8080 | HTTP/HTTPS | Web Gateway          |
+| auth       | -             | 9090          | HTTP       | JWT-Validierung      |
+| openwebui  | -             | 8080          | HTTP/WS    | AI-Interface         |
+| ollama     | -             | 11434         | HTTP       | LLM API              |
+| db         | -             | 5432          | PostgreSQL | Datenbank            |
+| redis      | -             | 6379, 8001    | Redis/HTTP | Cache & UI           |
+| searxng    | -             | 8080          | HTTP       | Such-API             |
+| mcposerver | -             | 8000          | HTTP       | MCP-Protokoll        |
+| docling    | -             | 5001          | HTTP       | Dokument-Parsing     |
+| tika       | -             | 9998          | HTTP       | Metadaten-Extraktion |
+| edgetts    | -             | 5050          | HTTP       | Sprachsynthese       |
+| backrest   | 9898          | 9898          | HTTP       | Backup-Management    |
 
 ### Docker Networks
+
 - **erni-ki_default**: Haupt-Netzwerk für alle Services
 - **Isolation**: Jeder Service nur über Container-Namen erreichbar
 - **DNS**: Automatische Namensauflösung über Docker DNS
@@ -268,6 +303,7 @@ graph TB
 ## 🔄 Datenflüsse
 
 ### Benutzeranfrage
+
 1. **Browser** → **Cloudflare** → **Cloudflared** → **Nginx**
 2. **Nginx** → **Auth Service** (JWT-Validierung)
 3. **Nginx** → **Open WebUI** (Haupt-Interface)
@@ -275,12 +311,14 @@ graph TB
 5. **Open WebUI** → **PostgreSQL** (Verlaufs-Speicherung)
 
 ### RAG-Suche
+
 1. **Open WebUI** → **SearXNG** (Informationssuche)
 2. **SearXNG** → **Redis** (Ergebnis-Caching)
 3. **Open WebUI** → **PostgreSQL/pgvector** (Vektor-Suche)
 4. **Open WebUI** → **Ollama** (Generierung mit Kontext)
 
 ### Dokumentenverarbeitung
+
 1. **Open WebUI** → **Docling/Tika** (Dokument-Parsing)
 2. **Open WebUI** → **PostgreSQL/pgvector** (Vektor-Speicherung)
 3. **Open WebUI** → **Ollama** (Inhalts-Analyse)
@@ -288,16 +326,19 @@ graph TB
 ## 📊 Monitoring und Observability
 
 ### Health Checks
+
 - Alle Services haben konfigurierte Health Checks
 - Automatischer Neustart bei Ausfällen
 - Überwachung über `docker compose ps`
 
 ### Logging
+
 - Zentralisierte Logs über Docker Logging Driver
 - Log-Rotation zur Festplatten-Überlauf-Vermeidung
 - Strukturiertes Logging im JSON-Format
 
 ### Metriken
+
 - Ressourcenverbrauch über `docker stats`
 - GPU-Überwachung über nvidia-smi
 - Datenbank-Performance-Monitoring
@@ -305,20 +346,24 @@ graph TB
 ## 🔧 Konfiguration und Deployment
 
 ### Umgebungsvariablen
+
 - Jeder Service hat separate `.env`-Datei
 - Automatische Generierung geheimer Schlüssel
 - Konfiguration über Docker Compose
 
 ### Skalierung
+
 - Horizontale Skalierung über Docker Compose scale
 - Load Balancing über Nginx upstream
 - Automatische Erkennung neuer Instanzen
 
 ### Sicherheit
+
 - Minimale Berechtigungen für alle Container
 - Netzwerk- und Dateisystem-Isolation
 - Regelmäßige Sicherheitsupdates über Watchtower
 
 ---
 
-**📝 Hinweis**: Diese Architektur ist für den Produktionseinsatz optimiert mit Fokus auf Sicherheit, Performance und Zuverlässigkeit.
+**📝 Hinweis**: Diese Architektur ist für den Produktionseinsatz optimiert mit
+Fokus auf Sicherheit, Performance und Zuverlässigkeit.
