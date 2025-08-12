@@ -19,7 +19,8 @@ Sicherheitssystem.
   P2200)
   - 6 vorinstallierte Modelle inklusive qwen2.5-coder:1.5b für Programmierung
   - Generierungszeit: ~1,5 Sekunden (GPU-Beschleunigung)
-- **LiteLLM** - einheitliche API für verschiedene LLM-Anbieter (3 Modelle)
+- **LiteLLM** - einheitliche API für verschiedene LLM-Anbieter (optimierte
+  Konfiguration)
 - **RAG-Suche** - Integration mit SearXNG (Startpage, Brave, Bing Engines)
   - Antwortzeit: <3 Sekunden, 60+ Suchergebnisse
 - **MCP-Server** - erweiterte Funktionen über Model Context Protocol
@@ -259,6 +260,8 @@ Das Monitoring-System umfasst:
 
 - [🏗️ Systemarchitektur](architecture.md) - technische Dokumentation
 - [🔌 API-Referenz](../api-reference.md) - API-Dokumentation
+- [📎 Docling Upload Hinweis](snippets/docling-multipart-note.md) – Multipart
+  Feldname ist "files" (nicht "file")
 - [💻 Entwicklerhandbuch](../development.md) - Entwicklungsumgebung einrichten
 
 ## 🤝 Mitwirkung
@@ -301,7 +304,7 @@ cd auth && go build
 
 - **Monitoring verbessert**
   - 3 aktive Alerts für SearXNG
-  - Alle 20+ Services gesund
+  - Alle 27 Services gesund
   - System läuft mit 98% optimaler Leistung
 
 ## 📄 Lizenz
