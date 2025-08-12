@@ -1,0 +1,556 @@
+# Минимальная конфигурация для тестирования сети
+# Основные настройки в nginx.conf
+
+# Улучшенный upstream для OpenWebUI с обработкой ошибок
+upstream openwebui_backend {
+  # Используем имя сервиса для стандартной Docker сети
+  server openwebui:8080 max_fails=3 fail_timeout=30s weight=1;
+  keepalive 64; # Увеличено для высокой нагрузки
+  keepalive_requests 1000; # Увеличено для производительности
+  keepalive_timeout 300s; # Увеличено для долгих соединений
+
+  # Настройки для graceful handling
+  least_conn; # Балансировка по наименьшему количеству соединений
+}
+
+upstream redisUpstream {
+  # Используем имя сервиса Redis
+  server redis:6379 max_fails=3 fail_timeout=30s weight=1;
+  keepalive 32;
+  keepalive_requests 500;
+  keepalive_timeout 120s;
+}
+
+upstream searxngUpstream {
+  # Используем имя сервиса SearXNG
+  server searxng:8080 max_fails=3 fail_timeout=30s weight=1;
+  keepalive 32;
+  keepalive_requests 200;
+  keepalive_timeout 60s;
+}
+
+upstream authUpstream {
+  # Используем имя сервиса Auth
+  server auth:9090 max_fails=3 fail_timeout=30s weight=1;
+  keepalive 16;
+  keepalive_requests 100;
+  keepalive_timeout 60s;
+}
+
+# Upstream для Docling сервиса с оптимизацией для больших файлов
+upstream doclingUpstream {
+  # Используем имя сервиса Docling
+  server docling:5001 max_fails=3 fail_timeout=30s weight=1;
+  keepalive 16;
+  keepalive_requests 50;
+  keepalive_timeout 300s; # Увеличено для обработки больших документов
+}
+
+# LiteLLM upstream конфигурация с высокой производительностью
+upstream litellmUpstream {
+  # Используем имя сервиса LiteLLM
+  server litellm:4000 max_fails=3 fail_timeout=30s weight=1;
+  keepalive 64; # Увеличено для AI Gateway
+  keepalive_requests 500;
+  keepalive_timeout 300s; # Увеличено для долгих AI запросов
+}
+
+# Ollama upstream конфигурация для AI моделей
+upstream ollamaUpstream {
+  # Используем имя сервиса Ollama
+  server ollama:11434 max_fails=3 fail_timeout=30s weight=1;
+  keepalive 32; # Для AI запросов
+  keepalive_requests 200;
+  keepalive_timeout 300s; # Увеличено для долгих AI запросов
+}
+
+# MCPO upstream конфигурация для MCP серверов
+upstream mcpoUpstream {
+  # Используем имя сервиса MCPO
+  server mcposerver:8000 max_fails=3 fail_timeout=30s weight=1;
+  keepalive 16; # Для MCP запросов
+  keepalive_requests 100;
+  keepalive_timeout 60s;
+}
+
+# Map для автоматического добавления Authorization header из cookie
+map $cookie_openwebui_token $auth_header {
+  default "";
+  "~^(.+)$" "Bearer $1";
+}
+
+server {
+  listen 80;
+  # Мультидоменная поддержка для локальной и внешней сети
+  server_name ki.erni-gruppe.ch localhost 192.168.62.140 127.0.0.1;
+
+  # Let's Encrypt ACME challenge location
+  location /.well-known/acme-challenge/ {
+    root /var/www/certbot;
+    try_files $uri =404;
+    access_log off;
+    log_not_found off;
+
+    # Заголовки для ACME challenge
+    add_header Content-Type "text/plain" always;
+    add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+  }
+
+  # Принудительный редирект на HTTPS для всех остальных запросов
+  location / {
+    # Умный редирект с сохранением хоста для локальной сети
+    set $redirect_host $host;
+    if ($host = "192.168.62.140") {
+      set $redirect_host "localhost";
+    }
+    return 301 https://$redirect_host$request_uri;
+  }
+}
+
+
+# HTTPS server с Let's Encrypt сертификатом (split-horizon DNS)
+server {
+  listen 443 ssl;
+  http2 on; # Современный синтаксис для HTTP/2
+  # Поддержка домена и IP адресов для split-horizon DNS
+  server_name ki.erni-gruppe.ch localhost 192.168.62.140 127.0.0.1;
+
+  # SSL конфигурация для Let's Encrypt сертификата
+  ssl_certificate /etc/nginx/ssl/nginx-fullchain.crt;
+  ssl_certificate_key /etc/nginx/ssl/nginx.key;
+
+  # Современные SSL протоколы
+  ssl_protocols TLSv1.2 TLSv1.3;
+
+  # Оптимизированные шифры для безопасности и производительности
+  ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+  ssl_prefer_server_ciphers off;
+
+  # SSL сессии для производительности (оптимизировано для корпоративной сети)
+  ssl_session_cache shared:SSL:100m; # Увеличено для корпоративной нагрузки
+  ssl_session_timeout 8h; # Оптимизировано для рабочего дня
+  ssl_session_tickets off; # Отключено для безопасности
+
+  # OCSP Stapling отключен для внутренней корпоративной сети
+  ssl_stapling off;
+  ssl_stapling_verify off;
+  # ssl_trusted_certificate /etc/nginx/ssl/nginx-ca.crt;
+  # Корпоративные DNS резолверы (настроить при необходимости)
+  resolver 127.0.0.11 valid=300s ipv6=off;
+  resolver_timeout 5s;
+
+  # Оптимизация для корпоративной сети
+  ssl_buffer_size 8k; # Увеличено для корпоративной сети (лучше throughput)
+  ssl_early_data off; # Отключено для повышенной безопасности в корпоративной среде
+
+  # Дополнительные оптимизации для локальной сети
+  keepalive_timeout 65; # Увеличиваем keepalive для локальной сети
+
+  # Оптимизация для Docker внутренней сети (172.19.0.0/16)
+  set_real_ip_from 172.19.0.0/16; # Docker сеть ERNI-KI
+  set_real_ip_from 192.168.62.0/24; # Локальная сеть
+  real_ip_header X-Forwarded-For;
+  real_ip_recursive on;
+
+  # Client settings (оптимизировано для RAG документов)
+  client_max_body_size 100M; # Поддержка больших документов для RAG
+  client_body_timeout 120s; # Увеличен для больших файлов
+  client_header_timeout 30s; # Увеличен для стабильности
+  client_body_buffer_size 128k;
+  client_header_buffer_size 4k;
+  large_client_header_buffers 4 16k;
+
+  # Усиленные заголовки безопасности для корпоративной среды ERNI
+  add_header X-Frame-Options DENY always;
+  add_header X-Content-Type-Options nosniff always;
+  add_header X-XSS-Protection "1; mode=block" always;
+  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  # HSTS оптимизирован для корпоративной сети (1 год вместо 2)
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+  # Улучшенная CSP политика для корпоративной безопасности
+  add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' *.erni-gruppe.ch; style-src 'self' 'unsafe-inline' *.erni-gruppe.ch; img-src 'self' data: https: *.erni-gruppe.ch; font-src 'self' data: *.erni-gruppe.ch; connect-src 'self' wss: https: *.erni-gruppe.ch; frame-ancestors 'none'; base-uri 'self'; form-action 'self' *.erni-gruppe.ch;" always;
+  add_header Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()" always;
+  # Дополнительные заголовки безопасности для корпоративной среды
+  add_header X-Permitted-Cross-Domain-Policies "none" always;
+  add_header Cross-Origin-Embedder-Policy "require-corp" always;
+  add_header Cross-Origin-Opener-Policy "same-origin" always;
+  add_header Cross-Origin-Resource-Policy "same-origin" always;
+
+  # OpenWebUI API endpoints
+  location /api/health {
+    limit_req zone=general burst=20 nodelay;
+
+    proxy_pass http://openwebui_backend/health;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    proxy_connect_timeout 5s;
+    proxy_send_timeout 10s;
+    proxy_read_timeout 10s;
+
+    add_header Content-Type "application/json" always;
+    add_header Access-Control-Allow-Origin "*" always;
+  }
+
+  location /api/v1/models {
+    limit_req zone=general burst=50 nodelay;
+
+    proxy_pass http://openwebui_backend/api/models;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    proxy_connect_timeout 10s;
+    proxy_send_timeout 30s;
+    proxy_read_timeout 30s;
+
+    add_header Content-Type "application/json" always;
+    add_header Access-Control-Allow-Origin "*" always;
+  }
+
+
+  # Files API endpoints с увеличенными лимитами для загрузки документов
+  location ~ ^/api/v1/files(/.*)?$ {
+    limit_req zone=general burst=10 nodelay;
+
+    # Увеличенные лимиты для загрузки файлов RAG
+    client_max_body_size 100M;
+    client_body_timeout 300s;
+
+    proxy_pass http://openwebui_backend;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Увеличенные timeout для обработки файлов
+    proxy_connect_timeout 30s;
+    proxy_send_timeout 300s;
+    proxy_read_timeout 300s;
+
+    # Отключить буферизацию для больших файлов
+    proxy_request_buffering off;
+    proxy_buffering off;
+  }
+
+  # Chat API endpoints с увеличенными timeout для AI запросов
+  location /api/chat/ {
+    limit_req zone=general burst=5 nodelay;
+
+    proxy_pass http://openwebui_backend;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # WebSocket поддержка для streaming
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_cache_bypass $http_upgrade;
+
+    # Увеличенные timeout для длительных AI запросов
+    proxy_connect_timeout 30s;
+    proxy_send_timeout 300s;
+    proxy_read_timeout 600s;
+
+    # Увеличенный размер буферов для больших ответов
+    client_max_body_size 100M; # Унифицировано для RAG документов
+    client_body_timeout 120s; # Увеличено для стабильности
+
+    # Отключить буферизацию для streaming
+    proxy_buffering off;
+    proxy_request_buffering off;
+
+    add_header Content-Type "application/json" always;
+    add_header Access-Control-Allow-Origin "*" always;
+  }
+
+
+  # API endpoint для SearXNG (для MCP интеграции)
+  location /api/searxng/ {
+    # Ограничить доступ только для локальных запросов (MCP серверы)
+    allow 127.0.0.1;
+    allow 10.0.0.0/8;
+    allow 172.16.0.0/12;
+    allow 192.168.0.0/16;
+    deny all;
+
+    limit_req zone=searxng_api burst=30 nodelay;
+    limit_req_status 429;
+
+    # Убираем /api/searxng/ префикс и передаем на SearXNG
+    rewrite ^/api/searxng/(.*)$ /$1 break;
+
+    # Логирование для отладки
+    access_log /var/log/nginx/searxng_api.log combined;
+
+    proxy_pass http://searxngUpstream;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+
+    # Таймауты для поисковых запросов
+    proxy_connect_timeout 5s;
+    proxy_send_timeout 10s;
+    proxy_read_timeout 15s;
+
+    # Буферизация для JSON ответов
+    proxy_buffering on;
+    proxy_buffer_size 16k;
+    proxy_buffers 8 16k;
+
+    # CORS headers для API
+    add_header Access-Control-Allow-Origin "*" always;
+    add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
+  }
+
+  # Health check endpoint для SearXNG по HTTPS (симметрично HTTP)
+  location /searxng/healthz {
+    access_log off;
+    proxy_pass http://searxngUpstream/healthz;
+    proxy_connect_timeout 1s;
+    proxy_send_timeout 1s;
+    proxy_read_timeout 1s;
+  }
+
+
+  # API для Docling сервиса с увеличенными лимитами
+  location /api/docling {
+    limit_req zone=docling_api burst=5 nodelay;
+    limit_req_status 429;
+
+    # Исправление endpoint для совместимости с OpenWebUI
+    # Перенаправляем /v1alpha/convert/file на /v1/convert/file
+    rewrite ^/api/docling/v1alpha/convert/file$ /v1/convert/file break;
+    rewrite ^/api/docling/(.*)$ /$1 break;
+    # Увеличенные лимиты для обработки документов
+    client_max_body_size 100M;
+    client_body_timeout 300s;
+    proxy_pass http://doclingUpstream;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    # Увеличенные timeout для обработки больших документов
+    proxy_connect_timeout 30s;
+    proxy_send_timeout 300s;
+    proxy_read_timeout 600s;
+
+    # Отключить буферизацию для больших файлов
+    proxy_buffering off;
+    proxy_request_buffering off;
+
+    add_header Content-Type "application/json" always;
+    add_header Access-Control-Allow-Origin "*" always;
+  }
+
+  # LiteLLM Health endpoint (без авторизации для мониторинга)
+  location /api/litellm/health {
+    limit_req zone=litellm_api burst=5 nodelay;
+    limit_req_status 429;
+
+    proxy_pass http://litellmUpstream/health;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Быстрые timeout для health checks
+    proxy_connect_timeout 5s;
+    proxy_send_timeout 10s;
+    proxy_read_timeout 10s;
+
+    add_header Content-Type "application/json" always;
+    add_header Access-Control-Allow-Origin "*" always;
+  }
+
+  # LiteLLM API endpoints с усиленной безопасностью для корпоративной среды
+  location /api/litellm/ {
+    # Строгие ограничения доступа для корпоративной сети ERNI
+    allow 127.0.0.1;
+    allow 10.0.0.0/8;
+    allow 172.16.0.0/12;
+    allow 192.168.0.0/16;
+    # Добавить конкретные IP диапазоны ERNI при необходимости
+    # allow 192.168.62.0/24; # Пример корпоративной подсети
+    deny all;
+
+    # Дополнительная защита от автоматизированных атак
+    if ($http_user_agent ~* (bot|crawler|spider|scraper)) {
+      return 403;
+    }
+
+    limit_req zone=litellm_api burst=10 nodelay;
+    limit_req_status 429;
+
+    proxy_pass http://litellmUpstream/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Оптимизированные timeout для AI запросов
+    proxy_connect_timeout 10s;
+    proxy_send_timeout 120s;
+    proxy_read_timeout 300s;
+
+    # Поддержка streaming ответов
+    proxy_buffering off;
+    proxy_cache_bypass $http_upgrade;
+
+    add_header Content-Type "application/json" always;
+    add_header Access-Control-Allow-Origin "*" always;
+  }
+
+  # Основной location для OpenWebUI (HTTPS)
+  location / {
+    # Увеличенные лимиты для загрузки файлов
+    client_max_body_size 100M;
+    client_body_timeout 300s;
+
+    proxy_pass http://openwebui_backend;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # WebSocket поддержка для streaming
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+
+    # Увеличенные timeout для AI операций
+    proxy_connect_timeout 30s;
+    proxy_send_timeout 300s;
+    proxy_read_timeout 300s;
+
+    # Отключить буферизацию для больших файлов
+    proxy_request_buffering off;
+  }
+}
+
+
+# Cloudflare Tunnel server (порт 8080)
+server {
+  listen 8080;
+  server_name ki.erni-gruppe.ch diz.zone localhost;
+
+
+  # MCP (Model Context Protocol) API endpoints для Cloudflare
+  location ~ ^/api/mcp/(.*)$ {
+    limit_req zone=api burst=50 nodelay;
+
+    # Проксируем к MCP серверу с сохранением пути
+    proxy_pass http://mcpoUpstream/$1$is_args$args;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+
+    # Таймауты для MCP запросов
+    proxy_connect_timeout 10s;
+    proxy_send_timeout 30s;
+    proxy_read_timeout 60s;
+
+    # Буферизация для JSON ответов
+    proxy_buffering on;
+    proxy_buffers 8 16k;
+    proxy_buffer_size 32k;
+  }
+
+  # API endpoint для SearXNG (для MCP интеграции через Cloudflare)
+  location /api/searxng/ {
+    # Ограничить доступ только для локальных запросов (MCP серверы)
+    allow 127.0.0.1;
+    allow 10.0.0.0/8;
+    allow 172.16.0.0/12;
+    allow 192.168.0.0/16;
+    deny all;
+
+    limit_req zone=searxng_api burst=30 nodelay;
+    limit_req_status 429;
+
+    # Убираем /api/searxng/ префикс и передаем на SearXNG
+    rewrite ^/api/searxng/(.*)$ /$1 break;
+
+    proxy_pass http://searxngUpstream;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Оптимизированные timeout для поиска
+    proxy_connect_timeout 5s;
+    proxy_send_timeout 30s;
+    proxy_read_timeout 30s;
+
+    add_header Content-Type "application/json" always;
+    add_header Access-Control-Allow-Origin "*" always;
+  }
+
+  # Специальная обработка JavaScript файлов - принудительное обновление кэша
+  location ~* /_app/immutable/.*\.js$ {
+    proxy_pass http://openwebui_backend;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Принудительное обновление кэша для JavaScript файлов
+    add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+    add_header Pragma "no-cache" always;
+    add_header Expires "0" always;
+
+    # Отключить кэширование на уровне proxy
+    proxy_cache off;
+    proxy_no_cache 1;
+    proxy_cache_bypass 1;
+  }
+
+  # Основной location для OpenWebUI
+  location / {
+    # Увеличенные лимиты для загрузки файлов (fallback)
+    client_max_body_size 100M;
+    client_body_timeout 300s;
+
+    proxy_pass http://openwebui_backend;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # WebSocket поддержка
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+
+    # Увеличенные timeout для AI операций
+    proxy_connect_timeout 30s;
+    proxy_send_timeout 300s;
+    proxy_read_timeout 300s;
+
+    # Отключить буферизацию для больших файлов
+    proxy_request_buffering off;
+  }
+
+  # Nginx status для Prometheus мониторинга
+  location /nginx_status {
+    stub_status on;
+    access_log off;
+    allow 172.19.0.0/16; # Docker network
+    allow 127.0.0.1; # Localhost
+    deny all;
+  }
+}
