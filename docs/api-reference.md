@@ -1,19 +1,23 @@
 # 🔌 Справочник API ERNI-KI
 
-> **Версия документа:** 2.0  
-> **Дата обновления:** 2025-07-04  
-> **API Версия:** v1
+> **Версия документа:** 2.0 **Дата обновления:** 2025-07-04 **API Версия:** v1
 
 ## 📋 Обзор API
 
-ERNI-KI предоставляет RESTful API для интеграции с внешними системами. API включает endpoints для работы с чатами, моделями, поиском и управлением пользователями.
+ERNI-KI предоставляет RESTful API для интеграции с внешними системами. API
+включает endpoints для работы с чатами, моделями, поиском и управлением
+пользователями.
 
 ### Базовые URL
-- **Production**: `https://your-domain.com/api/v1`
+
+- **Production**: `https://ki.erni-gruppe.ch/api/v1`
+- **Alternative**: `https://diz.zone/api/v1`
 - **Development**: `http://localhost:8080/api/v1`
 
 ### Аутентификация
+
 Все API запросы требуют JWT токен в заголовке:
+
 ```http
 Authorization: Bearer your-jwt-token
 ```
@@ -21,9 +25,11 @@ Authorization: Bearer your-jwt-token
 ## 🔐 Аутентификация
 
 ### POST /api/v1/auths/signin
+
 Вход в систему и получение JWT токена.
 
 **Запрос:**
+
 ```json
 {
   "email": "user@example.com",
@@ -32,6 +38,7 @@ Authorization: Bearer your-jwt-token
 ```
 
 **Ответ:**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -45,9 +52,11 @@ Authorization: Bearer your-jwt-token
 ```
 
 ### POST /api/v1/auths/signup
+
 Регистрация нового пользователя.
 
 **Запрос:**
+
 ```json
 {
   "name": "New User",
@@ -57,18 +66,22 @@ Authorization: Bearer your-jwt-token
 ```
 
 ### POST /api/v1/auths/signout
+
 Выход из системы (инвалидация токена).
 
 ## 💬 Управление чатами
 
 ### GET /api/v1/chats
+
 Получение списка чатов пользователя.
 
 **Параметры запроса:**
+
 - `page` (int) - номер страницы (по умолчанию: 1)
 - `limit` (int) - количество чатов на странице (по умолчанию: 20)
 
 **Ответ:**
+
 ```json
 {
   "chats": [
@@ -87,9 +100,11 @@ Authorization: Bearer your-jwt-token
 ```
 
 ### POST /api/v1/chats
+
 Создание нового чата.
 
 **Запрос:**
+
 ```json
 {
   "title": "Новый чат",
@@ -98,9 +113,11 @@ Authorization: Bearer your-jwt-token
 ```
 
 ### GET /api/v1/chats/{chat_id}
+
 Получение истории конкретного чата.
 
 **Ответ:**
+
 ```json
 {
   "id": "chat-uuid",
@@ -114,7 +131,7 @@ Authorization: Bearer your-jwt-token
     },
     {
       "id": "message-uuid-2",
-      "role": "assistant", 
+      "role": "assistant",
       "content": "Привет! Как дела?",
       "timestamp": "2025-07-04T10:00:05Z"
     }
@@ -123,9 +140,11 @@ Authorization: Bearer your-jwt-token
 ```
 
 ### POST /api/v1/chats/{chat_id}/messages
+
 Отправка сообщения в чат.
 
 **Запрос:**
+
 ```json
 {
   "content": "Расскажи о квантовых компьютерах",
@@ -135,6 +154,7 @@ Authorization: Bearer your-jwt-token
 ```
 
 **Ответ (обычный):**
+
 ```json
 {
   "id": "message-uuid",
@@ -146,6 +166,7 @@ Authorization: Bearer your-jwt-token
 ```
 
 **Ответ (streaming):**
+
 ```
 data: {"content": "Квантовые", "done": false}
 data: {"content": " компьютеры", "done": false}
@@ -153,14 +174,17 @@ data: {"content": " - это...", "done": true}
 ```
 
 ### DELETE /api/v1/chats/{chat_id}
+
 Удаление чата.
 
 ## 🧠 Управление моделями
 
 ### GET /api/v1/models
+
 Получение списка доступных моделей.
 
 **Ответ:**
+
 ```json
 {
   "models": [
@@ -173,7 +197,7 @@ data: {"content": " - это...", "done": true}
     },
     {
       "name": "llama3.1:8b",
-      "size": "4.7GB", 
+      "size": "4.7GB",
       "family": "llama",
       "parameter_size": "8B",
       "quantization_level": "Q4_0"
@@ -183,9 +207,11 @@ data: {"content": " - это...", "done": true}
 ```
 
 ### POST /api/v1/models/pull
+
 Загрузка новой модели.
 
 **Запрос:**
+
 ```json
 {
   "name": "llama3.1:8b"
@@ -193,6 +219,7 @@ data: {"content": " - это...", "done": true}
 ```
 
 **Ответ (streaming):**
+
 ```
 data: {"status": "downloading", "progress": 25}
 data: {"status": "downloading", "progress": 50}
@@ -200,14 +227,17 @@ data: {"status": "completed", "progress": 100}
 ```
 
 ### DELETE /api/v1/models/{model_name}
+
 Удаление модели.
 
 ## 🔍 SearXNG Search API
 
 ### GET /api/searxng/search
+
 Поиск через SearXNG (прямой доступ).
 
 **Параметры запроса:**
+
 - `q` (string) - поисковый запрос
 - `format` (string) - формат ответа (json, html)
 - `categories` (string) - категории поиска
@@ -215,11 +245,13 @@ data: {"status": "completed", "progress": 100}
 - `lang` (string) - язык поиска (ru, en)
 
 **Пример запроса:**
+
 ```http
 GET /api/searxng/search?q=artificial%20intelligence&format=json&lang=ru
 ```
 
 **Ответ:**
+
 ```json
 {
   "query": "artificial intelligence",
@@ -239,9 +271,11 @@ GET /api/searxng/search?q=artificial%20intelligence&format=json&lang=ru
 ```
 
 ### POST /api/v1/search
+
 RAG поиск через OpenWebUI (с интеграцией в чат).
 
 **Запрос:**
+
 ```json
 {
   "query": "последние новости ИИ",
@@ -252,6 +286,7 @@ RAG поиск через OpenWebUI (с интеграцией в чат).
 ```
 
 **Ответ:**
+
 ```json
 {
   "results": [
@@ -270,15 +305,18 @@ RAG поиск через OpenWebUI (с интеграцией в чат).
 ## 📄 Управление документами
 
 ### POST /api/v1/documents/upload
+
 Загрузка документа для анализа.
 
 **Запрос (multipart/form-data):**
+
 ```
 file: document.pdf
 chat_id: chat-uuid
 ```
 
 **Ответ:**
+
 ```json
 {
   "document_id": "doc-uuid",
@@ -291,12 +329,15 @@ chat_id: chat-uuid
 ```
 
 ### GET /api/v1/documents/{document_id}
+
 Получение информации о документе.
 
 ### POST /api/v1/documents/{document_id}/query
+
 Запрос к содержимому документа.
 
 **Запрос:**
+
 ```json
 {
   "question": "Какие основные выводы в документе?",
@@ -307,9 +348,11 @@ chat_id: chat-uuid
 ## 🎤 Speech API (EdgeTTS)
 
 ### POST /api/v1/speech/synthesize
+
 Синтез речи из текста.
 
 **Запрос:**
+
 ```json
 {
   "text": "Привет, как дела?",
@@ -320,6 +363,7 @@ chat_id: chat-uuid
 ```
 
 **Ответ:**
+
 ```
 Content-Type: audio/mpeg
 Content-Length: 12345
@@ -328,9 +372,11 @@ Content-Length: 12345
 ```
 
 ### GET /api/v1/speech/voices
+
 Получение списка доступных голосов.
 
 **Ответ:**
+
 ```json
 {
   "voices": [
@@ -341,7 +387,7 @@ Content-Length: 12345
       "locale": "ru-RU"
     },
     {
-      "name": "en-US-JennyNeural", 
+      "name": "en-US-JennyNeural",
       "language": "English",
       "gender": "Female",
       "locale": "en-US"
@@ -353,9 +399,11 @@ Content-Length: 12345
 ## 🔧 MCP (Model Context Protocol)
 
 ### GET /api/v1/mcp/tools
+
 Получение списка доступных MCP инструментов.
 
 **Ответ:**
+
 ```json
 {
   "tools": [
@@ -376,9 +424,11 @@ Content-Length: 12345
 ```
 
 ### POST /api/v1/mcp/tools/{tool_name}/execute
+
 Выполнение MCP инструмента.
 
 **Запрос:**
+
 ```json
 {
   "parameters": {
@@ -390,9 +440,11 @@ Content-Length: 12345
 ## 📊 Системная информация
 
 ### GET /api/v1/system/status
+
 Получение статуса системы.
 
 **Ответ:**
+
 ```json
 {
   "status": "healthy",
@@ -400,7 +452,7 @@ Content-Length: 12345
   "uptime": 86400,
   "services": {
     "ollama": "healthy",
-    "database": "healthy", 
+    "database": "healthy",
     "redis": "healthy",
     "searxng": "healthy"
   },
@@ -414,9 +466,11 @@ Content-Length: 12345
 ```
 
 ### GET /api/v1/system/metrics
+
 Получение метрик производительности.
 
 **Ответ:**
+
 ```json
 {
   "requests_per_minute": 45,
@@ -434,19 +488,20 @@ Content-Length: 12345
 
 ## 🚨 Коды ошибок
 
-| Код | Описание | Решение |
-|-----|----------|---------|
-| 400 | Неверный запрос | Проверьте формат данных |
-| 401 | Не авторизован | Обновите JWT токен |
-| 403 | Доступ запрещен | Недостаточно прав |
-| 404 | Не найдено | Проверьте URL и ID |
-| 429 | Слишком много запросов | Снизьте частоту запросов |
-| 500 | Внутренняя ошибка | Проверьте логи сервера |
-| 503 | Сервис недоступен | Проверьте статус сервисов |
+| Код | Описание               | Решение                   |
+| --- | ---------------------- | ------------------------- |
+| 400 | Неверный запрос        | Проверьте формат данных   |
+| 401 | Не авторизован         | Обновите JWT токен        |
+| 403 | Доступ запрещен        | Недостаточно прав         |
+| 404 | Не найдено             | Проверьте URL и ID        |
+| 429 | Слишком много запросов | Снизьте частоту запросов  |
+| 500 | Внутренняя ошибка      | Проверьте логи сервера    |
+| 503 | Сервис недоступен      | Проверьте статус сервисов |
 
 ## 📝 Примеры интеграции
 
 ### Python
+
 ```python
 import requests
 
@@ -454,7 +509,7 @@ class ERNIKIClient:
     def __init__(self, base_url, token):
         self.base_url = base_url
         self.headers = {"Authorization": f"Bearer {token}"}
-    
+
     def send_message(self, chat_id, content):
         response = requests.post(
             f"{self.base_url}/chats/{chat_id}/messages",
@@ -464,36 +519,41 @@ class ERNIKIClient:
         return response.json()
 
 # Использование
-client = ERNIKIClient("http://localhost:8080/api/v1", "your-token")
+client = ERNIKIClient("https://ki.erni-gruppe.ch/api/v1", "your-token")
 response = client.send_message("chat-id", "Привет!")
 ```
 
 ### JavaScript
+
 ```javascript
 class ERNIKIClient {
-    constructor(baseUrl, token) {
-        this.baseUrl = baseUrl;
-        this.headers = {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-    }
-    
-    async sendMessage(chatId, content) {
-        const response = await fetch(`${this.baseUrl}/chats/${chatId}/messages`, {
-            method: 'POST',
-            headers: this.headers,
-            body: JSON.stringify({ content })
-        });
-        return response.json();
-    }
+  constructor(baseUrl, token) {
+    this.baseUrl = baseUrl;
+    this.headers = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+  }
+
+  async sendMessage(chatId, content) {
+    const response = await fetch(`${this.baseUrl}/chats/${chatId}/messages`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ content }),
+    });
+    return response.json();
+  }
 }
 
 // Использование
-const client = new ERNIKIClient('http://localhost:8080/api/v1', 'your-token');
+const client = new ERNIKIClient(
+  'https://ki.erni-gruppe.ch/api/v1',
+  'your-token'
+);
 const response = await client.sendMessage('chat-id', 'Привет!');
 ```
 
 ---
 
-**📚 Дополнительная информация**: Полная OpenAPI спецификация доступна по адресу `/api/v1/docs`
+**📚 Дополнительная информация**: Полная OpenAPI спецификация доступна по адресу
+`/api/v1/docs`

@@ -1,44 +1,60 @@
 # 📚 ERNI-KI Dokumentation (Deutsch)
 
-> **Willkommen zur deutschen Dokumentation von ERNI-KI**  
-> **Version:** 2.0  
+> **Willkommen zur deutschen Dokumentation von ERNI-KI** **Version:** 2.0
 > **Aktualisiert:** 2025-07-04
 
 ## 🎯 Über ERNI-KI
 
-ERNI-KI ist eine moderne, produktionsreife AI-Plattform basierend auf Open WebUI mit vollständiger Containerisierung, GPU-Beschleunigung und umfassendem Sicherheitssystem. Die Plattform bietet eine benutzerfreundliche Weboberfläche für die Arbeit mit lokalen Sprachmodellen, RAG-Suche, Dokumentenverarbeitung und Sprachinteraktion.
+ERNI-KI ist eine moderne, produktionsreife AI-Plattform basierend auf Open WebUI
+mit vollständiger Containerisierung, GPU-Beschleunigung und umfassendem
+Sicherheitssystem. Die Plattform bietet eine benutzerfreundliche Weboberfläche
+für die Arbeit mit lokalen Sprachmodellen, RAG-Suche, Dokumentenverarbeitung und
+Sprachinteraktion.
 
 ## 📖 Dokumentations-Übersicht
 
 ### 🚀 Erste Schritte
+
 - **[README](README.md)** - Projektübersicht und Schnellstart
-- **[Installationsanleitung](installation-guide.md)** - Detaillierte Installationsschritte
+- **[Installationsanleitung](installation-guide.md)** - Detaillierte
+  Installationsschritte
 - **[Benutzerhandbuch](user-guide.md)** - Anleitung für Endbenutzer
 
 ### 🏗️ Technische Dokumentation
-- **[Systemarchitektur](architecture.md)** - Technische Architektur und Service-Details
+
+- **[Systemarchitektur](architecture.md)** - Technische Architektur und
+  Service-Details
 - **[Administrator-Handbuch](admin-guide.md)** - Systemverwaltung und Wartung
 - **[API-Referenz](../api-reference.md)** - API-Dokumentation (Englisch)
 
 ### 💻 Entwicklung
-- **[Entwicklerhandbuch](../development.md)** - Entwicklungsumgebung einrichten (Englisch)
+
+- **[Entwicklerhandbuch](../development.md)** - Entwicklungsumgebung einrichten
+  (Englisch)
 
 ## 🎯 Zielgruppen
 
 ### 👤 **Endbenutzer**
+
 Wenn Sie ERNI-KI verwenden möchten:
+
 1. Beginnen Sie mit dem **[Benutzerhandbuch](user-guide.md)**
 2. Lernen Sie die Grundlagen der AI-Interaktion
 3. Entdecken Sie erweiterte Funktionen wie RAG-Suche und Dokumentenverarbeitung
 
 ### 👨‍💼 **Administratoren**
+
 Wenn Sie ERNI-KI installieren und verwalten:
+
 1. Folgen Sie der **[Installationsanleitung](installation-guide.md)**
 2. Studieren Sie die **[Systemarchitektur](architecture.md)**
-3. Verwenden Sie das **[Administrator-Handbuch](admin-guide.md)** für die tägliche Verwaltung
+3. Verwenden Sie das **[Administrator-Handbuch](admin-guide.md)** für die
+   tägliche Verwaltung
 
 ### 👨‍💻 **Entwickler**
+
 Wenn Sie ERNI-KI erweitern oder anpassen möchten:
+
 1. Verstehen Sie die **[Systemarchitektur](architecture.md)**
 2. Lesen Sie das **[Entwicklerhandbuch](../development.md)**
 3. Nutzen Sie die **[API-Referenz](../api-reference.md)**
@@ -46,6 +62,7 @@ Wenn Sie ERNI-KI erweitern oder anpassen möchten:
 ## 🚀 Schnellstart-Pfade
 
 ### 🏃‍♂️ **Schnelle Installation (30 Minuten)**
+
 ```bash
 # Repository klonen
 git clone https://github.com/DIZ-admin/erni-ki.git
@@ -61,10 +78,13 @@ docker compose up -d
 # Erstes Modell laden
 docker compose exec ollama ollama pull llama3.2:3b
 ```
+
 → **Weiter mit:** [Installationsanleitung](installation-guide.md)
 
 ### 🎯 **Erste Nutzung (10 Minuten)**
-1. Browser öffnen: `http://localhost:8080`
+
+1. Browser öffnen: `https://ki.erni-gruppe.ch` (oder lokal:
+   `http://localhost:8080`)
 2. Administrator-Account erstellen
 3. Ollama-Verbindung konfigurieren: `http://ollama:11434`
 4. Ersten Chat mit AI starten
@@ -72,6 +92,7 @@ docker compose exec ollama ollama pull llama3.2:3b
 → **Weiter mit:** [Benutzerhandbuch](user-guide.md)
 
 ### ⚙️ **System-Administration**
+
 1. Service-Status überwachen: `docker compose ps`
 2. Logs prüfen: `docker compose logs -f`
 3. Backups konfigurieren: `http://localhost:9898`
@@ -82,18 +103,21 @@ docker compose exec ollama ollama pull llama3.2:3b
 ## 🔧 Hauptfunktionen
 
 ### 🤖 **AI-Funktionen**
+
 - **Lokale Sprachmodelle** - Vollständige Kontrolle über Ihre Daten
 - **RAG-Suche** - Aktuelle Informationen aus dem Internet
 - **Dokumentenverarbeitung** - PDF, DOCX, PPTX Analyse
 - **Sprachinteraktion** - Ein- und Ausgabe über Sprache
 
 ### 🔒 **Sicherheit**
+
 - **JWT-Authentifizierung** - Sichere Benutzeranmeldung
 - **SSL/TLS-Verschlüsselung** - Vollständige HTTPS-Unterstützung
 - **Cloudflare Zero Trust** - Sichere Tunnel ohne offene Ports
 - **Lokale Datenspeicherung** - Ihre Daten bleiben bei Ihnen
 
 ### 🛠️ **DevOps-Features**
+
 - **Docker Compose** - Einfache Containerisierung
 - **Automatische Backups** - Datenschutz durch Backrest
 - **Health Monitoring** - Systemüberwachung
@@ -102,6 +126,7 @@ docker compose exec ollama ollama pull llama3.2:3b
 ## 📊 Systemanforderungen
 
 ### Minimum (Testen)
+
 - **OS**: Ubuntu 20.04+ / Debian 11+
 - **CPU**: 4 Kerne
 - **RAM**: 8GB
@@ -109,6 +134,7 @@ docker compose exec ollama ollama pull llama3.2:3b
 - **Docker**: 20.10+
 
 ### Empfohlen (Produktion)
+
 - **CPU**: 8+ Kerne mit AVX2
 - **RAM**: 32GB
 - **GPU**: NVIDIA RTX 4060+ (8GB VRAM)
@@ -118,16 +144,20 @@ docker compose exec ollama ollama pull llama3.2:3b
 ## 🆘 Hilfe und Support
 
 ### 📚 **Dokumentation**
+
 - Alle Anleitungen sind in dieser Dokumentation verfügbar
 - Schritt-für-Schritt-Anleitungen mit Code-Beispielen
 - Fehlerbehebungs-Guides für häufige Probleme
 
 ### 🐛 **Problem-Meldung**
-- **GitHub Issues**: [github.com/DIZ-admin/erni-ki/issues](https://github.com/DIZ-admin/erni-ki/issues)
+
+- **GitHub Issues**:
+  [github.com/DIZ-admin/erni-ki/issues](https://github.com/DIZ-admin/erni-ki/issues)
 - **Diskussionen**: GitHub Discussions für Fragen
 - **Community**: Austausch mit anderen Benutzern
 
 ### 🔍 **Diagnose-Tools**
+
 ```bash
 # System-Gesundheit prüfen
 docker compose ps
@@ -143,18 +173,21 @@ curl http://localhost:8080/health
 ## 🌟 Erweiterte Themen
 
 ### 🔧 **Anpassung**
+
 - Eigene Sprachmodelle hinzufügen
 - Custom Nginx-Konfiguration
 - Erweiterte Sicherheitseinstellungen
 - Performance-Optimierung
 
 ### 📈 **Skalierung**
+
 - Multi-GPU-Konfiguration
 - Load Balancing
 - Hochverfügbarkeits-Setup
 - Monitoring und Alerting
 
 ### 🔌 **Integration**
+
 - API-Integration in eigene Anwendungen
 - Single Sign-On (SSO) Konfiguration
 - Externe Datenbank-Anbindung
@@ -183,7 +216,8 @@ Diese Dokumentation ist Open Source und Beiträge sind willkommen:
 
 **Bereit zum Start?** Wählen Sie Ihren Pfad:
 
-- 🚀 **[Schnelle Installation](installation-guide.md)** - System in 30 Minuten aufsetzen
+- 🚀 **[Schnelle Installation](installation-guide.md)** - System in 30 Minuten
+  aufsetzen
 - 👤 **[Benutzer-Guide](user-guide.md)** - Sofort mit AI arbeiten
 - 🏗️ **[Architektur verstehen](architecture.md)** - Technische Details
 

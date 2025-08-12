@@ -29,19 +29,19 @@ test_document_upload() {
     local file_path=$1
     local file_name=$(basename "$file_path")
     local file_size=$(du -h "$file_path" | cut -f1)
-    
+
     echo -n "📤 Uploading $file_name ($file_size)... "
-    
+
     local start_time=$(date +%s.%N)
     local response=$(curl -s -k -w "%{http_code}:%{time_total}:%{speed_upload}" \
-        -X POST -F "files=@$file_path" \
+        -X POST -F "files=@$file_path" -F "output_format=json_doctags" \
         "https://localhost/api/docling/v1/convert/file" 2>/dev/null)
     local end_time=$(date +%s.%N)
-    
+
     local http_code=$(echo $response | grep -o '[0-9]\{3\}:[0-9.]*:[0-9.]*$' | cut -d: -f1)
     local response_time=$(echo $response | grep -o '[0-9]\{3\}:[0-9.]*:[0-9.]*$' | cut -d: -f2)
     local upload_speed=$(echo $response | grep -o '[0-9]\{3\}:[0-9.]*:[0-9.]*$' | cut -d: -f3)
-    
+
     if [[ "$http_code" == "200" ]]; then
         echo -e "${GREEN}✓ OK${NC} (${response_time}s, $(echo "scale=1; $upload_speed/1024" | bc -l)KB/s)"
         return 0
@@ -55,14 +55,14 @@ test_document_upload() {
 test_embedding_generation() {
     local text=$1
     echo -n "🧠 Testing embedding generation... "
-    
+
     local start_time=$(date +%s.%N)
     local response=$(curl -s -X POST "http://localhost:11434/api/embeddings" \
         -H "Content-Type: application/json" \
         -d "{\"model\": \"nomic-embed-text\", \"prompt\": \"$text\"}" 2>/dev/null)
     local end_time=$(date +%s.%N)
     local duration=$(echo "$end_time - $start_time" | bc -l)
-    
+
     if echo "$response" | grep -q "embedding"; then
         local embedding_size=$(echo "$response" | jq -r '.embedding | length' 2>/dev/null || echo "unknown")
         echo -e "${GREEN}✓ OK${NC} (${duration}s, ${embedding_size}D vector)"
@@ -77,14 +77,14 @@ test_embedding_generation() {
 test_answer_generation() {
     local prompt=$1
     echo -n "🤖 Testing answer generation... "
-    
+
     local start_time=$(date +%s.%N)
     local response=$(curl -s -X POST "http://localhost:11434/api/generate" \
         -H "Content-Type: application/json" \
         -d "{\"model\": \"qwen2.5:0.5b\", \"prompt\": \"$prompt\", \"stream\": false}" 2>/dev/null)
     local end_time=$(date +%s.%N)
     local duration=$(echo "$end_time - $start_time" | bc -l)
-    
+
     if echo "$response" | grep -q "response"; then
         local response_length=$(echo "$response" | jq -r '.response | length' 2>/dev/null || echo "0")
         echo -e "${GREEN}✓ OK${NC} (${duration}s, ${response_length} chars)"
@@ -98,12 +98,12 @@ test_answer_generation() {
 # Функция для проверки векторной базы данных
 test_vector_database() {
     echo -n "🗄️ Testing vector database... "
-    
+
     # Проверка pgvector расширения
     local pgvector_version=$(docker exec erni-ki-db-1 psql -U postgres -d openwebui \
         -c "SELECT extversion FROM pg_extension WHERE extname = 'vector';" \
         -t 2>/dev/null | tr -d ' ' || echo "")
-    
+
     if [[ -n "$pgvector_version" ]]; then
         echo -e "${GREEN}✓ OK${NC} (pgvector v$pgvector_version)"
         return 0
@@ -200,7 +200,7 @@ rag_duration=$(echo "$rag_end_time - $rag_start_time" | bc -l)
 
 if echo "$embedding_response" | grep -q "embedding" && echo "$generation_response" | grep -q "response"; then
     echo -e "${GREEN}✓ OK${NC} (${rag_duration}s total)"
-    
+
     # Показать сгенерированный ответ
     echo -e "\n${CYAN}Generated Answer:${NC}"
     echo "$generation_response" | jq -r '.response' 2>/dev/null | head -3 | sed 's/^/  /'
@@ -241,17 +241,17 @@ if [[ $failed_tests -eq 0 ]]; then
     echo "  • Vector database ready for semantic search"
     echo "  • End-to-end RAG pipeline working"
     echo "  • System performance within acceptable limits"
-    
+
     echo -e "\n📈 ${GREEN}Performance Summary:${NC}"
     echo "  • Document processing: <30s (target met)"
     echo "  • Embedding generation: <5s (excellent)"
     echo "  • Answer generation: <10s (good)"
     echo "  • End-to-end RAG: <15s (acceptable)"
-    
+
 elif [[ $failed_tests -le 2 ]]; then
     echo -e "${YELLOW}⚠ Minor issues detected ($failed_tests failed tests)${NC}"
     echo "🔧 System mostly functional but needs optimization"
-    
+
 else
     echo -e "${RED}❌ Significant issues detected ($failed_tests failed tests)${NC}"
     echo "🚨 RAG document processing needs attention"

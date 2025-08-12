@@ -47,6 +47,13 @@ route:
       group_wait: 0s
       repeat_interval: 30m
 
+    # SearXNG производительность алерты
+    - match:
+        service: searxng
+      receiver: "searxng-performance-alerts"
+      group_interval: 2m
+      repeat_interval: 10m
+
 # Подавление дублирующихся алертов
 inhibit_rules:
   # Подавляем warning если есть critical
@@ -92,6 +99,15 @@ receivers:
     webhook_configs:
       - url: "http://webhook-receiver:9093/webhook/warning"
         send_resolved: true
+
+  # SearXNG производительность алерты
+  - name: "searxng-performance-alerts"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/searxng-performance"
+        send_resolved: true
+        http_config:
+          headers:
+            X-Alert-Type: "searxng-performance"
 
   # Алерты безопасности
   - name: "security-alerts"

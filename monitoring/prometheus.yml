@@ -11,8 +11,6 @@ global:
 # Правила алертинга
 rule_files:
   - "alert_rules.yml"
-  - "rules/erni-ki-alerts.yml"
-  - "security_alerts.yml"
 
 # Конфигурация Alertmanager
 alerting:
@@ -76,13 +74,13 @@ scrape_configs:
     metrics_path: /metrics
     scrape_timeout: 10s
 
-  # Ollama метрики (если доступны)
-  - job_name: "ollama"
+  # Ollama метрики - через custom exporter
+  - job_name: "ollama-exporter"
     static_configs:
-      - targets: ["ollama:11434"]
-    scrape_interval: 60s
-    metrics_path: /api/metrics
-    scrape_timeout: 30s
+      - targets: ["ollama-exporter:9778"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+    scrape_timeout: 10s
 
   # Open WebUI метрики
   - job_name: "openwebui"
@@ -132,13 +130,13 @@ scrape_configs:
     metrics_path: /metrics
     scrape_timeout: 15s
 
-  # Cloudflared метрики
-  - job_name: "cloudflared"
-    static_configs:
-      - targets: ["cloudflared:8080"]
-    scrape_interval: 60s
-    metrics_path: /metrics
-    scrape_timeout: 15s
+  # Cloudflared метрики - ОТКЛЮЧЕНО (сервис не предоставляет /metrics endpoint)
+  # - job_name: "cloudflared"
+  #   static_configs:
+  #     - targets: ["cloudflared:8080"]
+  #   scrape_interval: 60s
+  #   metrics_path: /metrics
+  #   scrape_timeout: 15s
 
   # Blackbox exporter для проверки доступности
   - job_name: "blackbox-http"
@@ -187,13 +185,13 @@ scrape_configs:
     metrics_path: /metrics
     scrape_timeout: 10s
 
-  # Webhook receiver метрики
-  - job_name: "webhook-receiver"
-    static_configs:
-      - targets: ["webhook-receiver:9093"]
-    scrape_interval: 30s
-    metrics_path: /metrics
-    scrape_timeout: 10s
+  # Webhook receiver метрики - ОТКЛЮЧЕНО (сервис не предоставляет /metrics endpoint)
+  # - job_name: "webhook-receiver"
+  #   static_configs:
+  #     - targets: ["webhook-receiver:9093"]
+  #   scrape_interval: 30s
+  #   metrics_path: /metrics
+  #   scrape_timeout: 10s
 
   # Fluent Bit метрики
   - job_name: "fluent-bit"
@@ -203,23 +201,23 @@ scrape_configs:
     metrics_path: /api/v1/metrics/prometheus
     scrape_timeout: 10s
 
-  # Elasticsearch метрики
-  - job_name: "elasticsearch"
-    static_configs:
-      - targets: ["elasticsearch:9200"]
-    scrape_interval: 30s
-    metrics_path: /_prometheus/metrics
-    scrape_timeout: 10s
+  # Elasticsearch метрики - ОТКЛЮЧЕНО (требуется отдельный elasticsearch_exporter)
+  # - job_name: "elasticsearch"
+  #   static_configs:
+  #     - targets: ["elasticsearch:9200"]
+  #   scrape_interval: 30s
+  #   metrics_path: /_prometheus/metrics
+  #   scrape_timeout: 10s
 
-  # Blackbox exporter для проверки Cloudflare tunnels
-  - job_name: "blackbox-cloudflare"
+  # Blackbox exporter для проверки HTTPS доступности через Cloudflare
+  - job_name: "blackbox-https"
     metrics_path: /probe
     params:
-      module: [cloudflare_tunnel]
+      module: [https_2xx]
     static_configs:
       - targets:
-          - https://erni-ki.example.com
-          - https://api.erni-ki.example.com
+          - https://diz.zone
+          - https://search.diz.zone
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -256,5 +254,71 @@ scrape_configs:
     scrape_interval: 30s
     metrics_path: /metrics
     scrape_timeout: 15s
+
+  # ============================================================================
+  # MCP (Model Context Protocol) МОНИТОРИНГ
+  # ============================================================================
+
+  # MCP Health Check мониторинг
+  - job_name: "mcp-health"
+    static_configs:
+      - targets: ["nginx:8080"]
+    metrics_path: /api/mcp/health
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # MCPO Server мониторинг
+  - job_name: "mcpo-server"
+    static_configs:
+      - targets: ["mcposerver:8000"]
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /docs
+
+  # LiteLLM мониторинг
+  - job_name: "litellm"
+    static_configs:
+      - targets: ["litellm:4000"]
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /health
+
+  # MCP Tools доступность (blackbox monitoring)
+  - job_name: "mcp-tools-blackbox"
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://nginx:8080/api/mcp/time/docs
+          - http://nginx:8080/api/mcp/postgres/docs
+          - http://nginx:8080/api/mcp/filesystem/docs
+          - http://nginx:8080/api/mcp/memory/docs
+          - http://nginx:8080/api/mcp/searxng/docs
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # SearXNG API производительность (blackbox monitoring)
+  - job_name: "blackbox-searxng-api"
+    metrics_path: /probe
+    params:
+      module: [searxng_api]
+    static_configs:
+      - targets:
+          - http://nginx:8080/api/searxng/search?q=monitoring-test&format=json
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+    scrape_interval: 30s
+    scrape_timeout: 10s
 # Примечание: Конфигурация хранения данных и веб-интерфейса
 # задается через command line аргументы в docker-compose.monitoring.yml

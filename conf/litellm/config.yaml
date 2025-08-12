@@ -1,205 +1,48 @@
-# LiteLLM Configuration для ERNI-KI Context Engineering
-# Скопировать в conf/litellm/config.yaml
+# LiteLLM Unified Configuration для ERNI-KI
+# Единый прокси для всех AI моделей с интеграцией OpenAI API и локальных Ollama моделей
 
-# === MODEL LIST CONFIGURATION ===
-model_list:
-  # Local Ollama models (приоритет для приватных данных)
-  - model_name: local-phi4-mini
-    litellm_params:
-      model: ollama/phi4-mini-reasoning:3.8b
-      api_base: http://ollama:11434
-      # Высокий приоритет для local модели
-      rpm: 1000
-      tpm: 50000
-    model_info:
-      mode: chat
-      supports_function_calling: true
-      supports_vision: false
-      context_window: 8192
-      max_output_tokens: 4096
+# Модели будут управляться через Database Models в LiteLLM Admin UI
+# Все модели мигрированы из конфигурации в базу данных для полного управления через веб-интерфейс
+model_list: []
 
-  - model_name: local-deepseek-r1
-    litellm_params:
-      model: ollama/deepseek-r1:7b
-      api_base: http://ollama:11434
-      rpm: 800
-      tpm: 40000
-    model_info:
-      mode: chat
-      supports_function_calling: true
-      supports_vision: false
-      context_window: 16384
-      max_output_tokens: 8192
-
-  - model_name: local-gemma3n
-    litellm_params:
-      model: ollama/gemma3n:e4b
-      api_base: http://ollama:11434
-      rpm: 600
-      tpm: 30000
-    model_info:
-      mode: chat
-      supports_function_calling: true
-      supports_vision: false
-      context_window: 8192
-      max_output_tokens: 4096
-
-  # OpenAI models (для cloud tasks)
-  - model_name: gpt-4o
-    litellm_params:
-      model: gpt-4o
-      api_key: os.environ/OPENAI_API_KEY
-      api_base: os.environ/OPENAI_API_BASE
-      rpm: 500
-      tpm: 30000
-    model_info:
-      mode: chat
-      supports_function_calling: true
-      supports_vision: true
-      context_window: 128000
-      max_output_tokens: 4096
-
-  - model_name: gpt-4o-mini
-    litellm_params:
-      model: gpt-4o-mini
-      api_key: os.environ/OPENAI_API_KEY
-      rpm: 1000
-      tpm: 100000
-    model_info:
-      mode: chat
-      supports_function_calling: true
-      supports_vision: true
-      context_window: 128000
-      max_output_tokens: 16384
-
-  # Anthropic Claude models (для сложных задач)
-  - model_name: claude-3-5-sonnet
-    litellm_params:
-      model: claude-3-5-sonnet-20241022
-      api_key: os.environ/ANTHROPIC_API_KEY
-      rpm: 300
-      tpm: 20000
-    model_info:
-      mode: chat
-      supports_function_calling: true
-      supports_vision: true
-      context_window: 200000
-      max_output_tokens: 8192
-
-  # Google Gemini models (для multimodal задач)
-  - model_name: gemini-pro
-    litellm_params:
-      model: gemini/gemini-pro
-      api_key: os.environ/GOOGLE_API_KEY
-      rpm: 600
-      tpm: 40000
-    model_info:
-      mode: chat
-      supports_function_calling: true
-      supports_vision: false
-      context_window: 32768
-      max_output_tokens: 8192
-
-# === ROUTER SETTINGS ===
 router_settings:
-  # Fallback настройки
   num_retries: 3
   timeout: 600
+  routing_strategy: "usage-based-routing-v2"
+  fallback_models: [] # Fallback модели будут настроены через Database Models
+  enable_fallbacks: false
 
-# === GENERAL SETTINGS ===
 general_settings:
-  # Master key для администрирования
   master_key: os.environ/LITELLM_MASTER_KEY
-
-  # Database для metadata
   database_url: os.environ/DATABASE_URL
+  ui_username: os.environ/UI_USERNAME
+  ui_password: os.environ/UI_PASSWORD
+  max_budget: 100
+  # === SECURITY SETTINGS ===
+  # Обязательная авторизация для всех /v1/* эндпоинтов (отключено для совместимости с OpenWebUI)
+  enforce_user_param: false
+  # Разрешить только аутентифицированные запросы
+  disable_spend_logs: false
+  # Включить аудит логи для безопасности
+  enable_audit_logs: true
 
-# === LITELLM SETTINGS ===
 litellm_settings:
-  # Отбрасывать неподдерживаемые параметры
   drop_params: true
-
-  # Включить verbose логирование только для debug
   set_verbose: false
-
-  # Retry настройки
   num_retries: 3
-  request_timeout: 600
-
-  # Кэширование
-  cache:
-    type: redis
-    host: redis
-    port: 6379
-    db: 2
-    ttl: 3600
-
-  # Success callback для мониторинга
-  success_callback: ["prometheus"]
-
-  # Failure callback для алертов
-  failure_callback: ["webhook"]
-
-# === ENVIRONMENT VARIABLES ===
-environment_variables:
-  # Redis настройки
-  REDIS_HOST: redis
-  REDIS_PORT: 6379
-  REDIS_DB: 1
-
-  # Ollama настройки
-  OLLAMA_API_BASE: http://ollama:11434
-
-  # OpenWebUI интеграция
-  OPENWEBUI_BASE_URL: http://openwebui:8080
-
-  # Prometheus metrics
-  PROMETHEUS_PORT: 9090
-
-  # Logging
-  LOG_LEVEL: INFO
-  LOG_FORMAT: json
-
-# === CONTEXT ENGINEERING RULES ===
-# Правила для intelligent routing
-routing_rules:
-  # Приватные данные → local models
-  - pattern: ".*confidential.*|.*private.*|.*internal.*"
-    target_models: ["local-llama3.2-3b", "local-llama3.2-1b"]
-    priority: high
-
-  # Простые задачи → быстрые модели
-  - pattern: ".*simple.*|.*quick.*|.*summary.*"
-    target_models: ["gpt-4o-mini", "local-llama3.2-1b"]
-    priority: medium
-
-  # Сложные задачи → мощные модели
-  - pattern: ".*complex.*|.*analysis.*|.*research.*"
-    target_models: ["claude-3-5-sonnet", "gpt-4o"]
-    priority: high
-
-  # Vision задачи → multimodal models
-  - pattern: ".*image.*|.*vision.*|.*visual.*"
-    target_models: ["gpt-4o", "claude-3-5-sonnet"]
-    priority: high
-
-  # Код → специализированные модели
-  - pattern: ".*code.*|.*programming.*|.*debug.*"
-    target_models: ["gpt-4o", "local-llama3.2-3b"]
-    priority: medium
-
-# === MONITORING & ALERTING ===
-callbacks:
-  # Prometheus metrics
-  - callback_name: prometheus
-    callback_type: success
-    callback_vars:
-      port: 9090
-
-  # Webhook для критических ошибок
-  - callback_name: webhook
-    callback_type: failure
-    callback_vars:
-      url: os.environ/WEBHOOK_URL
-      headers:
-        Authorization: "Bearer webhook-token"
+  request_timeout: 300
+  # === KEY GENERATION SETTINGS ===
+  # Настройки по умолчанию для генерации ключей
+  default_key_generate_params:
+    max_budget: 10.0 # Максимальный бюджет по умолчанию $10
+    duration: "30d" # Срок действия ключа 30 дней
+    metadata:
+      created_by: "erni-ki-system"
+      environment: "production"
+  # Ограничения для генерации ключей
+  upperbound_key_generate_params:
+    max_budget: 100.0 # Максимальный лимит бюджета $100
+    duration: "90d" # Максимальный срок действия 90 дней
+    max_parallel_requests: 50 # Максимум параллельных запросов
+    tpm_limit: 10000 # Лимит токенов в минуту
+    rpm_limit: 100 # Лимит запросов в минуту

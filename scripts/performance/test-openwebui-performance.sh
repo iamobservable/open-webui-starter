@@ -117,6 +117,17 @@ else
     echo -e "${RED}❌ Failed${NC}"
 fi
 
+
+# Верификация RAG цепочки (минимальная)
+((total_tests++))
+echo -n "Testing RAG web search via Nginx API... "
+if curl -s -k --max-time 8 "https://localhost/api/searxng/search?q=test&format=json" | grep -q "results"; then
+    echo -e "${GREEN}✅ OK${NC}"
+    ((passed_tests++))
+else
+    echo -e "${YELLOW}⚠️ Not verified over HTTPS${NC}"
+fi
+
 # Тест интеграции с PostgreSQL
 ((total_tests++))
 echo -n "Testing PostgreSQL integration... "

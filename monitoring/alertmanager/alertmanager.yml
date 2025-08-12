@@ -86,94 +86,30 @@ receivers:
     webhook_configs:
       - url: "http://webhook-receiver:9093/webhook/critical"
         send_resolved: true
-        title: "🚨 CRITICAL ALERT / КРИТИЧЕСКИЙ АЛЕРТ"
-        text: |
-          🚨 **КРИТИЧЕСКИЙ АЛЕРТ / CRITICAL ALERT** 🚨
-
-          {{ range .Alerts }}
-          **Alert:** {{ .Annotations.summary }}
-          **Description:** {{ .Annotations.description }}
-          **Severity:** {{ .Labels.severity }}
-          **Service:** {{ .Labels.service }}
-          **Component:** {{ .Labels.component }}
-          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
-          **Runbook:** {{ .Annotations.runbook_url }}
-          {{ end }}
-
-          **Action Required:** Immediate attention needed / Требуется немедленное внимание
 
   # Предупреждения
   - name: "erni-ki-warning"
     webhook_configs:
       - url: "http://webhook-receiver:9093/webhook/warning"
         send_resolved: true
-        title: "⚠️ Warning Alert / Предупреждение"
-        text: |
-          ⚠️ **WARNING / ПРЕДУПРЕЖДЕНИЕ** ⚠️
-
-          {{ range .Alerts }}
-          **Alert:** {{ .Annotations.summary }}
-          **Description:** {{ .Annotations.description }}
-          **Service:** {{ .Labels.service }}
-          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
-          {{ end }}
 
   # GPU специфичные алерты
   - name: "erni-ki-gpu"
     webhook_configs:
       - url: "http://webhook-receiver:9093/webhook/gpu"
         send_resolved: true
-        title: "🎮 GPU Alert / GPU Алерт"
-        text: |
-          🎮 **GPU ALERT / GPU АЛЕРТ** 🎮
-
-          {{ range .Alerts }}
-          **Alert:** {{ .Annotations.summary }}
-          **Description:** {{ .Annotations.description }}
-          **GPU ID:** {{ .Labels.gpu_id }}
-          **Component:** {{ .Labels.component }}
-          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
-          {{ end }}
-
-          **Note:** GPU performance may be affected / Производительность GPU может быть снижена
 
   # AI сервисы алерты
   - name: "erni-ki-ai"
     webhook_configs:
       - url: "http://webhook-receiver:9093/webhook/ai"
         send_resolved: true
-        title: "🤖 AI Services Alert / Алерт AI сервисов"
-        text: |
-          🤖 **AI SERVICES ALERT / АЛЕРТ AI СЕРВИСОВ** 🤖
-
-          {{ range .Alerts }}
-          **Alert:** {{ .Annotations.summary }}
-          **Description:** {{ .Annotations.description }}
-          **Service:** {{ .Labels.service }}
-          **Component:** {{ .Labels.component }}
-          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
-          {{ end }}
-
-          **Impact:** AI functionality may be limited / Функциональность AI может быть ограничена
 
   # База данных алерты
   - name: "erni-ki-database"
     webhook_configs:
       - url: "http://webhook-receiver:9093/webhook/database"
         send_resolved: true
-        title: "🗄️ Database Alert / Алерт базы данных"
-        text: |
-          🗄️ **DATABASE ALERT / АЛЕРТ БАЗЫ ДАННЫХ** 🗄️
-
-          {{ range .Alerts }}
-          **Alert:** {{ .Annotations.summary }}
-          **Description:** {{ .Annotations.description }}
-          **Service:** {{ .Labels.service }}
-          **Component:** {{ .Labels.component }}
-          **Time:** {{ .StartsAt.Format "2006-01-02 15:04:05" }}
-          {{ end }}
-
-          **Impact:** Data operations may be affected / Операции с данными могут быть затронуты
 
 # Подавление алертов (inhibit rules)
 inhibit_rules:

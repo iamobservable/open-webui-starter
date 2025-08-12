@@ -174,8 +174,16 @@ test_http_endpoints() {
         ["http://localhost:8080/health"]="OpenWebUI"
         ["http://localhost:5001/health"]="Docling"
         ["http://localhost:5050/voices"]="EdgeTTS"
-        ["http://localhost:9998/tika"]="Tika"
+        ["http://localhost:9998/tika"]="Tika (GET)"
     )
+
+    # Дополнительная проверка Tika методом PUT (универсальная экстракция)
+    log "Проверка Tika PUT /tika..."
+    if curl -sf --max-time 5 -X PUT --data-binary @tests/russian_test_content.md -H "Content-Type: text/plain" "http://localhost:9998/tika" > /dev/null 2>&1; then
+        success "Tika (PUT /tika): доступен"
+    else
+        warning "Tika (PUT /tika): недоступен"
+    fi
 
     for url in "${!endpoints[@]}"; do
         name="${endpoints[$url]}"

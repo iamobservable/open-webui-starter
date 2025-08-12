@@ -12,6 +12,8 @@ groups:
         labels:
           severity: critical
           category: infrastructure
+          # Используем job как service name для общих правил
+          service: "{{ $labels.job }}"
         annotations:
           summary: "Service {{ $labels.job }} is down"
           description: "Service {{ $labels.job }} on {{ $labels.instance }} has been down for more than 1 minute."
@@ -23,6 +25,7 @@ groups:
         labels:
           severity: warning
           category: infrastructure
+          service: "system"
         annotations:
           summary: "High CPU usage on {{ $labels.instance }}"
           description: "CPU usage is above 80% for more than 5 minutes on {{ $labels.instance }}."
@@ -34,6 +37,7 @@ groups:
         labels:
           severity: warning
           category: infrastructure
+          service: "system"
         annotations:
           summary: "High memory usage on {{ $labels.instance }}"
           description: "Memory usage is above 85% for more than 5 minutes on {{ $labels.instance }}."
@@ -45,6 +49,7 @@ groups:
         labels:
           severity: critical
           category: infrastructure
+          service: "system"
         annotations:
           summary: "Low disk space on {{ $labels.instance }}"
           description: "Disk usage is above 90% on {{ $labels.instance }} ({{ $labels.mountpoint }})."
@@ -59,9 +64,11 @@ groups:
         labels:
           severity: critical
           category: container
+          # Динамическое определение service из имени контейнера (erni-ki-{service}-{number})
+          service: '{{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}'
         annotations:
           summary: "Container {{ $labels.name }} high memory usage"
-          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit for more than 2 minutes."
+          description: 'Container {{ $labels.name }} (service: {{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}) is using {{ $value | humanizePercentage }} of its memory limit for more than 2 minutes.'
 
       # Предупреждение о высоком использовании памяти контейнером
       - alert: ContainerWarningMemoryUsage
@@ -70,9 +77,11 @@ groups:
         labels:
           severity: warning
           category: container
+          # Динамическое определение service из имени контейнера (erni-ki-{service}-{number})
+          service: '{{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}'
         annotations:
           summary: "Container {{ $labels.name }} warning memory usage"
-          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} of its memory limit for more than 5 minutes."
+          description: 'Container {{ $labels.name }} (service: {{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}) is using {{ $value | humanizePercentage }} of its memory limit for more than 5 minutes.'
 
       # Специфичные алерты для критических сервисов
       - alert: ElasticsearchCriticalMemory
@@ -104,9 +113,11 @@ groups:
         labels:
           severity: warning
           category: container
+          # Динамическое определение service из имени контейнера (erni-ki-{service}-{number})
+          service: '{{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}'
         annotations:
           summary: "Container {{ $labels.name }} restarting too often"
-          description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last hour."
+          description: 'Container {{ $labels.name }} (service: {{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}) has restarted {{ $value }} times in the last hour.'
 
   # Правила для Auth сервиса
   - name: auth-service.rules
@@ -499,17 +510,29 @@ groups:
           summary: "SearXNG is down"
           description: "SearXNG search service has been down for more than 1 minute."
 
-      # Медленные поисковые запросы SearXNG
-      - alert: SlowSearXNGQueries
-        expr: histogram_quantile(0.95, rate(searxng_request_duration_seconds_bucket[5m])) > 5
-        for: 5m
+      # Медленные поисковые запросы SearXNG (>2s)
+      - alert: SearXNGSlowResponse
+        expr: histogram_quantile(0.95, rate(searxng_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
         labels:
           severity: warning
           service: searxng
           category: performance
         annotations:
-          summary: "Slow SearXNG queries"
-          description: "95th percentile SearXNG query time is above 5 seconds for more than 5 minutes."
+          summary: "SearXNG response time above 2 seconds"
+          description: "95th percentile SearXNG query time is above 2 seconds for more than 2 minutes. Current value: {{ $value }}s"
+
+      # Критически медленные поисковые запросы SearXNG (>5s)
+      - alert: SearXNGCriticallySlowQueries
+        expr: histogram_quantile(0.95, rate(searxng_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: critical
+          service: searxng
+          category: performance
+        annotations:
+          summary: "SearXNG critically slow queries"
+          description: "95th percentile SearXNG query time is above 5 seconds for more than 5 minutes. Current value: {{ $value }}s"
 
       # Высокий процент неудачных поисковых запросов
       - alert: HighSearXNGFailureRate
@@ -522,3 +545,16 @@ groups:
         annotations:
           summary: "High SearXNG failure rate"
           description: "SearXNG failure rate is above 20% for more than 3 minutes."
+
+      # Медленный API endpoint /api/searxng/search
+      - alert: SearXNGAPISlowResponse
+        expr: probe_duration_seconds{job="blackbox-searxng-api"} > 2
+        for: 1m
+        labels:
+          severity: warning
+          service: searxng
+          category: api-performance
+          endpoint: "/api/searxng/search"
+        annotations:
+          summary: "SearXNG API endpoint slow response"
+          description: "SearXNG API endpoint /api/searxng/search response time is above 2 seconds for more than 1 minute. Current value: {{ $value }}s"

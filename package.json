@@ -42,6 +42,9 @@
   "scripts": {
     "dev": "vitest",
     "test": "vitest run --coverage",
+    "e2e": "playwright test",
+    "e2e:headed": "PW_BASE_URL=https://localhost playwright test --headed --project=chromium",
+    "e2e:report": "playwright show-report",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
     "lint": "eslint . --ext .js,.ts,.jsx,.tsx",
@@ -66,6 +69,7 @@
     "@commitlint/cli": "^18.6.1",
     "@commitlint/config-conventional": "^18.6.3",
     "@eslint/js": "^9.15.0",
+    "@playwright/test": "^1.54.2",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^11.0.0",

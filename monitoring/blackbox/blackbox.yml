@@ -5,7 +5,7 @@ modules:
   # ============================================================================
   # HTTP ПРОВЕРКИ
   # ============================================================================
-  
+
   # Базовая HTTP проверка
   http_2xx:
     prober: http
@@ -84,7 +84,7 @@ modules:
   # ============================================================================
   # TCP ПРОВЕРКИ
   # ============================================================================
-  
+
   # Базовая TCP проверка
   tcp_connect:
     prober: tcp
@@ -119,7 +119,7 @@ modules:
   # ============================================================================
   # ICMP ПРОВЕРКИ
   # ============================================================================
-  
+
   # ICMP ping проверка
   icmp:
     prober: icmp
@@ -133,7 +133,7 @@ modules:
   # ============================================================================
   # DNS ПРОВЕРКИ
   # ============================================================================
-  
+
   # DNS A record проверка
   dns_a:
     prober: dns
@@ -165,7 +165,7 @@ modules:
   # ============================================================================
   # СПЕЦИАЛЬНЫЕ ПРОВЕРКИ ДЛЯ ERNI-KI
   # ============================================================================
-  
+
   # OpenWebUI health check
   openwebui_health:
     prober: http
@@ -281,6 +281,27 @@ modules:
       fail_if_body_matches_regexp:
         - "error"
         - "5[0-9][0-9]"
+      tls_config:
+        insecure_skip_verify: false
+      preferred_ip_protocol: "ip4"
+
+  # SearXNG API проверка с JSON валидацией
+  searxng_api:
+    prober: http
+    timeout: 5s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+      valid_status_codes: [200]
+      method: GET
+      headers:
+        User-Agent: "ERNI-KI SearXNG Monitor"
+        Accept: "application/json"
+      no_follow_redirects: true
+      fail_if_ssl: false
+      fail_if_not_ssl: false
+      fail_if_body_not_matches_regexp:
+        - '"query":'
+        - '"results":'
       tls_config:
         insecure_skip_verify: false
       preferred_ip_protocol: "ip4"

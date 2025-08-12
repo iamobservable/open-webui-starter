@@ -1,12 +1,12 @@
 # 👨‍💼 ERNI-KI Administrator-Handbuch
 
-> **Dokumentversion:** 2.0  
-> **Aktualisierungsdatum:** 2025-07-04  
-> **Zielgruppe:** Systemadministratoren
+> **Dokumentversion:** 2.0 **Aktualisierungsdatum:** 2025-07-04 **Zielgruppe:**
+> Systemadministratoren
 
 ## 🎯 Überblick der administrativen Aufgaben
 
 Als ERNI-KI Administrator sind Sie verantwortlich für:
+
 - Überwachung des Status aller 14 Services
 - Benutzer- und Zugriffsverwaltung
 - Backup-Konfiguration
@@ -17,6 +17,7 @@ Als ERNI-KI Administrator sind Sie verantwortlich für:
 ## 📊 System-Monitoring
 
 ### Service-Status prüfen
+
 ```bash
 # Allgemeiner Status aller Container
 docker compose ps
@@ -34,6 +35,7 @@ docker stats
 ### Wichtige Monitoring-Metriken
 
 #### Service-Status (sollten "healthy" sein)
+
 - **nginx** - Web-Gateway und Load Balancer
 - **auth** - JWT-Authentifizierung
 - **openwebui** - Haupt-AI-Interface
@@ -44,6 +46,7 @@ docker stats
 - **backrest** - Backup-System
 
 #### Ressourcenverbrauch
+
 ```bash
 # CPU und Speicher pro Container
 docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}"
@@ -57,6 +60,7 @@ nvidia-smi
 ```
 
 ### Automatisiertes Monitoring
+
 ```bash
 # Tägliches Health-Check-Skript erstellen
 cat > /usr/local/bin/erni-ki-health.sh << 'EOF'
@@ -80,10 +84,16 @@ if [ $DISK_USAGE -gt 80 ]; then
     echo "[$DATE] ⚠️  Hoher Festplattenverbrauch: ${DISK_USAGE}%" >> $LOG_FILE
 fi
 
-# API-Verfügbarkeit prüfen
+# API-Verfügbarkeit prüfen (lokal)
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
 if [ "$HTTP_CODE" != "200" ]; then
     echo "[$DATE] ❌ OpenWebUI nicht erreichbar (HTTP $HTTP_CODE)" >> $LOG_FILE
+fi
+
+# Externe Verfügbarkeit prüfen
+HTTP_CODE_EXT=$(curl -s -o /dev/null -w "%{http_code}" https://ki.erni-gruppe.ch/)
+if [ "$HTTP_CODE_EXT" != "200" ]; then
+    echo "[$DATE] ❌ Externe Domain nicht erreichbar (HTTP $HTTP_CODE_EXT)" >> $LOG_FILE
 fi
 EOF
 
@@ -96,23 +106,25 @@ echo "0 9 * * * /usr/local/bin/erni-ki-health.sh" | crontab -
 ## 🗄️ Datenbank-Management
 
 ### PostgreSQL-Verbindung
+
 ```bash
 # Zur Datenbank verbinden
 docker compose exec db psql -U openwebui -d openwebui
 
 # Datenbankgröße prüfen
 docker compose exec db psql -U openwebui -d openwebui -c "
-SELECT 
+SELECT
     schemaname,
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
-FROM pg_tables 
+FROM pg_tables
 WHERE schemaname = 'public'
 ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
 "
 ```
 
 ### Datenbank-Wartung
+
 ```bash
 # Alte Daten löschen (älter als 90 Tage)
 docker compose exec db psql -U openwebui -d openwebui -c "
@@ -122,8 +134,8 @@ VACUUM ANALYZE;
 
 # Indizes prüfen
 docker compose exec db psql -U openwebui -d openwebui -c "
-SELECT schemaname, tablename, indexname, idx_tup_read, idx_tup_fetch 
-FROM pg_stat_user_indexes 
+SELECT schemaname, tablename, indexname, idx_tup_read, idx_tup_fetch
+FROM pg_stat_user_indexes
 ORDER BY idx_tup_read DESC;
 "
 
@@ -134,12 +146,14 @@ docker compose exec db pg_dump -U openwebui openwebui > backup_$(date +%Y%m%d).s
 ## 💾 Backup-Management
 
 ### Backrest-Konfiguration
+
 1. Web-Interface öffnen: `http://your-server:9898`
 2. Mit Anmeldedaten aus `env/backrest.env` einloggen
 3. Neues Repository für Backups erstellen
 4. Backup-Zeitplan konfigurieren
 
 ### Backup-Konfiguration
+
 ```json
 {
   "repos": [
@@ -155,7 +169,7 @@ docker compose exec db pg_dump -U openwebui openwebui > backup_$(date +%Y%m%d).s
       "repo": "local-backup",
       "paths": [
         "/backup-sources/data/postgres",
-        "/backup-sources/data/openwebui", 
+        "/backup-sources/data/openwebui",
         "/backup-sources/data/redis",
         "/backup-sources/env",
         "/backup-sources/conf"
@@ -173,6 +187,7 @@ docker compose exec db pg_dump -U openwebui openwebui > backup_$(date +%Y%m%d).s
 ```
 
 ### Wiederherstellung aus Backup
+
 ```bash
 # Services stoppen
 docker compose down
@@ -188,13 +203,14 @@ docker compose up -d
 ## 🔒 Sicherheit und Zugriff
 
 ### Benutzerverwaltung
+
 ```bash
 # Neuen Benutzer über API erstellen
 curl -X POST http://localhost:8080/api/v1/auths/signup \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Neuer Benutzer",
-    "email": "user@example.com", 
+    "email": "user@example.com",
     "password": "sicheres-passwort"
   }'
 
@@ -205,6 +221,7 @@ SELECT id, name, email, role, created_at FROM user ORDER BY created_at DESC;
 ```
 
 ### SSL/TLS-Konfiguration
+
 ```bash
 # SSL-Zertifikate aktualisieren
 # Bei Let's Encrypt:
@@ -217,6 +234,7 @@ docker compose restart nginx
 ```
 
 ### Sicherheits-Audit
+
 ```bash
 # Offene Ports prüfen
 netstat -tulpn | grep LISTEN
@@ -231,12 +249,13 @@ docker compose logs auth | grep "authentication failed" | tail -10
 ## ⚡ Performance und Optimierung
 
 ### Performance-Monitoring
+
 ```bash
 # Langsame PostgreSQL-Abfragen analysieren
 docker compose exec db psql -U openwebui -d openwebui -c "
 SELECT query, calls, total_time, mean_time, rows
-FROM pg_stat_statements 
-ORDER BY total_time DESC 
+FROM pg_stat_statements
+ORDER BY total_time DESC
 LIMIT 10;
 "
 
@@ -246,6 +265,7 @@ docker compose exec redis redis-cli info stats
 ```
 
 ### GPU-Nutzung optimieren
+
 ```bash
 # GPU-Nutzung prüfen
 nvidia-smi -l 1
@@ -258,6 +278,7 @@ docker compose exec ollama ollama show llama3.2:3b --modelfile
 ```
 
 ### Service-Skalierung
+
 ```bash
 # Anzahl nginx-Instanzen erhöhen
 docker compose up -d --scale nginx=2
@@ -269,6 +290,7 @@ docker compose logs nginx | grep upstream
 ## 🔧 Fehlerbehebung
 
 ### Problem-Diagnose
+
 ```bash
 # Status aller Services prüfen
 docker compose ps
@@ -284,6 +306,7 @@ docker compose exec openwebui curl -I http://ollama:11434
 ### Häufige Probleme und Lösungen
 
 #### Service startet nicht
+
 ```bash
 # Ressourcen prüfen
 docker system df
@@ -297,6 +320,7 @@ docker compose restart service-name
 ```
 
 #### Langsame AI-Performance
+
 ```bash
 # GPU-Last prüfen
 nvidia-smi
@@ -309,6 +333,7 @@ docker compose restart ollama
 ```
 
 #### Such-Probleme
+
 ```bash
 # SearXNG prüfen
 curl "http://localhost:8080/api/searxng/search?q=test&format=json"
@@ -323,18 +348,21 @@ docker compose exec redis redis-cli info memory
 ### Ressourcen-Empfehlungen
 
 #### Für kleine Teams (bis 10 Benutzer)
+
 - **CPU**: 8 Kerne
 - **RAM**: 32GB
 - **GPU**: RTX 4060 (8GB VRAM)
 - **Festplatte**: 500GB SSD
 
-#### Für mittlere Teams (10-50 Benutzer)  
+#### Für mittlere Teams (10-50 Benutzer)
+
 - **CPU**: 16 Kerne
 - **RAM**: 64GB
 - **GPU**: RTX 4080 (16GB VRAM)
 - **Festplatte**: 1TB NVMe SSD
 
 #### Für große Teams (50+ Benutzer)
+
 - **CPU**: 32+ Kerne
 - **RAM**: 128GB+
 - **GPU**: RTX 4090 oder mehrere GPUs
@@ -343,6 +371,7 @@ docker compose exec redis redis-cli info memory
 ## 🔄 System-Updates
 
 ### ERNI-KI aktualisieren
+
 ```bash
 # Backup vor Update erstellen
 docker compose exec backrest restic backup /backup-sources
@@ -361,6 +390,7 @@ docker compose ps
 ```
 
 ### Rollback zur vorherigen Version
+
 ```bash
 # Zu vorherigem Commit zurückkehren
 git log --oneline -10
