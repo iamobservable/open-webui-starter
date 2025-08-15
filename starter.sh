@@ -32,7 +32,7 @@ collect_user_inputs () {
       
     # Handle Timezone lookup
     elif [[ $input_type == "dynamic:Timezone" ]]; then
-      system_timezone="$(cat /etc/timezone)"
+      system_timezone=$(timedatectl status | grep "zone" | sed -e 's/^[ ]*Time zone: \(.*\) (.*)$/\1/g')
       USER_INPUTS[${key^^}]="$system_timezone"
       print_verbose_message "--> dynamic:Timezone ${key^^} $system_timezone"
 
@@ -406,7 +406,7 @@ set_environment_overrides_or_defaults () {
   DATABASE_URL="postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB"
   PGVECTOR_DB_URL="postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB"
 
-  TIMEZONE="${TIMEZONE:-$(cat /etc/timezone)}"
+  TIMEZONE="${TIMEZONE:-$(timedatectl status | grep "zone" | sed -e 's/^[ ]*Time zone: \(.*\) (.*)$/\1/g')}"
 
   HOST_PORT="${HOST_PORT:-${USER_INPUTS[HOST_PORT]:-3000}}"
   NGINX_HOST="${NGINX_HOST:-${USER_INPUTS[NGINX_HOST]:-localhost}}"
