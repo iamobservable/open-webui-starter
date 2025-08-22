@@ -80,7 +80,7 @@ jobs:
       - name: 🐹 Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.23.6"
+          go-version: "1.23.10"
           cache-dependency-path: auth/go.sum
 
       - name: 📦 Download dependencies
