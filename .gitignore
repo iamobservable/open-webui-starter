@@ -67,7 +67,7 @@ auth/build/
 # DOCKER
 # ===================================================================
 docker-compose.override.yml
-compose.yml
+# compose.yml - теперь включен в репозиторий для CI/CD валидации
 .docker/
 docker-data/
 

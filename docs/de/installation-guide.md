@@ -1,12 +1,12 @@
 # 🚀 Detaillierte Installationsanleitung für ERNI-KI
 
-> **Dokumentversion:** 2.0
-> **Aktualisierungsdatum:** 2025-07-04
+> **Dokumentversion:** 2.0 **Aktualisierungsdatum:** 2025-07-04
 > **Installationszeit:** 30-60 Minuten
 
 ## 📋 Systemanforderungen
 
 ### Mindestanforderungen
+
 - **OS**: Ubuntu 20.04+ / CentOS 8+ / Debian 11+ / RHEL 8+
 - **CPU**: 4 Kerne (Intel/AMD x86_64)
 - **RAM**: 8GB (Minimum für Grundbetrieb)
@@ -14,6 +14,7 @@
 - **Netzwerk**: Stabile Internetverbindung
 
 ### Empfohlene Anforderungen
+
 - **CPU**: 8+ Kerne mit AVX2-Unterstützung
 - **RAM**: 32GB (für große Sprachmodelle)
 - **GPU**: NVIDIA GPU mit 8GB+ VRAM (RTX 3070/4060 oder höher)
@@ -21,6 +22,7 @@
 - **Netzwerk**: 100 Mbps+ für Modell-Downloads
 
 ### Unterstützte GPUs
+
 - **NVIDIA**: RTX 20/30/40 Serie, Tesla, Quadro mit CUDA 11.8+
 - **Minimaler VRAM**: 6GB für 7B-Parameter-Modelle
 - **Empfohlener VRAM**: 12GB+ für 13B+ Parameter-Modelle
@@ -30,12 +32,14 @@
 ### 1. System-Update
 
 #### Ubuntu/Debian
+
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl wget git unzip software-properties-common
 ```
 
 #### CentOS/RHEL/Fedora
+
 ```bash
 sudo dnf update -y
 sudo dnf install -y curl wget git unzip
@@ -44,6 +48,7 @@ sudo dnf install -y curl wget git unzip
 ### 2. Docker und Docker Compose Installation
 
 #### Automatische Installation (empfohlen)
+
 ```bash
 # Docker Installation über offizielles Skript
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -61,6 +66,7 @@ docker compose version
 ```
 
 #### Manuelle Docker Installation (Ubuntu)
+
 ```bash
 # Alte Versionen entfernen
 sudo apt remove docker docker-engine docker.io containerd runc
@@ -82,6 +88,7 @@ sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 ### 3. NVIDIA GPU Konfiguration (optional)
 
 #### NVIDIA Treiber Installation
+
 ```bash
 # GPU-Verfügbarkeit prüfen
 lspci | grep -i nvidia
@@ -94,6 +101,7 @@ sudo reboot
 ```
 
 #### NVIDIA Container Toolkit Installation
+
 ```bash
 # NVIDIA Repository hinzufügen
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
@@ -114,6 +122,7 @@ docker run --rm --gpus all nvidia/cuda:11.8-base-ubuntu20.04 nvidia-smi
 ## 📦 ERNI-KI Installation
 
 ### 1. Repository klonen
+
 ```bash
 # Projekt klonen
 git clone https://github.com/DIZ-admin/erni-ki.git
@@ -126,6 +135,7 @@ ls -la
 ### 2. Konfigurationsdateien einrichten
 
 #### Beispiel-Konfigurationen kopieren
+
 ```bash
 # Haupt-Compose-Datei kopieren
 cp compose.yml.example compose.yml
@@ -141,6 +151,7 @@ cp conf/nginx/conf.d/default.example conf/nginx/conf.d/default.conf
 ```
 
 #### Geheime Schlüssel generieren
+
 ```bash
 # Skript für Schlüsselgenerierung erstellen
 cat > scripts/generate-secrets.sh << 'EOF'
@@ -168,12 +179,14 @@ chmod +x scripts/generate-secrets.sh
 ### 3. Umgebungsvariablen konfigurieren
 
 #### Grundeinstellungen (env/openwebui.env)
+
 ```bash
 # Grundeinstellungen bearbeiten
 nano env/openwebui.env
 ```
 
 Wichtige Parameter zur Konfiguration:
+
 ```env
 # URL Ihrer Domain (bei Cloudflare-Nutzung)
 WEBUI_URL=https://your-domain.com
@@ -190,6 +203,7 @@ FILE_UPLOAD_LIMIT=104857600
 ```
 
 #### Cloudflare-Konfiguration (optional)
+
 ```bash
 # Tunnel-Einstellungen bearbeiten
 nano env/cloudflared.env
@@ -201,6 +215,7 @@ TUNNEL_TOKEN=your-cloudflare-tunnel-token
 ```
 
 #### Datenbank-Konfiguration
+
 ```bash
 # PostgreSQL-Einstellungen prüfen
 nano env/postgres.env
@@ -216,12 +231,14 @@ POSTGRES_PASSWORD=generated-password
 ### 4. Nginx-Konfiguration
 
 #### Domain-Namen aktualisieren
+
 ```bash
 # Platzhalter durch Ihre Domain ersetzen
 sed -i 's/<domain-name>/your-domain.com/g' conf/nginx/conf.d/default.conf
 ```
 
 #### SSL-Zertifikate einrichten (ohne Cloudflare)
+
 ```bash
 # Selbstsignierte Zertifikate für Tests erstellen
 sudo mkdir -p /etc/nginx/ssl
@@ -234,6 +251,7 @@ sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 ## 🚀 System starten
 
 ### 1. Erster Start
+
 ```bash
 # Alle Services starten
 docker compose up -d
@@ -246,6 +264,7 @@ docker compose logs -f
 ```
 
 ### 2. Initialisierung abwarten
+
 ```bash
 # Service-Bereitschaft prüfen (kann 2-5 Minuten dauern)
 watch -n 5 'docker compose ps --format "table {{.Name}}\t{{.Status}}"'
@@ -254,6 +273,7 @@ watch -n 5 'docker compose ps --format "table {{.Name}}\t{{.Status}}"'
 ```
 
 ### 3. Erstes Sprachmodell laden
+
 ```bash
 # Leichtes Modell zum Testen laden (3B Parameter)
 docker compose exec ollama ollama pull llama3.2:3b
@@ -268,6 +288,7 @@ docker compose exec ollama ollama list
 ## ✅ Installation prüfen
 
 ### 1. Service-Verfügbarkeit prüfen
+
 ```bash
 # Haupt-Interface prüfen
 curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/
@@ -283,6 +304,7 @@ curl -s "http://localhost:8080/api/searxng/search?q=test&format=json" | head -5
 ```
 
 ### 2. GPU prüfen (falls installiert)
+
 ```bash
 # GPU-Verfügbarkeit in Ollama prüfen
 docker exec erni-ki-ollama-1 nvidia-smi
@@ -292,6 +314,7 @@ docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 ```
 
 ### 3. Erste Anmeldung
+
 1. Browser öffnen und zu `http://localhost:8080` navigieren
 2. Administrator-Account erstellen
 3. Ollama-Verbindung konfigurieren: `http://ollama:11434`
@@ -300,6 +323,7 @@ docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
 ## 🔧 Konfiguration nach Installation
 
 ### 1. Autostart einrichten
+
 ```bash
 # Systemd-Service für Autostart erstellen
 sudo tee /etc/systemd/system/erni-ki.service > /dev/null << EOF
@@ -326,6 +350,7 @@ sudo systemctl start erni-ki.service
 ```
 
 ### 2. Monitoring einrichten
+
 ```bash
 # Monitoring-Skript erstellen
 cat > scripts/health-check.sh << 'EOF'
@@ -355,6 +380,7 @@ chmod +x scripts/health-check.sh
 ```
 
 ### 3. Backup-Konfiguration
+
 ```bash
 # Backrest über Web-Interface konfigurieren
 echo "Öffnen Sie http://localhost:9898 für Backup-Konfiguration"
@@ -365,6 +391,7 @@ echo "Passwort: siehe env/backrest.env"
 ## 🛠️ Fehlerbehebung
 
 ### Startprobleme
+
 ```bash
 # Logs des problematischen Services prüfen
 docker compose logs service-name
@@ -377,6 +404,7 @@ docker compose down && docker compose up -d
 ```
 
 ### GPU-Probleme
+
 ```bash
 # NVIDIA-Treiber prüfen
 nvidia-smi
@@ -389,6 +417,7 @@ sed -i 's/# deploy: \*gpu-deploy/deploy: *gpu-deploy/g' compose.yml
 ```
 
 ### Netzwerk-Probleme
+
 ```bash
 # Docker-Netzwerke prüfen
 docker network ls
@@ -402,11 +431,15 @@ sudo systemctl restart docker
 
 Nach erfolgreicher Installation wird empfohlen:
 
-1. **[Benutzerhandbuch](user-guide.md) studieren** - Grundlagen der Interface-Bedienung
-2. **[Monitoring](admin-guide.md#monitoring) konfigurieren** - Systemzustand überwachen
-3. **[API-Dokumentation](../api-reference.md) studieren** - Integration mit externen Systemen
+1. **[Benutzerhandbuch](user-guide.md) studieren** - Grundlagen der
+   Interface-Bedienung
+2. **[Monitoring](admin-guide.md#monitoring) konfigurieren** - Systemzustand
+   überwachen
+3. **[API-Dokumentation](../api-reference.md) studieren** - Integration mit
+   externen Systemen
 4. **[Backup](admin-guide.md#backup) einrichten** - Datenschutz
 
 ---
 
-**🎉 Herzlichen Glückwunsch! ERNI-KI ist erfolgreich installiert und einsatzbereit!**
+**🎉 Herzlichen Glückwunsch! ERNI-KI ist erfolgreich installiert und
+einsatzbereit!**
