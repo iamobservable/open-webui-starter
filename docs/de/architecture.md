@@ -1,16 +1,32 @@
 # 🏗️ ERNI-KI Systemarchitektur
 
-> **Dokumentversion:** 5.0 **Aktualisierungsdatum:** 2025-07-25 **Status:**
-> Production Ready
+> **Dokumentversion:** 6.5 **Aktualisierungsdatum:** 2025-08-22 **Status:**
+> Production Ready (Nach kritischen Korrekturen)
 
 ## 📋 Architektur-Überblick
 
 ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den
 Prinzipien der Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das
-System besteht aus **25 miteinander verbundenen Services**, einschließlich
-Komponenten wie LiteLLM, Docling, Context Engineering und einem vollständigen
-Monitoring-Stack mit webhook-receiver für Alert-Verarbeitung, von denen jeder
-eine spezialisierte Funktion erfüllt.
+System besteht aus **29 ERNI-KI Microservices**, einschließlich Komponenten wie
+LiteLLM, Docling, MCP Server, vollständigem Monitoring-Stack mit 35+ aktiven
+Targets, ollama-exporter für AI-Metriken, nginx-exporter für Web-Analytik und
+zentralisierter Protokollierung über Fluent-bit → Loki. Zusätzlich umfasst das
+System 9 externe Services (RAGFlow, Photo-ERNI, Audio-ERNI).
+
+### 🚀 Neueste Optimierungen (v6.5 - August 2025)
+
+- **Monitoring-System**: 100% Abdeckung mit 35+ aktiven Targets erreicht
+- **AI-Metriken**: ollama-exporter (Port 9778) für KI-Modell-Monitoring
+  bereitgestellt
+- **Web-Analytik**: nginx-exporter (Port 9113) für Traffic-Monitoring
+  hinzugefügt
+- **Zentralisierte Protokollierung**: Elasticsearch durch Loki ersetzt,
+  Fluent-bit → Loki für Log-Sammlung aller Services korrigiert
+- **Cloudflare-Tunnel**: DNS-Probleme behoben, Konfiguration aktualisiert
+- **SearXNG API**: Zugriff über nginx proxy optimiert (<0.8s Antwortzeit)
+- **Backrest API**: Manuelle Backup-Verwaltung konfiguriert
+- **GPU-Beschleunigung**: NVIDIA Quadro P2200 Funktionalität in Ollama bestätigt
+- **Production Ready**: Alle kritischen Komponenten sind stabil und überwacht
 
 ## 🎯 Architektur-Prinzipien
 

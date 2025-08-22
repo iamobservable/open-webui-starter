@@ -43,9 +43,29 @@ indent_size = 2
 indent_size = 2
 
 # Nginx конфигурация
-[*.conf]
+[nginx.conf]
 indent_size = 2
 
-# Конфигурационные файлы
+# Fluent Bit конфигурация - НЕ ИЗМЕНЯТЬ ОТСТУПЫ
+[conf/fluent-bit/*.conf]
+indent_style = space
+indent_size = 4
+# Отключаем автоформатирование для сохранения структуры
+trim_trailing_whitespace = false
+
+# Prometheus конфигурация
+[conf/prometheus/*.yml]
+indent_size = 2
+
+# Grafana конфигурация
+[conf/grafana/**/*.{yml,yaml,json}]
+indent_size = 2
+
+# Конфигурационные файлы общие
 [*.{ini,cfg,toml}]
 indent_size = 2
+
+# Специальные конфигурации сервисов - сохраняем как есть
+[conf/**/*.{conf,ini,cfg}]
+# Отключаем автоформатирование
+trim_trailing_whitespace = false

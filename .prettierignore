@@ -33,6 +33,22 @@ Dockerfile*
 .env*
 *.example
 
+# Специфичные конфигурации ERNI-KI - НЕ ФОРМАТИРОВАТЬ
+conf/fluent-bit/**
+conf/nginx/**
+conf/prometheus/**
+conf/grafana/**
+conf/loki/**
+conf/searxng/**
+conf/backrest/**
+conf/litellm/**
+conf/mcposerver/**
+conf/openwebui/**
+conf/watchtower/**
+conf/ssl/**
+conf/performance/**
+conf/monitoring/**
+
 # Автогенерированные файлы
 package-lock.json
 yarn.lock

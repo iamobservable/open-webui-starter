@@ -110,7 +110,15 @@
     "compose.yml.example": "yaml",
     "Dockerfile.*": "dockerfile",
     "*.conf": "nginx",
-    "nginx.example": "nginx"
+    "nginx.example": "nginx",
+    // Специальные ассоциации для конфигурационных файлов ERNI-KI
+    "**/conf/fluent-bit/*.conf": "properties",
+    "**/conf/prometheus/*.yml": "yaml",
+    "**/conf/grafana/**/*.yml": "yaml",
+    "**/conf/loki/*.yaml": "yaml",
+    "**/conf/searxng/*.yml": "yaml",
+    "**/conf/nginx/*.conf": "nginx",
+    "**/conf/**/*.conf": "properties"
   },
   "files.exclude": {
     "**/node_modules": true,
@@ -242,6 +250,17 @@
   },
   "[nginx]": {
     "editor.defaultFormatter": "raynigon.nginx-formatter"
+  },
+
+  // Специальные настройки для конфигурационных файлов ERNI-KI
+  // Отключаем автоформатирование для сохранения структуры
+
+  // Отключаем форматирование для конфигурационных файлов
+  "[properties]": {
+    "editor.formatOnSave": false,
+    "editor.formatOnPaste": false,
+    "editor.trimAutoWhitespace": false,
+    "files.trimTrailingWhitespace": false
   },
 
   // Настройки для работы с REST API удалены - требуют установки расширения

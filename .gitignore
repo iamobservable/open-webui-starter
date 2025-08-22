@@ -125,11 +125,21 @@ conf/**/*.yml
 !conf/**/*.template
 !conf/**/*.sample
 
+# Временные конфигурационные файлы
+*.conf.new
+*.conf.old
+*.conf.backup
+*.yml.new
+*.yml.old
+*.yml.backup
+*.yaml.new
+*.yaml.old
+*.yaml.backup
+
 # ===================================================================
 # МОНИТОРИНГ И BACKUP
 # ===================================================================
-monitoring/data/
-monitoring/logs/
+# Директория monitoring/ удалена - конфигурации перенесены в conf/
 *.metrics
 .config-backup/
 backup/

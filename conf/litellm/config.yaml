@@ -1,7 +1,7 @@
 # LiteLLM Unified Configuration для ERNI-KI
 # Единый прокси для всех AI моделей с интеграцией OpenAI API и локальных Ollama моделей
 
-# Модели будут управляться через Database Models в LiteLLM Admin UI
+# Модели управляются через Database Models в LiteLLM Admin UI
 # Все модели мигрированы из конфигурации в базу данных для полного управления через веб-интерфейс
 model_list: []
 
@@ -25,12 +25,27 @@ general_settings:
   disable_spend_logs: false
   # Включить аудит логи для безопасности
   enable_audit_logs: true
+  # === HEALTH CHECK BYPASS ===
+  # Отключить аутентификацию для health check эндпоинтов
+  disable_auth_on_health_check: true
 
 litellm_settings:
   drop_params: true
   set_verbose: false
   num_retries: 3
   request_timeout: 300
+  # === OLLAMA THINKING TOKENS COMPATIBILITY ===
+  # Настройки для правильной обработки thinking tokens
+  ignore_unknown_fields: true
+  ollama_ignore_thinking: true
+  # Включить поддержку thinking tokens в streaming
+  enable_thinking_tokens: true
+  # Обрабатывать thinking как часть response
+  thinking_as_response: true
+  # Настройки для Ollama провайдера
+  ollama_thinking_mode: "stream"
+  # Разрешить неизвестные поля в chunk responses
+  allow_unknown_chunk_fields: true
   # === KEY GENERATION SETTINGS ===
   # Настройки по умолчанию для генерации ключей
   default_key_generate_params:

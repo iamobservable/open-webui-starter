@@ -2,7 +2,14 @@
 
 **ERNI-KI** ist eine produktionsreife AI-Plattform basierend auf Open WebUI mit
 vollständiger Containerisierung, GPU-Beschleunigung und umfassendem
-Sicherheitssystem.
+Sicherheitssystem. Das System umfasst **29 ERNI-KI Microservices** mit
+vollständigem Monitoring-Stack (35+ aktive Targets), AI-Metriken,
+zentralisierter Protokollierung und automatisiertem Management.
+
+> **🚀 Neueste Updates (August 2025):** Kritische DNS-Probleme in
+> Cloudflare-Tunneln behoben, SearXNG API optimiert (<0.8s), manuelle
+> Backrest-Verwaltung konfiguriert, GPU-Beschleunigung Ollama bestätigt. System
+> ist produktionsbereit.
 
 [![CI](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml)
 [![Security](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml)
@@ -207,7 +214,7 @@ erni-ki/
 ├── conf/                # Service-Konfigurationen
 ├── env/                 # Umgebungsvariablen
 ├── docs/                # Dokumentation
-├── monitoring/          # Monitoring-Konfigurationen
+├── conf/                # Service-Konfigurationen (inkl. Monitoring)
 ├── tests/               # TypeScript Tests
 ├── types/               # TypeScript Typen
 └── compose.yml.example  # Docker Compose Template
@@ -229,10 +236,19 @@ Das Projekt verwendet moderne Tools zur Qualitätssicherung:
 
 Das Monitoring-System umfasst:
 
-- **Prometheus** - Metriken-Sammlung
-- **Grafana** - Datenvisualisierung
+- **Prometheus** - Metriken-Sammlung (35 aktive Targets)
+- **Grafana** - Datenvisualisierung und Dashboards
 - **Alertmanager** - Problem-Benachrichtigungen
-- Health Checks für alle Services
+- **Webhook Receiver** - Alert-Verarbeitung und Protokollierung
+- **GPU-Monitoring** - NVIDIA GPU Metriken (Temperatur, Speicher, Auslastung)
+- **AI-Metriken** - Ollama Exporter (Modelle, Größen, Performance)
+- **Web-Analytik** - Nginx Exporter (Verbindungen, Anfragen, Upstreams)
+- **Health Checks** - automatische Zustandsüberwachung aller 29 Services
+- **Watchtower** - automatische Container-Updates
+- **Zentralisierte Protokollierung** - Fluent-bit → Elasticsearch für alle
+  Komponenten
+- ✨ **Neu**: 100% Monitoring-Abdeckung (35/35 Targets aktiv)
+- ✨ **Neu**: AI-Metriken für 3 Modelle (nomic-embed-text, gpt-oss, gemma3n)
 
 ## 🔒 Sicherheit
 
@@ -302,10 +318,12 @@ cd auth && go build
   - qwen2.5-coder:1.5b für Programmierung hinzugefügt
   - Insgesamt 6 Modelle, GPU-Beschleunigung optimiert
 
-- **Monitoring verbessert**
-  - 3 aktive Alerts für SearXNG
-  - Alle 27 Services gesund
-  - System läuft mit 98% optimaler Leistung
+- **Monitoring erreichte Perfektion**
+  - 35/35 Prometheus Targets aktiv (100% Erfolg)
+  - Alle 29 ERNI-KI Services gesund
+  - AI-Metriken: 3 Modelle werden überwacht
+  - Zentralisierte Protokollierung funktioniert
+  - System läuft mit 100% optimaler Leistung
 
 ## 📄 Lizenz
 

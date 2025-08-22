@@ -1,0 +1,33 @@
+{
+  "name": "erni-ki-ai-diagnostics",
+  "version": "1.0.0",
+  "description": "Комплексная диагностика AI моделей ERNI-KI с использованием Playwright",
+  "main": "ai-models-diagnostics.js",
+  "scripts": {
+    "test": "node ai-models-diagnostics.js",
+    "test:headless": "HEADLESS=true node ai-models-diagnostics.js",
+    "test:gpu": "node gpu-monitoring.js",
+    "install-playwright": "npx playwright install chromium",
+    "setup": "npm install && npm run install-playwright"
+  },
+  "keywords": [
+    "ai",
+    "testing",
+    "playwright",
+    "ollama",
+    "openwebui",
+    "rag",
+    "gpu"
+  ],
+  "author": "Альтэон Шульц (Tech Lead)",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
