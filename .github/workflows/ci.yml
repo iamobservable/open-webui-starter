@@ -48,7 +48,14 @@ jobs:
         run: npm install -g prettier
 
       - name: 🎨 Check Prettier formatting
-        run: prettier --check "**/*.{js,ts,json,md,yml,yaml}" --ignore-path .gitignore
+        run: |
+          prettier --check \
+            "*.{js,ts,json,md,yml,yaml}" \
+            "docs/**/*.md" \
+            "tests/**/*.{js,ts}" \
+            ".github/**/*.yml" \
+            "auth/**/*.{go,mod,sum}" \
+            --ignore-unknown
 
       - name: 🔍 Skip ESLint (no package.json in root)
         run: echo "ESLint skipped - no package.json in root directory"
