@@ -6,7 +6,9 @@
 
 ## 📋 Обзор MCPO (Model Context Protocol Operations)
 
-MCPO-сервер в ERNI-KI предоставляет стандартизированный интерфейс для интеграции AI-инструментов с OpenWebUI через Model Context Protocol (MCP). Система включает 5 основных MCP серверов:
+MCPO-сервер в ERNI-KI предоставляет стандартизированный интерфейс для интеграции
+AI-инструментов с OpenWebUI через Model Context Protocol (MCP). Система включает
+5 основных MCP серверов:
 
 - **Time Server** - работа с временем и часовыми поясами
 - **PostgreSQL Server** - выполнение SQL запросов к базе данных
@@ -25,7 +27,7 @@ graph TB
     C --> F[Filesystem MCP Server]
     C --> G[Memory MCP Server]
     C --> H[SearXNG MCP Server]
-    
+
     E --> I[PostgreSQL Database]
     H --> J[SearXNG Service]
     F --> K[File System]
@@ -37,7 +39,8 @@ graph TB
 
 1. **MCPO Server** - здоров и доступен на порту 8000
 2. **Swagger UI** - доступен по адресу http://localhost:8000/docs
-3. **OpenAPI спецификация** - доступна по адресу http://localhost:8000/openapi.json
+3. **OpenAPI спецификация** - доступна по адресу
+   http://localhost:8000/openapi.json
 4. **Все 5 MCP серверов** - инициализированы и отвечают на запросы
 5. **Nginx proxy** - корректно проксирует запросы к MCP серверам
 6. **OpenWebUI конфигурация** - TOOL_SERVER_CONNECTIONS настроены
@@ -54,10 +57,12 @@ graph TB
 ### 1. Time Server (`/time`)
 
 **Endpoints:**
+
 - `POST /time/get_current_time` - получение текущего времени
 - `POST /time/convert_time` - конвертация времени между часовыми поясами
 
 **Пример использования:**
+
 ```bash
 curl -X POST "http://localhost:8000/time/get_current_time" \
   -H "Content-Type: application/json" \
@@ -65,6 +70,7 @@ curl -X POST "http://localhost:8000/time/get_current_time" \
 ```
 
 **Ответ:**
+
 ```json
 {
   "timezone": "Europe/Berlin",
@@ -76,9 +82,11 @@ curl -X POST "http://localhost:8000/time/get_current_time" \
 ### 2. PostgreSQL Server (`/postgres`)
 
 **Endpoints:**
+
 - `POST /postgres/query` - выполнение SQL запросов
 
 **Пример использования:**
+
 ```bash
 curl -X POST "http://localhost:8000/postgres/query" \
   -H "Content-Type: application/json" \
@@ -88,6 +96,7 @@ curl -X POST "http://localhost:8000/postgres/query" \
 ### 3. Memory Server (`/memory`)
 
 **Endpoints (9 инструментов):**
+
 - `POST /memory/create_entities` - создание сущностей в графе знаний
 - `POST /memory/create_relations` - создание связей между сущностями
 - `POST /memory/read_graph` - чтение всего графа знаний
@@ -101,6 +110,7 @@ curl -X POST "http://localhost:8000/postgres/query" \
 ### 4. Filesystem Server (`/filesystem`)
 
 **Endpoints (14 инструментов):**
+
 - `POST /filesystem/read_file` - чтение файлов
 - `POST /filesystem/write_file` - запись файлов
 - `POST /filesystem/list_directory` - список файлов в директории
@@ -111,6 +121,7 @@ curl -X POST "http://localhost:8000/postgres/query" \
 ### 5. SearXNG Server (`/searxng`)
 
 **Endpoints:**
+
 - `POST /searxng/searxng_web_search` - веб-поиск
 - `POST /searxng/web_url_read` - чтение контента по URL
 
@@ -118,7 +129,8 @@ curl -X POST "http://localhost:8000/postgres/query" \
 
 ### Конфигурация TOOL_SERVER_CONNECTIONS
 
-В файле `env/openwebui.env` настроены подключения к MCP серверам через nginx proxy:
+В файле `env/openwebui.env` настроены подключения к MCP серверам через nginx
+proxy:
 
 ```bash
 TOOL_SERVER_CONNECTIONS=[
@@ -137,13 +149,13 @@ Nginx проксирует запросы от OpenWebUI к MCPO серверу:
 # MCP (Model Context Protocol) API endpoints
 location ~ ^/api/mcp/(.*)$ {
     limit_req zone=api burst=50 nodelay;
-    
+
     proxy_pass http://mcpoUpstream/$1$is_args$args;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-    
+
     # Таймауты для MCP запросов
     proxy_connect_timeout 10s;
     proxy_send_timeout 30s;
@@ -195,7 +207,8 @@ curl -s "http://localhost:8080/api/mcp/time/docs" | grep -q "swagger" && echo "�
 
 ### 1. Доступ к инструментам
 
-После настройки TOOL_SERVER_CONNECTIONS инструменты MCP становятся доступны в чате OpenWebUI. AI может использовать их для:
+После настройки TOOL_SERVER_CONNECTIONS инструменты MCP становятся доступны в
+чате OpenWebUI. AI может использовать их для:
 
 - **Получения текущего времени** в любом часовом поясе
 - **Выполнения SQL запросов** к базе данных ERNI-KI
@@ -206,18 +219,21 @@ curl -s "http://localhost:8080/api/mcp/time/docs" | grep -q "swagger" && echo "�
 ### 2. Примеры использования в чате
 
 **Запрос времени:**
+
 ```
 Пользователь: Какое сейчас время в Берлине?
 AI: Использует Time Server для получения текущего времени в Europe/Berlin
 ```
 
 **Запрос к базе данных:**
+
 ```
 Пользователь: Сколько пользователей зарегистрировано в системе?
 AI: Использует PostgreSQL Server для выполнения запроса SELECT COUNT(*) FROM users
 ```
 
 **Работа с файлами:**
+
 ```
 Пользователь: Найди все файлы конфигурации в папке conf/
 AI: Использует Filesystem Server для поиска файлов с расширением .conf
@@ -257,6 +273,7 @@ AI: Использует Filesystem Server для поиска файлов с �
 ### Частые проблемы
 
 1. **MCPO сервер не отвечает**
+
    ```bash
    docker-compose restart mcposerver
    docker-compose logs mcposerver
@@ -294,6 +311,7 @@ docker-compose restart mcposerver nginx openwebui
 ### Логирование
 
 Все запросы к MCPO серверу логируются с информацией о:
+
 - HTTP статус коде
 - Времени выполнения
 - IP адресе клиента
