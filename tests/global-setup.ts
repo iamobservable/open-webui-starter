@@ -1,6 +1,6 @@
 // Глобальная настройка окружения для тестов проекта erni-ki
-import { execSync } from 'child_process';
-import { existsSync, mkdirSync } from 'fs';
+import { execSync } from 'node:child_process';
+import { existsSync, mkdirSync } from 'node:fs';
 
 export async function setup() {
   console.log('🚀 Настройка тестового окружения...');

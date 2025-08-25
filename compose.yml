@@ -7,30 +7,64 @@ x-gpu-deploy: &gpu-deploy
           count: all
           capabilities: [gpu]
 
-# Logging configuration anchors
+# ============================================================================
+# 4-УРОВНЕВАЯ СТРАТЕГИЯ ЛОГГИРОВАНИЯ ERNI-KI
+# Обновлено: 2025-08-22 - Оптимизированная система согласно аудиту
+# ============================================================================
+
+# УРОВЕНЬ 1 - Критически важные сервисы (OpenWebUI, Ollama, PostgreSQL, Nginx)
+# Dual logging: fluentd + json-file backup, максимальная надежность
+x-critical-logging: &critical-logging
+  driver: "fluentd"
+  options:
+    fluentd-address: "localhost:24224"
+    fluentd-async: "true"
+    fluentd-retry-wait: "1s"
+    fluentd-max-retries: "10"
+    tag: "critical.{{.Name}}"
+    labels: "service,version,environment,level=critical"
+    # Backup в json-file для надежности
+    fluentd-buffer-limit: "16777216"
+
+# УРОВЕНЬ 2 - Важные сервисы (SearXNG, Redis, Backrest, Auth, Cloudflared)
+# Fluentd с буферизацией, стандартная надежность
+x-important-logging: &important-logging
+  driver: "fluentd"
+  options:
+    fluentd-address: "localhost:24224"
+    fluentd-async: "true"
+    fluentd-retry-wait: "2s"
+    fluentd-max-retries: "5"
+    tag: "important.{{.Name}}"
+    labels: "service,version,environment,level=important"
+
+# УРОВЕНЬ 3 - Вспомогательные сервисы (Docling, EdgeTTS, Tika, MCP)
+# JSON-file с компрессией, базовое логгирование
+x-auxiliary-logging: &auxiliary-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+    compress: "true"
+    labels: "service,version,level=auxiliary"
+
+# УРОВЕНЬ 4 - Мониторинговые сервисы (Prometheus, Grafana, Exporters)
+# Минимальное логгирование с агрессивной ротацией
+x-monitoring-logging: &monitoring-logging
+  driver: "json-file"
+  options:
+    max-size: "5m"
+    max-file: "2"
+    compress: "true"
+    labels: "service,version,level=monitoring"
+
+# Обратная совместимость (deprecated, будет удалено в следующих версиях)
 x-logging: &default-logging
   driver: "json-file"
   options:
     max-size: "10m"
     max-file: "5"
     labels: "service,version"
-
-# Centralized logging через Fluent Bit для ключевых сервисов ERNI-KI
-# Обновлено: 2025-08-22 - Оптимизированная конфигурация для Loki интеграции
-x-fluentd-logging: &fluentd-logging
-  driver: "fluentd"
-  options:
-    # Адрес Fluent Bit сервиса (localhost для Docker bridge network)
-    fluentd-address: "localhost:24224"
-    # Асинхронная отправка для производительности
-    fluentd-async: "true"
-    # Настройки retry для надежности доставки
-    fluentd-retry-wait: "1s"
-    fluentd-max-retries: "5"
-    # Тег для идентификации источника логов
-    tag: "docker.{{.Name}}"
-    # Дополнительные labels для Loki
-    labels: "service,version,environment"
 
 services:
   # Базовые сервисы инфраструктуры
@@ -80,7 +114,7 @@ services:
       retries: 5
       start_period: 20s
     image: pgvector/pgvector:pg15
-    logging: *fluentd-logging
+    logging: *critical-logging
     restart: unless-stopped
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
@@ -104,7 +138,7 @@ services:
       retries: 5
       start_period: 20s
     image: redis/redis-stack:latest
-    logging: *fluentd-logging
+    logging: *important-logging
     restart: unless-stopped
     volumes:
       - ./data/redis:/data
@@ -142,15 +176,16 @@ services:
     restart: unless-stopped
 
     # Logging configuration
-    logging: *fluentd-logging
+    logging: *auxiliary-logging
 
-    # Health check для мониторинга состояния (упрощенная проверка процесса)
+    # Health check для мониторинга состояния (HTTP endpoint проверка)
+    # Используем Python urllib вместо curl, так как curl не установлен в контейнере LiteLLM
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -f litellm || exit 1"]
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness', timeout=5).read()\" || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s # Упрощенная проверка
+      start_period: 30s # Время на инициализацию
 
     # Volume mounts для конфигурации
     volumes:
@@ -193,7 +228,7 @@ services:
       watchtower:
         condition: service_healthy
     env_file: env/auth.env
-    logging: *fluentd-logging
+    logging: *important-logging
     ports:
       - "9092:9090" # Изменен порт для избежания конфликта
     restart: unless-stopped
@@ -220,7 +255,7 @@ services:
     healthcheck:
       disable: true
     image: cloudflare/cloudflared:latest
-    logging: *fluentd-logging
+    logging: *important-logging
     restart: unless-stopped
     volumes:
       - ./conf/cloudflare/config:/home/nonroot/.cloudflared
@@ -244,6 +279,9 @@ services:
       # Производительность (оптимизация для быстрой обработки)
       DOCLING_SERVE_MAX_WORKERS: 4
       DOCLING_SERVE_ENABLE_UI: true
+      # Включение remote services для работы с внешними API (Ollama)
+      DOCLING_SERVE_ENABLE_REMOTE_SERVICES: true
+      DOCLING_ENABLE_REMOTE_SERVICES: true
       # OCR настройки (оптимизированные для стабильности)
       DOCLING_OCR_ENGINE: easyocr
       DOCLING_DISABLE_OSD: true
@@ -272,7 +310,7 @@ services:
       retries: 3
       start_period: 30s
     image: quay.io/docling-project/docling-serve:latest
-    logging: *fluentd-logging
+    logging: *auxiliary-logging
     # Порт закрыт для внешнего доступа - только через nginx
     # ports:
     #   - 5001:5001
@@ -300,7 +338,7 @@ services:
       retries: 3
       start_period: 30s
     image: travisvn/openai-edge-tts:latest
-    logging: *fluentd-logging
+    logging: *auxiliary-logging
     ports:
       - 5050:5050
     restart: unless-stopped
@@ -322,7 +360,7 @@ services:
       retries: 3
       start_period: 30s
     image: apache/tika:latest-full
-    logging: *fluentd-logging
+    logging: *auxiliary-logging
     ports:
       - 9998:9998
     restart: unless-stopped
@@ -347,7 +385,7 @@ services:
       retries: 3
       start_period: 15s
     image: ghcr.io/open-webui/mcpo:latest
-    logging: *fluentd-logging
+    logging: *auxiliary-logging
     ports:
       - "8000:8000"
     restart: unless-stopped
@@ -379,7 +417,7 @@ services:
       retries: 3
       start_period: 30s
     image: searxng/searxng:latest
-    logging: *fluentd-logging
+    logging: *important-logging
     restart: unless-stopped
     volumes:
       - ./conf/searxng/settings.yml:/etc/searxng/settings.yml:ro
@@ -409,7 +447,7 @@ services:
       retries: 5
       start_period: 10s
     image: ollama/ollama:0.11.6
-    logging: *fluentd-logging
+    logging: *critical-logging
     ports:
       - 11434:11434
     restart: unless-stopped
@@ -436,7 +474,7 @@ services:
       retries: 5
       start_period: 5s
     image: nginx:latest
-    logging: *fluentd-logging
+    logging: *critical-logging
     ports:
       - "80:80"
       - "443:443"
@@ -470,8 +508,6 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-      # MCP Tool Servers через nginx proxy (HTTP endpoints для избежания SSL проблем)
-      - 'TOOL_SERVER_CONNECTIONS=[{"name": "Time Server", "url": "http://nginx:8080/api/mcp/time", "enabled": true}, {"name": "PostgreSQL Server", "url": "http://nginx:8080/api/mcp/postgres", "enabled": true}, {"name": "Filesystem Server", "url": "http://nginx:8080/api/mcp/filesystem", "enabled": true}, {"name": "Memory Server", "url": "http://nginx:8080/api/mcp/memory", "enabled": true}]'
     env_file: env/openwebui.env
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://localhost:8080/health || exit 1"]
@@ -480,7 +516,7 @@ services:
       retries: 5
       start_period: 10s
     image: ghcr.io/open-webui/open-webui:cuda
-    logging: *fluentd-logging
+    logging: *critical-logging
     restart: unless-stopped
     volumes:
       - ./data/openwebui:/app/backend/data
@@ -502,7 +538,7 @@ services:
       retries: 3
       start_period: 30s
     image: garethgeorge/backrest:latest
-    logging: *fluentd-logging
+    logging: *important-logging
     ports:
       - "9898:9898"
     restart: unless-stopped
@@ -545,11 +581,12 @@ services:
     volumes:
       - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./conf/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - ./conf/prometheus/rules:/etc/prometheus/rules:ro
       - ./data/prometheus:/prometheus
     ports:
       - "9091:9090"
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     healthcheck:
       test:
         [
@@ -590,7 +627,7 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
       interval: 30s
@@ -610,7 +647,7 @@ services:
         condition: service_healthy
     image: grafana/loki:3.4.1
     container_name: erni-ki-loki
-    logging: *default-logging
+    logging: *monitoring-logging
     restart: unless-stopped
     ports:
       - "3100:3100"
@@ -654,7 +691,7 @@ services:
       - "9093:9093"
       - "9094:9094"
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     healthcheck:
       test:
         [
@@ -694,7 +731,7 @@ services:
       - "9101:9100"
     pid: host
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     healthcheck:
       test:
         [
@@ -731,7 +768,7 @@ services:
     ports:
       - "9187:9187"
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     healthcheck:
       test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9187/metrics || exit 1"]
       interval: 30s
@@ -759,7 +796,7 @@ services:
     ports:
       - "9121:9121"
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     healthcheck:
       disable: true # Минимальный контейнер без утилит для проверки
     labels:
@@ -781,7 +818,7 @@ services:
     ports:
       - "9445:9445"
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f nvidia_gpu_prometheus_exporter > /dev/null || exit 1"]
       interval: 30s
@@ -806,7 +843,7 @@ services:
     ports:
       - "9115:9115"
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     healthcheck:
       test:
         [
@@ -841,7 +878,7 @@ services:
     ports:
       - "9778:9778"
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     healthcheck:
       test:
         [
@@ -871,7 +908,7 @@ services:
     ports:
       - "9113:9113"
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     # Health check убран - контейнер минимальный без curl/wget
     # Метрики доступны на http://localhost:9113/metrics
     labels:
@@ -899,7 +936,7 @@ services:
     ports:
       - "8081:8080"
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     healthcheck:
       test:
         [
@@ -941,17 +978,21 @@ services:
       disable: true
     image: fluent/fluent-bit:3.0
     container_name: erni-ki-fluent-bit
-    logging: *default-logging
+    logging: *monitoring-logging
     restart: unless-stopped
     volumes:
       # Обновленная конфигурация Fluent Bit для Loki интеграции
       - ./conf/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
-      - ./data/logs:/var/log:ro
-      - ./data/fluent-bit/db:/fluent-bit/db
+      - ./conf/fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - ./conf/fluent-bit/scripts:/fluent-bit/scripts:ro
+      # Dedicated volume для логов с оптимизацией для SSD (Фаза 3)
+      - erni-ki-logs:/var/log
+      - erni-ki-fluent-db:/fluent-bit/db
       # Доступ к Docker socket для сбора логов контейнеров
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
-      - "2020:2020" # HTTP API и метрики
+      - "2020:2020" # HTTP API и health checks
+      - "2021:2021" # Prometheus метрики (Фаза 2)
       - "24224:24224" # Fluentd forward protocol
     labels:
       # Разрешить автообновление для Fluent Bit
@@ -985,7 +1026,7 @@ services:
     ports:
       - "9095:9093" # Webhook endpoint (избегаем конфликта с Alertmanager 9093)
     restart: unless-stopped
-    logging: *default-logging
+    logging: *monitoring-logging
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9093/health"]
       interval: 30s
@@ -1005,3 +1046,32 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=monitoring-stack"
 # Используем стандартную Docker bridge сеть (docker0)
+
+# ============================================================================
+# DEDICATED VOLUMES - Оптимизированные тома для производительности (Фаза 3)
+# ============================================================================
+
+volumes:
+  # Dedicated volume для логов с оптимизацией для SSD
+  erni-ki-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data/logs-optimized
+    labels:
+      - "com.erni-ki.volume.type=logs"
+      - "com.erni-ki.volume.optimization=ssd"
+      - "com.erni-ki.volume.phase=3"
+
+  # Dedicated volume для Fluent Bit database с высокой производительностью
+  erni-ki-fluent-db:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/data/fluent-bit-optimized
+    labels:
+      - "com.erni-ki.volume.type=database"
+      - "com.erni-ki.volume.optimization=high-performance"
+      - "com.erni-ki.volume.phase=3"

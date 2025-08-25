@@ -54,6 +54,9 @@
     "golang.go-nightly",
     "bradlc.vscode-tailwindcss",
     "ritwickdey.liveserver",
-    "formulahendry.auto-rename-tag"
+    "formulahendry.auto-rename-tag",
+
+    // Проблемные расширения для ERNI-KI
+    "snyk-security.snyk-vulnerability-scanner"  // Вызывает ошибки доступа к Docker данным
   ]
 }

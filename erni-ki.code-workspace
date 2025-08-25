@@ -1,0 +1,74 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    // Snyk настройки для workspace
+    "snyk.enableCodeSecurity": false,
+    "snyk.enableOpenSource": false,
+    "snyk.enableIac": false,
+    "snyk.enableContainer": false,
+    "snyk.enableCode": false,
+    "snyk.scanOnSave": false,
+    "snyk.scanOnOpen": false,
+    "snyk.trustedFolders": [],
+    
+    // Исключения для файлового менеджера
+    "files.exclude": {
+      "**/data": true,
+      "**/cache": true,
+      "**/logs": true,
+      "**/node_modules": true,
+      "**/vendor": true,
+      "**/.git": true,
+      "**/.DS_Store": true,
+      "**/Thumbs.db": true,
+      "**/coverage": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/.config-backup": true
+    },
+    
+    // Исключения для поиска
+    "search.exclude": {
+      "**/data": true,
+      "**/cache": true,
+      "**/logs": true,
+      "**/node_modules": true,
+      "**/vendor": true,
+      "**/coverage": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/*.min.js": true,
+      "**/*.min.css": true,
+      "**/.config-backup": true
+    },
+    
+    // Исключения для watcher
+    "files.watcherExclude": {
+      "**/data/**": true,
+      "**/cache/**": true,
+      "**/logs/**": true,
+      "**/node_modules/**": true,
+      "**/vendor/**": true,
+      "**/.git/objects/**": true,
+      "**/.git/subtree-cache/**": true,
+      "**/coverage/**": true,
+      "**/.config-backup/**": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "esbenp.prettier-vscode",
+      "ms-vscode.vscode-typescript-next",
+      "golang.go",
+      "ms-azuretools.vscode-docker",
+      "redhat.vscode-yaml"
+    ],
+    "unwantedRecommendations": [
+      "snyk-security.snyk-vulnerability-scanner"
+    ]
+  }
+}

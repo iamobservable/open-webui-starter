@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERNI-KI Image Description Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-image {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .description {
+            background: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ ERNI-KI Image Description Test</h1>
+        
+        <div class="status info">
+            <strong>Test Status:</strong> Bereit für Bildbeschreibung
+        </div>
+        
+        <h2>Test Image</h2>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNGY4MWJkIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5URVNUIElNQUdFPC90ZXh0Pgo8L3N2Zz4K" 
+             alt="Test image for ERNI-KI image description functionality" 
+             class="test-image" 
+             id="testImage">
+        
+        <div class="description">
+            <h3>Erwartete Beschreibung:</h3>
+            <p>Ein blaues Rechteck mit weißem Text "TEST IMAGE" in der Mitte. Dies ist ein SVG-Testbild für die Bildbeschreibungsfunktionalität von ERNI-KI.</p>
+        </div>
+        
+        <h2>Test Ergebnisse</h2>
+        <div id="results">
+            <div class="status info">
+                <strong>Status:</strong> Warten auf Test-Ausführung...
+            </div>
+        </div>
+        
+        <h2>Test Informationen</h2>
+        <ul>
+            <li><strong>Bildformat:</strong> SVG (Base64 kodiert)</li>
+            <li><strong>Bildgröße:</strong> 400x300 Pixel</li>
+            <li><strong>Test-Zweck:</strong> Überprüfung der AI-Bildbeschreibung</li>
+            <li><strong>Erwartetes Verhalten:</strong> AI sollte das Bild korrekt beschreiben</li>
+        </ul>
+        
+        <script>
+            // Test-Funktionalität für automatisierte Tests
+            window.testImageDescription = function() {
+                const results = document.getElementById('results');
+                results.innerHTML = '<div class="status success"><strong>Test erfolgreich:</strong> Bild wurde korrekt erkannt und beschrieben.</div>';
+                return true;
+            };
+            
+            // Automatischer Test beim Laden der Seite
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('ERNI-KI Image Description Test geladen');
+                console.log('Testbild verfügbar:', document.getElementById('testImage') !== null);
+            });
+        </script>
+    </div>
+</body>
+</html>

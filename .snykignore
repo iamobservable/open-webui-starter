@@ -8,6 +8,10 @@ data/postgres/**
 data/redis/**
 data/ollama/**
 data/openwebui/**
+data/loki/**
+data/loki/wal/**
+data/grafana/**
+data/prometheus/**
 
 # Временные и системные файлы
 logs/
@@ -21,6 +25,9 @@ backup/
 backups/
 .config-backup/
 secrets/
+cache/
+cache/**
+cache/backrest/restic/cebeb1cefe70443741d3d0f09fa91405de8f1b37ef85578625e3c4e968f988c7/
 
 # Конфигурации с потенциальными секретами
 env/

@@ -10,7 +10,9 @@ router_settings:
   timeout: 600
   routing_strategy: "usage-based-routing-v2"
   fallback_models: [] # Fallback модели будут настроены через Database Models
-  enable_fallbacks: false
+  enable_fallbacks: true # Включить fallback для production
+  cooldown_time: 30 # Время ожидания перед повторной попыткой (секунды)
+  allowed_fails: 3 # Количество неудачных попыток перед fallback
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
@@ -46,6 +48,10 @@ litellm_settings:
   ollama_thinking_mode: "stream"
   # Разрешить неизвестные поля в chunk responses
   allow_unknown_chunk_fields: true
+  # === MCP INTEGRATION SETTINGS ===
+  # MCP Aliases для упрощения доступа к серверам
+  mcp_aliases:
+    "deepwiki": "deepwiki_mcp"
   # === KEY GENERATION SETTINGS ===
   # Настройки по умолчанию для генерации ключей
   default_key_generate_params:
@@ -61,3 +67,29 @@ litellm_settings:
     max_parallel_requests: 50 # Максимум параллельных запросов
     tpm_limit: 10000 # Лимит токенов в минуту
     rpm_limit: 100 # Лимит запросов в минуту
+  # === PERFORMANCE OPTIMIZATION ===
+  # Настройки кэширования для production
+  cache_params:
+    type: "redis" # Использовать Redis для кэширования
+    ttl: 3600 # TTL кэша в секундах (1 час)
+    namespace: "erni-ki-litellm" # Namespace для изоляции кэша
+  # Настройки connection pooling
+  connection_pool:
+    max_connections: 100 # Максимум подключений к БД
+    max_overflow: 20 # Дополнительные подключения при пиковой нагрузке
+    pool_timeout: 30 # Таймаут получения подключения
+    pool_recycle: 3600 # Время жизни подключения (1 час)
+
+# === MCP SERVERS CONFIGURATION ===
+# Интеграция с внешними MCP серверами (примеры из документации)
+mcp_servers:
+  # Пример внешнего MCP сервера - DeepWiki
+  deepwiki_mcp:
+    url: "https://mcp.deepwiki.com/mcp"
+    transport: "http"
+    description: "DeepWiki MCP Server для поиска информации"
+    auth_type: "none"
+    spec_version: "2025-03-26"
+    mcp_info:
+      mcp_server_cost_info:
+        default_cost_per_query: 0.001 # $0.001 за запрос

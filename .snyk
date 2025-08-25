@@ -2,63 +2,43 @@
 # Исключения для сканирования безопасности
 
 # Версия конфигурации
-version: v1.0.0
+version: v1.25.0
 
-# Исключения для Infrastructure as Code сканирования
-exclude:
-  # Данные Docker контейнеров (создаются с правами root)
-  - data/**
+# Отключаем Infrastructure as Code сканирование для избежания проблем с правами доступа
+# IaC сканирование отключено из-за Docker контейнеров с ограниченными правами
 
-  # Специальные исключения для сервисов с ограниченными правами
-  - data/postgres/**          # PostgreSQL требует строгие права доступа (700/750)
-  - data/postgres/base/**     # База данных PostgreSQL - критически важные данные
-  - data/postgres/global/**   # Глобальные объекты PostgreSQL
-  - data/postgres/pg_*/**     # Системные директории PostgreSQL (pg_multixact, pg_stat, etc.)
-  - data/postgres/*/          # Все поддиректории PostgreSQL
+# Исключения для сканирования (закомментированы, так как IaC отключено)
+# exclude:
+#   - "data"
+#   - "data/**"
+#   - "cache"
+#   - "cache/**"
 
-  # Другие сервисы данных
-  - data/redis/**
-  - data/ollama/**
-  - data/openwebui/**
-  - data/grafana/alerting/**  # Исправлено, но может быть чувствительным
-  - cache/backrest/restic/**
-  - .git/**
+# Все исключения закомментированы, так как IaC сканирование отключено
+# - data/postgres/**
+# - data/redis/**
+# - data/ollama/**
+# - data/openwebui/**
+# - data/grafana/**
+# - data/loki/**
+# - cache/backrest/restic/**
+# - .git/**
 
-  # Временные файлы и логи
-  - logs/**
-  - tmp/**
-  - temp/**
-
-  # Backup файлы
-  - backup/**
-  - backups/**
-  - .config-backup/**
-
-  # Конфигурационные файлы с секретами
-  - env/**
-  - secrets/**
-  - conf/**/config
-  - "conf/**/*.conf"
-  - "conf/**/*.ini"
-  - "conf/**/*.json"
-  - "conf/**/*.yml"
-
-  # Исключаем примеры конфигураций (они безопасны)
-  - "!conf/**/*.example"
-  - "!conf/**/*.template"
-  - "!conf/**/*.sample"
-
-  # Node.js зависимости
-  - node_modules/**
-
-  # Go vendor директория
-  - vendor/**
-
-  # Сборочные артефакты
-  - dist/**
-  - build/**
-  - out/**
-  - lib/**
+# Все исключения закомментированы
+# - logs/**
+# - tmp/**
+# - temp/**
+# - backup/**
+# - backups/**
+# - .config-backup/**
+# - env/**
+# - secrets/**
+# - node_modules/**
+# - vendor/**
+# - dist/**
+# - build/**
+# - out/**
+# - lib/**
 
 # Игнорируемые уязвимости (с обоснованием)
 ignore:

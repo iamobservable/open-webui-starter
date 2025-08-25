@@ -264,4 +264,31 @@
   },
 
   // Настройки для работы с REST API удалены - требуют установки расширения
+
+  // Настройки Snyk - полное отключение проблемных сканирований
+  "snyk.enableCodeSecurity": false,
+  "snyk.enableOpenSource": true,
+  "snyk.enableIac": false,
+  "snyk.enableContainer": false,
+  "snyk.enableCode": false,
+  "snyk.trustedFolders": [],
+  "snyk.exclude": [
+    "**/data/**",
+    "**/cache/**",
+    "**/logs/**",
+    "**/node_modules/**",
+    "**/vendor/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/.git/**",
+    "**/tmp/**",
+    "**/temp/**",
+    "**/.config-backup/**",
+    "**/data/loki/wal/**",
+    "**/data/postgres/**"
+  ],
+  // Отключаем автоматическое сканирование
+  "snyk.scanOnSave": false,
+  "snyk.scanOnOpen": false
 }

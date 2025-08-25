@@ -1,0 +1,11 @@
+# Cron задачи для автоматических отчетов о системе логгирования ERNI-KI
+# Фаза 3: Мониторинг и алертинг
+
+# Ежедневный отчет в 06:00
+0 6 * * * cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/logging-reports.sh daily >> /var/log/erni-ki-reports.log 2>&1
+
+# Еженедельный отчет в воскресенье в 07:00
+0 7 * * 0 cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/logging-reports.sh weekly >> /var/log/erni-ki-reports.log 2>&1
+
+# Очистка старых отчетов (старше 90 дней) каждый месяц
+0 8 1 * * find /home/konstantin/Documents/augment-projects/erni-ki/.config-backup/reports -name "*.txt" -mtime +90 -delete >> /var/log/erni-ki-reports.log 2>&1
