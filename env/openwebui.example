@@ -2,10 +2,12 @@
 # Основной веб-интерфейс для AI ассистента с RAG и GPU ускорением
 
 # === Основные настройки ===
-# Секретный ключ для подписи сессий (сгенерируйте уникальный)
-WEBUI_SECRET_KEY=your-secret-key-here
-# Внешний URL для доступа
-WEBUI_URL=https://your-domain.com
+# Секретный ключ для подписи сессий
+# ⚠️ КРИТИЧЕСКИ ВАЖНО: Замените перед production использованием!
+# Генерировать через: openssl rand -hex 32
+WEBUI_SECRET_KEY=CHANGE_THIS_SECRET_KEY_BEFORE_PRODUCTION
+# Внешний URL для доступа (замените на ваш домен)
+WEBUI_URL=https://your-domain.example.com
 # Отключить анонимную телеметрию
 ANONYMIZED_TELEMETRY=false
 # Режим окружения
@@ -15,7 +17,8 @@ GLOBAL_LOG_LEVEL=info
 
 # === База данных PostgreSQL ===
 # Подключение к PostgreSQL с векторным расширением
-DATABASE_URL="postgresql://postgres:your-password-here@db:5432/openwebui"
+# ⚠️ ВАЖНО: Пароль должен совпадать с POSTGRES_PASSWORD в db.env
+DATABASE_URL="postgresql://postgres:CHANGE_THIS_PASSWORD_BEFORE_PRODUCTION@db:5432/openwebui"
 
 # === Ollama интеграция (AI модели) ===
 # Базовые URL для Ollama API

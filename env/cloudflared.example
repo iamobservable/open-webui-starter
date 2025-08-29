@@ -1,1 +1,14 @@
-TUNNEL_TOKEN=add-your-cloudflare-tunnel-token-here
+# Cloudflared Tunnel Configuration для ERNI-KI
+# Конфигурация Cloudflare туннеля для безопасного внешнего доступа
+
+# === Cloudflare Tunnel ===
+# Токен туннеля Cloudflare
+# ⚠️ КРИТИЧЕСКИ ВАЖНО: Замените на реальный токен перед использованием!
+# Получить токен: https://dash.cloudflare.com -> Zero Trust -> Access -> Tunnels
+TUNNEL_TOKEN=CHANGE_THIS_CLOUDFLARE_TUNNEL_TOKEN_BEFORE_PRODUCTION
+
+# === Дополнительные настройки ===
+# Уровень логирования (debug, info, warn, error)
+TUNNEL_LOG_LEVEL=info
+# Отключить автообновления (управляется через Watchtower)
+TUNNEL_NO_AUTOUPDATE=true

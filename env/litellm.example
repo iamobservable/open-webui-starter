@@ -11,7 +11,8 @@ LITELLM_SALT_KEY=CHANGE_THIS_SALT_KEY_64_CHARS_LONG_NEVER_CHANGE_AFTER_FIRST_RUN
 
 # === DATABASE INTEGRATION ===
 # PostgreSQL connection для metadata storage
-DATABASE_URL=postgresql://postgres:postgres@db:5432/openwebui
+# ⚠️ ВАЖНО: Пароль должен совпадать с POSTGRES_PASSWORD в db.env
+DATABASE_URL=postgresql://postgres:CHANGE_THIS_PASSWORD_BEFORE_PRODUCTION@db:5432/openwebui
 
 # Включить хранение моделей в БД
 STORE_MODEL_IN_DB=True

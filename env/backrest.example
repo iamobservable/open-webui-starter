@@ -10,9 +10,10 @@ TMPDIR=/tmp
 TZ=Europe/Moscow
 
 # === Аутентификация ===
-# Оставьте пустым для отключения аутентификации (не рекомендуется для продакшена)
+# ⚠️ КРИТИЧЕСКИ ВАЖНО: Настройте безопасные учетные данные для production!
+# Генерировать пароль через: openssl rand -base64 32
 BACKREST_USERNAME=admin
-BACKREST_PASSWORD=CHANGE_BEFORE_GOING_LIVE
+BACKREST_PASSWORD=CHANGE_THIS_PASSWORD_BEFORE_PRODUCTION
 
 # === Restic настройки ===
 # Путь к бинарному файлу restic (оставьте пустым для автоматической установки)

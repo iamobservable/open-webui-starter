@@ -1,2 +1,16 @@
+# Auth Service Configuration для ERNI-KI
+# Конфигурация сервиса аутентификации и авторизации
+
+# === Режим работы ===
+# Режим Gin framework (release для production, debug для разработки)
 GIN_MODE=release
-JWT_SECRET=CHANGE_BEFORE_GOING_LIVE
+
+# === JWT Конфигурация ===
+# JWT секретный ключ для подписи токенов
+# ⚠️ КРИТИЧЕСКИ ВАЖНО: Замените перед production использованием!
+# Генерировать через: openssl rand -hex 32
+JWT_SECRET=CHANGE_THIS_JWT_SECRET_BEFORE_PRODUCTION
+
+# === База данных ===
+# URL подключения к PostgreSQL (будет автоматически подставлен из db.env)
+# DATABASE_URL=postgresql://postgres:password@db:5432/openwebui
