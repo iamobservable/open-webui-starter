@@ -1,12 +1,13 @@
 # 👤 ERNI-KI Benutzerhandbuch
 
-> **Dokumentversion:** 3.0 **Aktualisierungsdatum:** 2025-07-15 **Zielgruppe:** Endbenutzer
+> **Dokumentversion:** 3.0 **Aktualisierungsdatum:** 2025-07-15 **Zielgruppe:**
+> Endbenutzer
 
 ## 🎯 Einführung
 
-ERNI-KI ist eine moderne AI-Plattform, die eine benutzerfreundliche Weboberfläche für die Arbeit mit
-Sprachmodellen bietet. Das System unterstützt AI-Chat, Internetsuche, Dokumentenverarbeitung und
-Sprachinteraktion.
+ERNI-KI ist eine moderne AI-Plattform, die eine benutzerfreundliche
+Weboberfläche für die Arbeit mit Sprachmodellen bietet. Das System unterstützt
+AI-Chat, Internetsuche, Dokumentenverarbeitung und Sprachinteraktion.
 
 ## 🚀 Erste Schritte
 
@@ -52,14 +53,16 @@ Das Hauptinterface besteht aus:
 
 ### Was ist RAG-Suche
 
-RAG (Retrieval-Augmented Generation) ist eine Technologie, die es der AI ermöglicht, aktuelle
-Informationen aus dem Internet für präzisere Antworten zu erhalten.
+RAG (Retrieval-Augmented Generation) ist eine Technologie, die es der AI
+ermöglicht, aktuelle Informationen aus dem Internet für präzisere Antworten zu
+erhalten.
 
 ### Web-Suche verwenden
 
 1. **Automatische Suche**: AI sucht automatisch nach Informationen bei Bedarf
 2. **Manuelle Suche**: Verwenden Sie den Befehl `/search Ihre Anfrage`
-3. **Sucheinstellungen**: In den Einstellungen können Sie die Auto-Suche ein-/ausschalten
+3. **Sucheinstellungen**: In den Einstellungen können Sie die Auto-Suche
+   ein-/ausschalten
 
 ### Beispiele für Suchanfragen
 
@@ -215,27 +218,28 @@ Speichern Sie häufig verwendete Anfragen:
 
 ### **F: Wie wähle ich das passende Modell?**
 
-A: Für schnelle Antworten verwenden Sie 3B-7B Parameter-Modelle. Für komplexe Aufgaben - 13B+
-Parameter.
+A: Für schnelle Antworten verwenden Sie 3B-7B Parameter-Modelle. Für komplexe
+Aufgaben - 13B+ Parameter.
 
 ### **F: Warum kann AI keine aktuellen Informationen finden?**
 
-A: Stellen Sie sicher, dass RAG-Suche in den Einstellungen aktiviert ist. Verwenden Sie `/search`
-für erzwungene Suche.
+A: Stellen Sie sicher, dass RAG-Suche in den Einstellungen aktiviert ist.
+Verwenden Sie `/search` für erzwungene Suche.
 
 ### **F: Wie kann ich die Antwortgeschwindigkeit erhöhen?**
 
-A: Verwenden Sie GPU-Beschleunigung, wählen Sie ein kleineres Modell, reduzieren Sie die maximale
-Antwortlänge.
+A: Verwenden Sie GPU-Beschleunigung, wählen Sie ein kleineres Modell, reduzieren
+Sie die maximale Antwortlänge.
 
 ### **F: Kann ERNI-KI offline verwendet werden?**
 
-A: Ja, nach dem Laden der Modelle arbeitet das System vollständig autonom. Nur RAG-Suche benötigt
-Internet.
+A: Ja, nach dem Laden der Modelle arbeitet das System vollständig autonom. Nur
+RAG-Suche benötigt Internet.
 
 ### **F: Wie füge ich neue Sprachmodelle hinzu?**
 
-A: Verwenden Sie `docker compose exec ollama ollama pull model-name` zum Laden neuer Modelle.
+A: Verwenden Sie `docker compose exec ollama ollama pull model-name` zum Laden
+neuer Modelle.
 
 ## 🆘 Hilfe erhalten
 
@@ -253,5 +257,5 @@ A: Verwenden Sie `docker compose exec ollama ollama pull model-name` zum Laden n
 
 ---
 
-**💡 Tipp**: Experimentieren Sie mit verschiedenen Einstellungen und Modellen, um die optimale
-Konfiguration für Ihre Aufgaben zu finden!
+**💡 Tipp**: Experimentieren Sie mit verschiedenen Einstellungen und Modellen,
+um die optimale Konfiguration für Ihre Aufgaben zu finden!

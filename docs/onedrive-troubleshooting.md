@@ -6,8 +6,9 @@
 
 ## 📋 Обзор
 
-Данное руководство содержит решения типичных проблем при интеграции OneDrive в ERNI-KI системе,
-диагностические процедуры и рекомендации по устранению неполадок.
+Данное руководство содержит решения типичных проблем при интеграции OneDrive в
+ERNI-KI системе, диагностические процедуры и рекомендации по устранению
+неполадок.
 
 ---
 
@@ -113,7 +114,8 @@ az ad app permission add --id $AZURE_CLIENT_ID \
 **Симптомы:**
 
 - Ошибка при обмене authorization code на access token
-- Сообщение: "AADSTS70008: The provided authorization code or refresh token has expired"
+- Сообщение: "AADSTS70008: The provided authorization code or refresh token has
+  expired"
 
 **Причины:**
 
@@ -475,4 +477,5 @@ TRUNCATE TABLE onedrive_embeddings, onedrive_files, onedrive_tokens CASCADE;
 
 - **Tech Lead:** Альтэон Шульц
 - **Документация:** `docs/onedrive-integration-guide.md`
-- **Скрипты:** `scripts/setup-onedrive-integration.sh`, `scripts/test-onedrive-integration.sh`
+- **Скрипты:** `scripts/setup-onedrive-integration.sh`,
+  `scripts/test-onedrive-integration.sh`

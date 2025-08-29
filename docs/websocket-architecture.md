@@ -6,9 +6,10 @@
 
 ## 📋 **Обзор WebSocket архитектуры**
 
-Система ERNI-KI использует Redis-based WebSocket Manager для обеспечения real-time коммуникации
-между клиентами и сервером. Архитектура поддерживает кластерные развертывания и обеспечивает высокую
-доступность WebSocket соединений.
+Система ERNI-KI использует Redis-based WebSocket Manager для обеспечения
+real-time коммуникации между клиентами и сервером. Архитектура поддерживает
+кластерные развертывания и обеспечивает высокую доступность WebSocket
+соединений.
 
 ## 🏗️ **Архитектурная диаграмма WebSocket**
 
@@ -135,8 +136,8 @@ WEBSOCKET_REDIS_URL=redis://:ErniKiRedisSecurePassword2024@redis:6379/0
 # compose.yml
 redis:
   command: >
-    redis-stack-server --requirepass ErniKiRedisSecurePassword2024 --save "" --appendonly yes
-    --maxmemory-policy allkeys-lru
+    redis-stack-server --requirepass ErniKiRedisSecurePassword2024 --save ""
+    --appendonly yes --maxmemory-policy allkeys-lru
 ```
 
 ### **3. Nginx WebSocket поддержка**

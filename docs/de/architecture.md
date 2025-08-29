@@ -1,16 +1,18 @@
 # 🏗️ ERNI-KI Systemarchitektur
 
-> **Dokumentversion:** 8.0 **Aktualisierungsdatum:** 2025-08-29 **Status:** Production Ready
-> (Vollständig funktionsfähiges System mit behobenen Cloudflare-Tunneln + Aktualisierte
-> Dokumentation + Umfassende Diagnose)
+> **Dokumentversion:** 8.0 **Aktualisierungsdatum:** 2025-08-29 **Status:**
+> Production Ready (Vollständig funktionsfähiges System mit behobenen
+> Cloudflare-Tunneln + Aktualisierte Dokumentation + Umfassende Diagnose)
 
 ## 📋 Architektur-Überblick
 
-ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den Prinzipien der
-Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das System besteht aus **29 ERNI-KI
-Microservices** + **9 externe Services**, einschließlich Komponenten wie LiteLLM, Docling, MCP
-Server, vollständigem Monitoring-Stack mit 33/33 Containern im Status Healthy, AI-Metriken,
-nginx-exporter für Web-Analytik und zentralisierter Protokollierung über Fluent-bit → Loki.
+ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den
+Prinzipien der Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das
+System besteht aus **29 ERNI-KI Microservices** + **9 externe Services**,
+einschließlich Komponenten wie LiteLLM, Docling, MCP Server, vollständigem
+Monitoring-Stack mit 33/33 Containern im Status Healthy, AI-Metriken,
+nginx-exporter für Web-Analytik und zentralisierter Protokollierung über
+Fluent-bit → Loki.
 
 ### 🚀 Neueste Updates (v8.0 - 29. August 2025)
 
@@ -40,7 +42,8 @@ nginx-exporter für Web-Analytik und zentralisierter Protokollierung über Fluen
 - **Prometheus v2.55.1**: Metriken-Sammlung mit 35+ Targets
 - **Grafana**: Visualisierung und Dashboards
 - **Loki**: Zentralisierte Protokollierung über Fluent-bit
-- **8 Exporter**: node, postgres, redis, nginx, ollama, nvidia, cadvisor, blackbox
+- **8 Exporter**: node, postgres, redis, nginx, ollama, nvidia, cadvisor,
+  blackbox
 - **Backrest**: Lokale Backups (7 Tage + 4 Wochen)
 
 ## 🎯 Architektur-Prinzipien
@@ -396,5 +399,5 @@ graph TB
 
 ---
 
-**📝 Hinweis**: Diese Architektur ist für den Produktionseinsatz optimiert mit Fokus auf Sicherheit,
-Performance und Zuverlässigkeit.
+**📝 Hinweis**: Diese Architektur ist für den Produktionseinsatz optimiert mit
+Fokus auf Sicherheit, Performance und Zuverlässigkeit.

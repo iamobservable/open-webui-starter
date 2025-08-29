@@ -1,14 +1,16 @@
 # 🤖 ERNI-KI - Moderne AI-Plattform
 
-**ERNI-KI** ist eine produktionsreife AI-Plattform basierend auf OpenWebUI v0.6.26 mit vollständiger
-Containerisierung, GPU-Beschleunigung und umfassendem Sicherheitssystem. Das System umfasst **29
-ERNI-KI Microservices** + **9 externe Services** mit vollständigem Monitoring-Stack (33/33 Container
-im Status Healthy), AI-Metriken, zentralisierter Protokollierung und automatisiertem Management.
+**ERNI-KI** ist eine produktionsreife AI-Plattform basierend auf OpenWebUI
+v0.6.26 mit vollständiger Containerisierung, GPU-Beschleunigung und umfassendem
+Sicherheitssystem. Das System umfasst **29 ERNI-KI Microservices** + **9 externe
+Services** mit vollständigem Monitoring-Stack (33/33 Container im Status
+Healthy), AI-Metriken, zentralisierter Protokollierung und automatisiertem
+Management.
 
-> **✅ Systemstatus (29. August 2025):** Alle kritischen Probleme behoben. Cloudflare-Tunnel
-> wiederhergestellt, externer Zugriff funktioniert über alle 5 Domains. Systemantwortzeit <0,01
-> Sekunden. GPU-Auslastung 25% (optimal). System ist vollständig funktionsfähig und
-> produktionsbereit.
+> **✅ Systemstatus (29. August 2025):** Alle kritischen Probleme behoben.
+> Cloudflare-Tunnel wiederhergestellt, externer Zugriff funktioniert über alle 5
+> Domains. Systemantwortzeit <0,01 Sekunden. GPU-Auslastung 25% (optimal).
+> System ist vollständig funktionsfähig und produktionsbereit.
 
 [![CI](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml)
 [![Security](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml)
@@ -21,10 +23,12 @@ im Status Healthy), AI-Metriken, zentralisierter Protokollierung und automatisie
 ### 🤖 **AI-Interface**
 
 - **Open WebUI** - moderne Weboberfläche für die Arbeit mit AI
-- **Ollama** - lokaler Sprachmodell-Server mit GPU-Beschleunigung (NVIDIA Quadro P2200)
+- **Ollama** - lokaler Sprachmodell-Server mit GPU-Beschleunigung (NVIDIA Quadro
+  P2200)
   - 6 vorinstallierte Modelle inklusive qwen2.5-coder:1.5b für Programmierung
   - Generierungszeit: ~1,5 Sekunden (GPU-Beschleunigung)
-- **LiteLLM** - einheitliche API für verschiedene LLM-Anbieter (optimierte Konfiguration)
+- **LiteLLM** - einheitliche API für verschiedene LLM-Anbieter (optimierte
+  Konfiguration)
 - **RAG-Suche** - Integration mit SearXNG (Startpage, Brave, Bing Engines)
   - Antwortzeit: <3 Sekunden, 60+ Suchergebnisse
 - **MCP-Server** - erweiterte Funktionen über Model Context Protocol
@@ -242,7 +246,8 @@ Das Monitoring-System umfasst:
 - **Web-Analytik** - Nginx Exporter (Verbindungen, Anfragen, Upstreams)
 - **Health Checks** - automatische Zustandsüberwachung aller 29 Services
 - **Watchtower** - automatische Container-Updates
-- **Zentralisierte Protokollierung** - Fluent-bit → Elasticsearch für alle Komponenten
+- **Zentralisierte Protokollierung** - Fluent-bit → Elasticsearch für alle
+  Komponenten
 - ✨ **Neu**: 100% Monitoring-Abdeckung (35/35 Targets aktiv)
 - ✨ **Neu**: AI-Metriken für 3 Modelle (nomic-embed-text, gpt-oss, gemma3n)
 
@@ -272,8 +277,8 @@ Das Monitoring-System umfasst:
 
 - [🏗️ Systemarchitektur](architecture.md) - technische Dokumentation
 - [🔌 API-Referenz](../api-reference.md) - API-Dokumentation
-- [📎 Docling Upload Hinweis](snippets/docling-multipart-note.md) – Multipart Feldname ist "files"
-  (nicht "file")
+- [📎 Docling Upload Hinweis](snippets/docling-multipart-note.md) – Multipart
+  Feldname ist "files" (nicht "file")
 - [💻 Entwicklerhandbuch](../development.md) - Entwicklungsumgebung einrichten
 
 ## 🤝 Mitwirkung
@@ -323,8 +328,8 @@ cd auth && go build
 
 ## 📄 Lizenz
 
-Dieses Projekt ist unter der MIT License lizenziert - siehe [LICENSE](../../LICENSE) Datei für
-Details.
+Dieses Projekt ist unter der MIT License lizenziert - siehe
+[LICENSE](../../LICENSE) Datei für Details.
 
 ---
 

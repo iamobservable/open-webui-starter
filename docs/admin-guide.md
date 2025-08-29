@@ -1,19 +1,21 @@
 # 👨‍💼 Administration Guide - ERNI-KI
 
-> **Версия:** 6.0 **Дата обновления:** 25.08.2025 **Статус:** Production Ready (Оптимизированные
-> PostgreSQL и Redis + Enterprise мониторинг + Troubleshooting)
+> **Версия:** 6.0 **Дата обновления:** 25.08.2025 **Статус:** Production Ready
+> (Оптимизированные PostgreSQL и Redis + Enterprise мониторинг +
+> Troubleshooting)
 
 ## 📋 Обзор
 
-Comprehensive руководство по администрированию и мониторингу системы ERNI-KI с оптимизированной
-архитектурой 15+ сервисов, enterprise-grade производительностью БД и полным мониторингом стеком в
-production окружении.
+Comprehensive руководство по администрированию и мониторингу системы ERNI-KI с
+оптимизированной архитектурой 15+ сервисов, enterprise-grade производительностью
+БД и полным мониторингом стеком в production окружении.
 
 ## 🚀 Production оптимизации (август 2025)
 
 #### 🔴 Критические оптимизации БД
 
-- ✅ **PostgreSQL 15.13**: Production конфигурация (shared_buffers: 256MB, max_connections: 200)
+- ✅ **PostgreSQL 15.13**: Production конфигурация (shared_buffers: 256MB,
+  max_connections: 200)
 - ✅ **Redis 7.4.5**: Memory limits (2GB) с LRU eviction policy
 - ✅ **Cache hit ratio**: 99.76% для PostgreSQL (отличная производительность)
 - ✅ **Memory overcommit**: Исправлен warning (vm.overcommit_memory=1)
@@ -527,12 +529,15 @@ docker network ls
 ### Внешние ресурсы
 
 - **📖 Документация:** [docs/troubleshooting.md](troubleshooting.md)
-- **🔧 Database Troubleshooting:** [docs/database-troubleshooting.md](database-troubleshooting.md)
-- **📊 Database Monitoring:** [docs/database-monitoring-plan.md](database-monitoring-plan.md)
+- **🔧 Database Troubleshooting:**
+  [docs/database-troubleshooting.md](database-troubleshooting.md)
+- **📊 Database Monitoring:**
+  [docs/database-monitoring-plan.md](database-monitoring-plan.md)
 - **⚡ Production Optimizations:**
   [docs/database-production-optimizations.md](database-production-optimizations.md)
 - **🐛 Issues:** [GitHub Issues](https://github.com/DIZ-admin/erni-ki/issues)
-- **💬 Discussions:** [GitHub Discussions](https://github.com/DIZ-admin/erni-ki/discussions)
+- **💬 Discussions:**
+  [GitHub Discussions](https://github.com/DIZ-admin/erni-ki/discussions)
 
 ## ✅ Процедуры валидации системы
 
@@ -584,5 +589,5 @@ docker compose up -d
 
 ---
 
-**📝 Примечание:** Данное руководство актуализировано для архитектуры 29 сервисов ERNI-KI версии 5.1
-(август 2025).
+**📝 Примечание:** Данное руководство актуализировано для архитектуры 29
+сервисов ERNI-KI версии 5.1 (август 2025).
