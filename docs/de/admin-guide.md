@@ -109,7 +109,7 @@ echo "0 9 * * * /usr/local/bin/erni-ki-health.sh" | crontab -
 
 ```bash
 # Zur Datenbank verbinden
-docker compose exec db psql -U openwebui -d openwebui
+docker compose exec db psql -U postgres -d openwebui
 
 # Datenbankgröße prüfen
 docker compose exec db psql -U openwebui -d openwebui -c "

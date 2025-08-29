@@ -1,36 +1,32 @@
 # 📚 ERNI-KI Dokumentation (Deutsch)
 
-> **Willkommen zur deutschen Dokumentation von ERNI-KI** **Version:** 2.0
-> **Aktualisiert:** 2025-07-04
+> **Willkommen zur deutschen Dokumentation von ERNI-KI** **Version:** 2.0 **Aktualisiert:**
+> 2025-07-04
 
 ## 🎯 Über ERNI-KI
 
-ERNI-KI ist eine moderne, produktionsreife AI-Plattform basierend auf Open WebUI
-mit vollständiger Containerisierung, GPU-Beschleunigung und umfassendem
-Sicherheitssystem. Die Plattform bietet eine benutzerfreundliche Weboberfläche
-für die Arbeit mit lokalen Sprachmodellen, RAG-Suche, Dokumentenverarbeitung und
-Sprachinteraktion.
+ERNI-KI ist eine moderne, produktionsreife AI-Plattform basierend auf Open WebUI mit vollständiger
+Containerisierung, GPU-Beschleunigung und umfassendem Sicherheitssystem. Die Plattform bietet eine
+benutzerfreundliche Weboberfläche für die Arbeit mit lokalen Sprachmodellen, RAG-Suche,
+Dokumentenverarbeitung und Sprachinteraktion.
 
 ## 📖 Dokumentations-Übersicht
 
 ### 🚀 Erste Schritte
 
 - **[README](README.md)** - Projektübersicht und Schnellstart
-- **[Installationsanleitung](installation-guide.md)** - Detaillierte
-  Installationsschritte
+- **[Installationsanleitung](installation-guide.md)** - Detaillierte Installationsschritte
 - **[Benutzerhandbuch](user-guide.md)** - Anleitung für Endbenutzer
 
 ### 🏗️ Technische Dokumentation
 
-- **[Systemarchitektur](architecture.md)** - Technische Architektur und
-  Service-Details
+- **[Systemarchitektur](architecture.md)** - Technische Architektur und Service-Details
 - **[Administrator-Handbuch](admin-guide.md)** - Systemverwaltung und Wartung
 - **[API-Referenz](../api-reference.md)** - API-Dokumentation (Englisch)
 
 ### 💻 Entwicklung
 
-- **[Entwicklerhandbuch](../development.md)** - Entwicklungsumgebung einrichten
-  (Englisch)
+- **[Entwicklerhandbuch](../development.md)** - Entwicklungsumgebung einrichten (Englisch)
 
 ## 🎯 Zielgruppen
 
@@ -48,8 +44,7 @@ Wenn Sie ERNI-KI installieren und verwalten:
 
 1. Folgen Sie der **[Installationsanleitung](installation-guide.md)**
 2. Studieren Sie die **[Systemarchitektur](architecture.md)**
-3. Verwenden Sie das **[Administrator-Handbuch](admin-guide.md)** für die
-   tägliche Verwaltung
+3. Verwenden Sie das **[Administrator-Handbuch](admin-guide.md)** für die tägliche Verwaltung
 
 ### 👨‍💻 **Entwickler**
 
@@ -83,8 +78,7 @@ docker compose exec ollama ollama pull llama3.2:3b
 
 ### 🎯 **Erste Nutzung (10 Minuten)**
 
-1. Browser öffnen: `https://ki.erni-gruppe.ch` (oder lokal:
-   `http://localhost:8080`)
+1. Browser öffnen: `https://ki.erni-gruppe.ch` (oder lokal: `http://localhost:8080`)
 2. Administrator-Account erstellen
 3. Ollama-Verbindung konfigurieren: `http://ollama:11434`
 4. Ersten Chat mit AI starten
@@ -216,8 +210,7 @@ Diese Dokumentation ist Open Source und Beiträge sind willkommen:
 
 **Bereit zum Start?** Wählen Sie Ihren Pfad:
 
-- 🚀 **[Schnelle Installation](installation-guide.md)** - System in 30 Minuten
-  aufsetzen
+- 🚀 **[Schnelle Installation](installation-guide.md)** - System in 30 Minuten aufsetzen
 - 👤 **[Benutzer-Guide](user-guide.md)** - Sofort mit AI arbeiten
 - 🏗️ **[Architektur verstehen](architecture.md)** - Technische Details
 

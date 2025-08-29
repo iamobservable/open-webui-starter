@@ -1,15 +1,14 @@
 # 🤖 ERNI-KI - Moderne AI-Plattform
 
-**ERNI-KI** ist eine produktionsreife AI-Plattform basierend auf Open WebUI mit
-vollständiger Containerisierung, GPU-Beschleunigung und umfassendem
-Sicherheitssystem. Das System umfasst **29 ERNI-KI Microservices** mit
-vollständigem Monitoring-Stack (35+ aktive Targets), AI-Metriken,
-zentralisierter Protokollierung und automatisiertem Management.
+**ERNI-KI** ist eine produktionsreife AI-Plattform basierend auf OpenWebUI v0.6.26 mit vollständiger
+Containerisierung, GPU-Beschleunigung und umfassendem Sicherheitssystem. Das System umfasst **29
+ERNI-KI Microservices** + **9 externe Services** mit vollständigem Monitoring-Stack (33/33 Container
+im Status Healthy), AI-Metriken, zentralisierter Protokollierung und automatisiertem Management.
 
-> **🚀 Neueste Updates (August 2025):** Kritische DNS-Probleme in
-> Cloudflare-Tunneln behoben, SearXNG API optimiert (<0.8s), manuelle
-> Backrest-Verwaltung konfiguriert, GPU-Beschleunigung Ollama bestätigt. System
-> ist produktionsbereit.
+> **✅ Systemstatus (29. August 2025):** Alle kritischen Probleme behoben. Cloudflare-Tunnel
+> wiederhergestellt, externer Zugriff funktioniert über alle 5 Domains. Systemantwortzeit <0,01
+> Sekunden. GPU-Auslastung 25% (optimal). System ist vollständig funktionsfähig und
+> produktionsbereit.
 
 [![CI](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml)
 [![Security](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml)
@@ -22,12 +21,10 @@ zentralisierter Protokollierung und automatisiertem Management.
 ### 🤖 **AI-Interface**
 
 - **Open WebUI** - moderne Weboberfläche für die Arbeit mit AI
-- **Ollama** - lokaler Sprachmodell-Server mit GPU-Beschleunigung (NVIDIA Quadro
-  P2200)
+- **Ollama** - lokaler Sprachmodell-Server mit GPU-Beschleunigung (NVIDIA Quadro P2200)
   - 6 vorinstallierte Modelle inklusive qwen2.5-coder:1.5b für Programmierung
   - Generierungszeit: ~1,5 Sekunden (GPU-Beschleunigung)
-- **LiteLLM** - einheitliche API für verschiedene LLM-Anbieter (optimierte
-  Konfiguration)
+- **LiteLLM** - einheitliche API für verschiedene LLM-Anbieter (optimierte Konfiguration)
 - **RAG-Suche** - Integration mit SearXNG (Startpage, Brave, Bing Engines)
   - Antwortzeit: <3 Sekunden, 60+ Suchergebnisse
 - **MCP-Server** - erweiterte Funktionen über Model Context Protocol
@@ -96,7 +93,7 @@ git clone https://github.com/DIZ-admin/erni-ki.git
 cd erni-ki
 ```
 
-2. **Konfigurationsdateien erstellen**
+1. **Konfigurationsdateien erstellen**
 
 ```bash
 # Haupt-Docker Compose Datei
@@ -111,7 +108,7 @@ cp conf/searxng/settings.yml.example conf/searxng/settings.yml
 cp conf/searxng/uwsgi.ini.example conf/searxng/uwsgi.ini
 ```
 
-3. **Umgebungsvariablen konfigurieren**
+1. **Umgebungsvariablen konfigurieren**
 
 ```bash
 # Umgebungsdateien kopieren und bearbeiten
@@ -124,7 +121,7 @@ cp env/searxng.example env/searxng.env
 # ... und weitere nach Bedarf
 ```
 
-4. **Services starten**
+1. **Services starten**
 
 ```bash
 # Alle Services starten
@@ -204,7 +201,7 @@ cd auth && go test -v ./...
 
 ### Projektstruktur
 
-```
+```text
 erni-ki/
 ├── auth/                 # Go JWT Service
 │   ├── main.go          # Hauptdatei
@@ -245,8 +242,7 @@ Das Monitoring-System umfasst:
 - **Web-Analytik** - Nginx Exporter (Verbindungen, Anfragen, Upstreams)
 - **Health Checks** - automatische Zustandsüberwachung aller 29 Services
 - **Watchtower** - automatische Container-Updates
-- **Zentralisierte Protokollierung** - Fluent-bit → Elasticsearch für alle
-  Komponenten
+- **Zentralisierte Protokollierung** - Fluent-bit → Elasticsearch für alle Komponenten
 - ✨ **Neu**: 100% Monitoring-Abdeckung (35/35 Targets aktiv)
 - ✨ **Neu**: AI-Metriken für 3 Modelle (nomic-embed-text, gpt-oss, gemma3n)
 
@@ -276,8 +272,8 @@ Das Monitoring-System umfasst:
 
 - [🏗️ Systemarchitektur](architecture.md) - technische Dokumentation
 - [🔌 API-Referenz](../api-reference.md) - API-Dokumentation
-- [📎 Docling Upload Hinweis](snippets/docling-multipart-note.md) – Multipart
-  Feldname ist "files" (nicht "file")
+- [📎 Docling Upload Hinweis](snippets/docling-multipart-note.md) – Multipart Feldname ist "files"
+  (nicht "file")
 - [💻 Entwicklerhandbuch](../development.md) - Entwicklungsumgebung einrichten
 
 ## 🤝 Mitwirkung
@@ -327,8 +323,8 @@ cd auth && go build
 
 ## 📄 Lizenz
 
-Dieses Projekt ist unter der MIT License lizenziert - siehe
-[LICENSE](../../LICENSE) Datei für Details.
+Dieses Projekt ist unter der MIT License lizenziert - siehe [LICENSE](../../LICENSE) Datei für
+Details.
 
 ---
 
@@ -340,4 +336,6 @@ Dieses Projekt ist unter der MIT License lizenziert - siehe
 - 📊 **Monitoring** - umfassendes Monitoring-System
 - 🤖 **AI-First** - optimiert für AI-Workloads
 
-**Erstellt mit ❤️ vom ERNI-KI Team**
+---
+
+Erstellt mit ❤️ vom ERNI-KI Team

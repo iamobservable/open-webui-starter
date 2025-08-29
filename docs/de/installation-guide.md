@@ -1,7 +1,6 @@
 # 🚀 Detaillierte Installationsanleitung für ERNI-KI
 
-> **Dokumentversion:** 2.0 **Aktualisierungsdatum:** 2025-07-04
-> **Installationszeit:** 30-60 Minuten
+> **Dokumentversion:** 2.0 **Aktualisierungsdatum:** 2025-07-04 **Installationszeit:** 30-60 Minuten
 
 ## 📋 Systemanforderungen
 
@@ -431,15 +430,11 @@ sudo systemctl restart docker
 
 Nach erfolgreicher Installation wird empfohlen:
 
-1. **[Benutzerhandbuch](user-guide.md) studieren** - Grundlagen der
-   Interface-Bedienung
-2. **[Monitoring](admin-guide.md#monitoring) konfigurieren** - Systemzustand
-   überwachen
-3. **[API-Dokumentation](../api-reference.md) studieren** - Integration mit
-   externen Systemen
+1. **[Benutzerhandbuch](user-guide.md) studieren** - Grundlagen der Interface-Bedienung
+2. **[Monitoring](admin-guide.md#monitoring) konfigurieren** - Systemzustand überwachen
+3. **[API-Dokumentation](../api-reference.md) studieren** - Integration mit externen Systemen
 4. **[Backup](admin-guide.md#backup) einrichten** - Datenschutz
 
 ---
 
-**🎉 Herzlichen Glückwunsch! ERNI-KI ist erfolgreich installiert und
-einsatzbereit!**
+**🎉 Herzlichen Glückwunsch! ERNI-KI ist erfolgreich installiert und einsatzbereit!**

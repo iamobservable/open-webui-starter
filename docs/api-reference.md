@@ -1,19 +1,17 @@
 # 🔌 Справочник API ERNI-KI
 
-> **Версия документа:** 2.1 **Дата обновления:** 2025-08-22 **API Версия:** v1
-> **Статус:** ✅ Все endpoints протестированы и работают
+> **Версия документа:** 2.1 **Дата обновления:** 2025-08-22 **API Версия:** v1 **Статус:** ✅ Все
+> endpoints протестированы и работают
 
 ## 📋 Обзор API
 
-ERNI-KI предоставляет RESTful API для интеграции с внешними системами. API
-включает endpoints для работы с чатами, моделями, поиском, резервным
-копированием и управлением пользователями.
+ERNI-KI предоставляет RESTful API для интеграции с внешними системами. API включает endpoints для
+работы с чатами, моделями, поиском, резервным копированием и управлением пользователями.
 
 ## 🚀 Новые API endpoints (август 2025)
 
 - ✅ **SearXNG API**: `/api/searxng/search` - оптимизированный поиск (<0.8s)
-- ✅ **Backrest API**: `/v1.Backrest/Backup`, `/v1.Backrest/GetOperations` -
-  управление бэкапами
+- ✅ **Backrest API**: `/v1.Backrest/Backup`, `/v1.Backrest/GetOperations` - управление бэкапами
 - ✅ **Docling API**: `/api/docling` - обработка документов с OCR
 - ✅ **MCP API**: `/api/mcp/*` - Model Context Protocol endpoints
 
@@ -176,7 +174,7 @@ Authorization: Bearer your-jwt-token
 
 **Ответ (streaming):**
 
-```
+```text
 data: {"content": "Квантовые", "done": false}
 data: {"content": " компьютеры", "done": false}
 data: {"content": " - это...", "done": true}
@@ -229,7 +227,7 @@ data: {"content": " - это...", "done": true}
 
 **Ответ (streaming):**
 
-```
+```text
 data: {"status": "downloading", "progress": 25}
 data: {"status": "downloading", "progress": 50}
 data: {"status": "completed", "progress": 100}
@@ -319,7 +317,7 @@ RAG поиск через OpenWebUI (с интеграцией в чат).
 
 **Запрос (multipart/form-data):**
 
-```
+```text
 file: document.pdf
 chat_id: chat-uuid
 ```
@@ -373,7 +371,7 @@ chat_id: chat-uuid
 
 **Ответ:**
 
-```
+```text
 Content-Type: audio/mpeg
 Content-Length: 12345
 
@@ -555,16 +553,13 @@ class ERNIKIClient {
 }
 
 // Использование
-const client = new ERNIKIClient(
-  'https://ki.erni-gruppe.ch/api/v1',
-  'your-token'
-);
+const client = new ERNIKIClient('https://ki.erni-gruppe.ch/api/v1', 'your-token');
 const response = await client.sendMessage('chat-id', 'Привет!');
 ```
 
-## 🔍 SearXNG Search API
+## 🔍 SearXNG Integration API
 
-### GET /api/searxng/search
+### GET /api/searxng/search - Поиск через SearXNG
 
 Выполняет поиск через SearXNG метапоисковый движок.
 
@@ -651,5 +646,4 @@ curl "http://localhost:8080/api/searxng/search?q=artificial+intelligence&format=
 
 ---
 
-**📚 Дополнительная информация**: Полная OpenAPI спецификация доступна по адресу
-`/api/v1/docs`
+**📚 Дополнительная информация**: Полная OpenAPI спецификация доступна по адресу `/api/v1/docs`

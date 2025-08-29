@@ -1,32 +1,47 @@
 # 🏗️ ERNI-KI Systemarchitektur
 
-> **Dokumentversion:** 6.5 **Aktualisierungsdatum:** 2025-08-22 **Status:**
-> Production Ready (Nach kritischen Korrekturen)
+> **Dokumentversion:** 8.0 **Aktualisierungsdatum:** 2025-08-29 **Status:** Production Ready
+> (Vollständig funktionsfähiges System mit behobenen Cloudflare-Tunneln + Aktualisierte
+> Dokumentation + Umfassende Diagnose)
 
 ## 📋 Architektur-Überblick
 
-ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den
-Prinzipien der Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das
-System besteht aus **29 ERNI-KI Microservices**, einschließlich Komponenten wie
-LiteLLM, Docling, MCP Server, vollständigem Monitoring-Stack mit 35+ aktiven
-Targets, ollama-exporter für AI-Metriken, nginx-exporter für Web-Analytik und
-zentralisierter Protokollierung über Fluent-bit → Loki. Zusätzlich umfasst das
-System 9 externe Services (RAGFlow, Photo-ERNI, Audio-ERNI).
+ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den Prinzipien der
+Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das System besteht aus **29 ERNI-KI
+Microservices** + **9 externe Services**, einschließlich Komponenten wie LiteLLM, Docling, MCP
+Server, vollständigem Monitoring-Stack mit 33/33 Containern im Status Healthy, AI-Metriken,
+nginx-exporter für Web-Analytik und zentralisierter Protokollierung über Fluent-bit → Loki.
 
-### 🚀 Neueste Optimierungen (v6.5 - August 2025)
+### 🚀 Neueste Updates (v8.0 - 29. August 2025)
 
-- **Monitoring-System**: 100% Abdeckung mit 35+ aktiven Targets erreicht
-- **AI-Metriken**: ollama-exporter (Port 9778) für KI-Modell-Monitoring
-  bereitgestellt
-- **Web-Analytik**: nginx-exporter (Port 9113) für Traffic-Monitoring
-  hinzugefügt
-- **Zentralisierte Protokollierung**: Elasticsearch durch Loki ersetzt,
-  Fluent-bit → Loki für Log-Sammlung aller Services korrigiert
-- **Cloudflare-Tunnel**: DNS-Probleme behoben, Konfiguration aktualisiert
-- **SearXNG API**: Zugriff über nginx proxy optimiert (<0.8s Antwortzeit)
-- **Backrest API**: Manuelle Backup-Verwaltung konfiguriert
-- **GPU-Beschleunigung**: NVIDIA Quadro P2200 Funktionalität in Ollama bestätigt
-- **Production Ready**: Alle kritischen Komponenten sind stabil und überwacht
+#### 🔴 Kritische Korrekturen (29. August 2025)
+
+- **Cloudflare-Tunnel**: DNS-Resolution-Fehler behoben
+  - Container-Namen in Tunnel-Konfiguration aktualisiert
+  - "server misbehaving" und "connection refused" Fehler beseitigt
+  - Externer Zugriff über alle 5 Domains wiederhergestellt
+  - Wiederherstellungszeit: 15 Minuten (schneller als geplant)
+- **System-Diagnose**: Umfassende Überprüfung von 29 Microservices
+  - Alle Services im Status "Healthy" (33/33 Container)
+  - Systemantwortzeit: <0,01 Sekunden
+  - GPU-Auslastung: 25% (optimal für Quadro P2200)
+
+#### 🛡️ Architektur-Komponenten (aktualisiert)
+
+- **OpenWebUI v0.6.26**: Haupt-AI-Interface mit CUDA-Unterstützung
+- **Ollama 0.11.8**: 9 geladene AI-Modelle mit GPU-Beschleunigung
+- **LiteLLM (main-stable)**: Context Engineering Gateway
+- **PostgreSQL 15.13 + pgvector 0.8.0**: Vektor-Datenbank
+- **Redis Stack**: WebSocket-Manager und Caching
+- **SearXNG**: RAG-Integration mit 6+ Suchquellen
+
+#### 📊 Monitoring und Observability
+
+- **Prometheus v2.55.1**: Metriken-Sammlung mit 35+ Targets
+- **Grafana**: Visualisierung und Dashboards
+- **Loki**: Zentralisierte Protokollierung über Fluent-bit
+- **8 Exporter**: node, postgres, redis, nginx, ollama, nvidia, cadvisor, blackbox
+- **Backrest**: Lokale Backups (7 Tage + 4 Wochen)
 
 ## 🎯 Architektur-Prinzipien
 
@@ -381,5 +396,5 @@ graph TB
 
 ---
 
-**📝 Hinweis**: Diese Architektur ist für den Produktionseinsatz optimiert mit
-Fokus auf Sicherheit, Performance und Zuverlässigkeit.
+**📝 Hinweis**: Diese Architektur ist für den Produktionseinsatz optimiert mit Fokus auf Sicherheit,
+Performance und Zuverlässigkeit.

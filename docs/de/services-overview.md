@@ -1,8 +1,7 @@
 # 📊 Detaillierte Tabelle der aktiven Services des ERNI-KI Systems
 
-> **Referenzdokumentation für die Administration des ERNI-KI Systems**
-> **Erstellungsdatum**: 2025-08-22 **Systemversion**: Production Ready
-> **Status**: ✅ Alle 29 Services laufen
+> **Referenzdokumentation für die Administration des ERNI-KI Systems** **Erstellungsdatum**:
+> 2025-08-22 **Systemversion**: Production Ready **Status**: ✅ Alle 29 Services laufen
 
 ---
 
@@ -86,16 +85,15 @@
 
 ## 🔧 Konfigurationstypen
 
-- **YAML/YML**: 8 Services (prometheus, grafana, loki, litellm, searxng,
-  cloudflared, postgres-exporter)
+- **YAML/YML**: 8 Services (prometheus, grafana, loki, litellm, searxng, cloudflared,
+  postgres-exporter)
 - **CONF**: 2 Services (nginx, fluent-bit)
 - **JSON**: 3 Services (backrest, mcposerver, openwebui)
 - **ENV nur**: 16 Services (übrige)
 
 ## ⚠️ Wichtige Hinweise
 
-1. **🔥 Kritisch wichtige Services** haben deaktivierte Auto-Updates für
-   Stabilität
+1. **🔥 Kritisch wichtige Services** haben deaktivierte Auto-Updates für Stabilität
 2. **🎮 GPU Services** benötigen NVIDIA Container Toolkit
 3. **⚠️ Services ohne Healthcheck** werden über externe Metriken überwacht
 4. **📁 Konfigurationen** sind vor IDE Auto-Formatierung geschützt
@@ -150,15 +148,13 @@ curl -s http://localhost:3100/ready
 
 ## 📚 Verwandte Dokumentation
 
-- **[Systemarchitektur](architecture.md)** - Diagramme und
-  Komponentenbeschreibung
-- **[Administrator-Handbuch](admin-guide.md)** - Detaillierte
-  Verwaltungsanweisungen
+- **[Systemarchitektur](architecture.md)** - Diagramme und Komponentenbeschreibung
+- **[Administrator-Handbuch](admin-guide.md)** - Detaillierte Verwaltungsanweisungen
 - **[Monitoring und Alerts](monitoring.md)** - Prometheus/Grafana Konfiguration
 - **[Backup-Handbuch](backup-guide.md)** - Backrest Konfiguration
 - **[Fehlerbehebung](troubleshooting.md)** - Lösung typischer Probleme
 
 ---
 
-**Letzte Aktualisierung**: 2025-08-22 **System**: Production Ready **Status**:
-✅ Alle Services laufen **Autor**: Alteon Schulz (Tech Lead-Weiser)
+**Letzte Aktualisierung**: 2025-08-22 **System**: Production Ready **Status**: ✅ Alle Services
+laufen **Autor**: Alteon Schulz (Tech Lead-Weiser)

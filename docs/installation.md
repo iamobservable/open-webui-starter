@@ -1,12 +1,12 @@
 # 📦 Installation Guide - ERNI-KI
 
-> **Версия:** 5.2 **Дата обновления:** 12.08.2025 **Статус:** Production Ready
-> (Оптимизированные конфигурации + nginx исправления)
+> **Версия:** 6.0 **Дата обновления:** 25.08.2025 **Статус:** Production Ready (Оптимизированные
+> PostgreSQL и Redis + Security headers + Performance tuning)
 
 ## 📋 Обзор
 
-Детальное руководство по установке и настройке системы ERNI-KI -
-Production-Ready AI Platform с архитектурой 27 микросервисов.
+Детальное руководство по установке и настройке системы ERNI-KI - Production-Ready AI Platform с
+архитектурой 29 микросервисов и enterprise-grade производительностью БД.
 
 ## 📋 Системные требования
 
@@ -14,17 +14,19 @@ Production-Ready AI Platform с архитектурой 27 микросерви
 
 - **OS:** Linux (Ubuntu 20.04+ / CentOS 8+ / Debian 11+)
 - **CPU:** 4 cores (8+ рекомендуется)
-- **RAM:** 8GB (16GB+ рекомендуется)
-- **Storage:** 50GB свободного места (SSD рекомендуется)
+- **RAM:** 16GB (оптимизировано для PostgreSQL и Redis)
+- **Storage:** 100GB свободного места (SSD рекомендуется)
 - **Network:** Стабильное интернет-соединение
+- **Системные настройки:** vm.overcommit_memory=1 (для Redis)
 
-### Рекомендуемые требования
+### Рекомендуемые требования (Production)
 
 - **CPU:** 8+ cores с поддержкой AVX2
-- **RAM:** 32GB+ для полной функциональности
-- **GPU:** NVIDIA GPU с 8GB+ VRAM (для Ollama)
-- **Storage:** 200GB+ NVMe SSD
-- **Network:** 100Mbps+ для быстрой загрузки моделей
+- **RAM:** 32GB+ (PostgreSQL: 256MB shared_buffers, Redis: 2GB limit)
+- **GPU:** NVIDIA GPU с 8GB+ VRAM (для Ollama GPU ускорения)
+- **Storage:** 500GB+ NVMe SSD
+- **Network:** 1Gbps+ для быстрой загрузки моделей
+- **Мониторинг:** Prometheus + Grafana для метрик БД
 
 ## 🔧 Предварительная настройка
 
@@ -111,8 +113,8 @@ nano env/ollama.env
 nano env/openwebui.env
 ```
 
-> **Примечание:** Структура конфигураций оптимизирована (август 2025). Все
-> дублирующиеся конфигурации удалены, naming convention стандартизирован.
+> **Примечание:** Структура конфигураций оптимизирована (август 2025). Все дублирующиеся
+> конфигурации удалены, naming convention стандартизирован.
 
 ### 2. Настройка SSL сертификатов
 
@@ -198,10 +200,10 @@ curl -s http://localhost:9095/health
 
 ### 2. Доступ к интерфейсам мониторинга
 
-- **Grafana:** http://localhost:3000 (admin/admin)
-- **Prometheus:** http://localhost:9091
-- **AlertManager:** http://localhost:9093
-- **Webhook Receiver:** http://localhost:9095/health
+- **Grafana:** <http://localhost:3000> (admin/admin)
+- **Prometheus:** <http://localhost:9091>
+- **AlertManager:** <http://localhost:9093>
+- **Webhook Receiver:** <http://localhost:9095/health>
 
 **Примечание:** Для внешнего доступа используйте домен ki.erni-gruppe.ch
 
@@ -214,6 +216,66 @@ curl -s http://localhost:9445/metrics | grep nvidia_gpu
 # Проверка GPU дашборда в Grafana
 # Откройте: http://localhost:3000/d/gpu-monitoring
 ```
+
+## 🚀 Production оптимизации БД (Рекомендуется)
+
+### 1. Оптимизация PostgreSQL
+
+```bash
+# Применение production конфигурации PostgreSQL
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET shared_buffers = '256MB';"
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET max_connections = 200;"
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET wal_buffers = '16MB';"
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET maintenance_work_mem = '64MB';"
+
+# Настройка агрессивного автовакуума
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET autovacuum_max_workers = 4;"
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET autovacuum_naptime = '15s';"
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET autovacuum_vacuum_threshold = 25;"
+
+# Включение логирования
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET log_connections = 'on';"
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET log_min_duration_statement = '100ms';"
+
+# Перезапуск для применения изменений
+docker-compose restart db
+```
+
+### 2. Оптимизация Redis
+
+```bash
+# Настройка memory limits
+docker exec erni-ki-redis-1 redis-cli CONFIG SET maxmemory 2gb
+docker exec erni-ki-redis-1 redis-cli CONFIG SET maxmemory-policy allkeys-lru
+
+# Исправление memory overcommit warning
+sudo sysctl vm.overcommit_memory=1
+echo 'vm.overcommit_memory = 1' | sudo tee -a /etc/sysctl.conf
+```
+
+### 3. Верификация оптимизаций
+
+```bash
+# Проверка PostgreSQL настроек
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "SHOW shared_buffers;"
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "SHOW max_connections;"
+
+# Проверка Redis настроек
+docker exec erni-ki-redis-1 redis-cli CONFIG GET maxmemory
+docker exec erni-ki-redis-1 redis-cli CONFIG GET maxmemory-policy
+
+# Проверка производительности
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "
+SELECT round(sum(heap_blks_hit) / (sum(heap_blks_hit) + sum(heap_blks_read)) * 100, 2) as cache_hit_ratio_percent
+FROM pg_statio_user_tables;"
+```
+
+**Ожидаемые результаты:**
+
+- PostgreSQL cache hit ratio: >95%
+- Redis memory usage: <10% от лимита
+- Время ответа БД: <100ms
+- Отсутствие warning в логах
 
 ## 💾 Настройка backup
 
@@ -264,22 +326,22 @@ sudo firewall-cmd --reload
 
 ## 🌐 Доступ к системе
 
-### Основные интерфейсы:
+### Основные интерфейсы
 
-- **OpenWebUI:** https://your-domain/ (основной интерфейс)
-- **Grafana:** https://your-domain/grafana (мониторинг)
-- **Kibana:** https://your-domain/kibana (логи)
+- **OpenWebUI:** <https://your-domain/> (основной интерфейс)
+- **Grafana:** <https://your-domain/grafana> (мониторинг)
+- **Kibana:** <https://your-domain/kibana> (логи)
 
-### Первый вход:
+### Первый вход
 
-1. Откройте https://your-domain/
+1. Откройте <https://your-domain/>
 2. Создайте первого пользователя
 3. Настройте модели в Ollama
 4. Проверьте интеграции
 
 ## 🔧 Устранение проблем
 
-### Общие проблемы:
+### Общие проблемы
 
 ```bash
 # Проверка логов
@@ -292,7 +354,7 @@ docker compose restart service-name
 ./scripts/troubleshooting/automated-recovery.sh
 ```
 
-### Проблемы с GPU:
+### Проблемы с GPU
 
 ```bash
 # Диагностика GPU
@@ -306,8 +368,7 @@ nvidia-smi
 
 - **📖 Документация:** [docs/troubleshooting.md](troubleshooting.md)
 - **🐛 Issues:** [GitHub Issues](https://github.com/DIZ-admin/erni-ki/issues)
-- **💬 Discussions:**
-  [GitHub Discussions](https://github.com/DIZ-admin/erni-ki/discussions)
+- **💬 Discussions:** [GitHub Discussions](https://github.com/DIZ-admin/erni-ki/discussions)
 
 ## 🆕 Важные обновления
 
@@ -337,5 +398,5 @@ nvidia-smi
 
 ---
 
-**📝 Примечание:** Данное руководство актуализировано для архитектуры 20+
-сервисов ERNI-KI версии 5.0.
+**📝 Примечание:** Данное руководство актуализировано для архитектуры 20+ сервисов ERNI-KI версии
+5.0.
