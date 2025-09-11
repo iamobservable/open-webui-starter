@@ -205,8 +205,9 @@ curl -s http://localhost:9095/health
 - **Prometheus:** <http://localhost:9091>
 - **AlertManager:** <http://localhost:9093>
 - **Webhook Receiver:** <http://localhost:9095/health>
- - **Fluent Bit (Prometheus формат):** <http://localhost:2020/api/v1/metrics/prometheus>
- - **RAG Exporter:** <http://localhost:9808/metrics>
+- **Fluent Bit (Prometheus формат):**
+  <http://localhost:2020/api/v1/metrics/prometheus>
+- **RAG Exporter:** <http://localhost:9808/metrics>
 
 **Примечание:** Для внешнего доступа используйте домен ki.erni-gruppe.ch
 
@@ -224,7 +225,7 @@ curl -s http://localhost:9445/metrics | grep nvidia_gpu
 
 ### 1. Оптимизация PostgreSQL
 
-```bash
+````bash
 # Применение production конфигурации PostgreSQL
 docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET shared_buffers = '256MB';"
 docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET max_connections = 200;"
@@ -253,11 +254,13 @@ docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET log_
 ```bash
 curl -X POST http://localhost:9091/-/reload  # Prometheus
 curl -X POST http://localhost:9093/-/reload  # Alertmanager
-```
+````
 
 # Перезапуск для применения изменений
+
 docker-compose restart db
-```
+
+````
 
 ### 2. Оптимизация Redis
 
@@ -269,7 +272,7 @@ docker exec erni-ki-redis-1 redis-cli CONFIG SET maxmemory-policy allkeys-lru
 # Исправление memory overcommit warning
 sudo sysctl vm.overcommit_memory=1
 echo 'vm.overcommit_memory = 1' | sudo tee -a /etc/sysctl.conf
-```
+````
 
 ### 3. Верификация оптимизаций
 

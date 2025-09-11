@@ -4,7 +4,9 @@
 
 ## 📋 Überblick
 
-Nginx in ERNI-KI fungiert als Reverse Proxy mit SSL/TLS-Unterstützung, WebSocket, Rate Limiting und Caching. Nach der Optimierung v9.0 ist die Konfiguration modular und wartbar geworden.
+Nginx in ERNI-KI fungiert als Reverse Proxy mit SSL/TLS-Unterstützung,
+WebSocket, Rate Limiting und Caching. Nach der Optimierung v9.0 ist die
+Konfiguration modular und wartbar geworden.
 
 ## 🏗️ Konfigurationsarchitektur
 
@@ -94,7 +96,7 @@ limit_conn_zone $server_name zone=perserver:10m;
 server {
   listen 80;
   server_name ki.erni-gruppe.ch diz.zone localhost;
-  
+
   # Zwangsweiterleitung zu HTTPS
   return 301 https://$host$request_uri;
 }
@@ -107,13 +109,13 @@ server {
   listen 443 ssl;
   http2 on;
   server_name ki.erni-gruppe.ch diz.zone localhost;
-  
+
   # SSL-Konfiguration
   ssl_certificate /etc/nginx/ssl/nginx-fullchain.crt;
   ssl_certificate_key /etc/nginx/ssl/nginx.key;
   ssl_protocols TLSv1.2 TLSv1.3;
   ssl_verify_client off;  # Korrektur für localhost
-  
+
   # Security Headers (für localhost optimiert)
   add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' localhost:*; ...";
   add_header Access-Control-Allow-Origin "https://ki.erni-gruppe.ch https://localhost ...";
@@ -126,7 +128,7 @@ server {
 server {
   listen 8080;
   server_name ki.erni-gruppe.ch diz.zone localhost;
-  
+
   # Für externen Zugriff optimiert
   # Ohne HTTPS-Weiterleitungen
   # Verwendet $request_id_header für Protokollierung
@@ -192,13 +194,13 @@ proxy_read_timeout 30s;
 
 ### Haupt-Endpunkte
 
-| Endpunkt | Status | Beschreibung | Antwortzeit |
-|----------|--------|--------------|-------------|
-| `/health` | ✅ | Systemstatusüberprüfung | <100ms |
-| `/api/config` | ✅ | Systemkonfiguration | <200ms |
-| `/api/searxng/search` | ✅ | RAG Web-Suche | <2s |
-| `/api/mcp/` | ✅ | Model Context Protocol | <500ms |
-| WebSocket-Endpunkte | ✅ | Echtzeit-Kommunikation | <50ms |
+| Endpunkt              | Status | Beschreibung            | Antwortzeit |
+| --------------------- | ------ | ----------------------- | ----------- |
+| `/health`             | ✅     | Systemstatusüberprüfung | <100ms      |
+| `/api/config`         | ✅     | Systemkonfiguration     | <200ms      |
+| `/api/searxng/search` | ✅     | RAG Web-Suche           | <2s         |
+| `/api/mcp/`           | ✅     | Model Context Protocol  | <500ms      |
+| WebSocket-Endpunkte   | ✅     | Echtzeit-Kommunikation  | <50ms       |
 
 ### Verwendungsbeispiele
 

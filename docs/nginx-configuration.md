@@ -4,7 +4,9 @@
 
 ## 📋 Обзор
 
-Nginx в ERNI-KI выполняет роль reverse proxy с поддержкой SSL/TLS, WebSocket, rate limiting и кэширования. После оптимизации v9.0 конфигурация стала модульной и maintainable.
+Nginx в ERNI-KI выполняет роль reverse proxy с поддержкой SSL/TLS, WebSocket,
+rate limiting и кэширования. После оптимизации v9.0 конфигурация стала модульной
+и maintainable.
 
 ## 🏗️ Архитектура конфигурации
 
@@ -94,7 +96,7 @@ limit_conn_zone $server_name zone=perserver:10m;
 server {
   listen 80;
   server_name ki.erni-gruppe.ch diz.zone localhost;
-  
+
   # Принудительное перенаправление на HTTPS
   return 301 https://$host$request_uri;
 }
@@ -107,13 +109,13 @@ server {
   listen 443 ssl;
   http2 on;
   server_name ki.erni-gruppe.ch diz.zone localhost;
-  
+
   # SSL конфигурация
   ssl_certificate /etc/nginx/ssl/nginx-fullchain.crt;
   ssl_certificate_key /etc/nginx/ssl/nginx.key;
   ssl_protocols TLSv1.2 TLSv1.3;
   ssl_verify_client off;  # Исправление для localhost
-  
+
   # Security headers (оптимизированные для localhost)
   add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' localhost:*; ...";
   add_header Access-Control-Allow-Origin "https://ki.erni-gruppe.ch https://localhost ...";
@@ -126,7 +128,7 @@ server {
 server {
   listen 8080;
   server_name ki.erni-gruppe.ch diz.zone localhost;
-  
+
   # Оптимизированный для внешнего доступа
   # Без HTTPS редиректов
   # Использует $request_id_header для логирования
@@ -192,13 +194,13 @@ proxy_read_timeout 30s;
 
 ### Основные эндпоинты
 
-| Эндпоинт | Статус | Описание | Время ответа |
-|----------|--------|----------|--------------|
-| `/health` | ✅ | Проверка состояния системы | <100ms |
-| `/api/config` | ✅ | Конфигурация системы | <200ms |
-| `/api/searxng/search` | ✅ | RAG веб-поиск | <2s |
-| `/api/mcp/` | ✅ | Model Context Protocol | <500ms |
-| WebSocket endpoints | ✅ | Real-time коммуникация | <50ms |
+| Эндпоинт              | Статус | Описание                   | Время ответа |
+| --------------------- | ------ | -------------------------- | ------------ |
+| `/health`             | ✅     | Проверка состояния системы | <100ms       |
+| `/api/config`         | ✅     | Конфигурация системы       | <200ms       |
+| `/api/searxng/search` | ✅     | RAG веб-поиск              | <2s          |
+| `/api/mcp/`           | ✅     | Model Context Protocol     | <500ms       |
+| WebSocket endpoints   | ✅     | Real-time коммуникация     | <50ms        |
 
 ### Примеры использования
 
