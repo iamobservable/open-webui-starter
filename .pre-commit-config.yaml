@@ -1,0 +1,264 @@
+# Pre-commit hooks конфигурация для проекта ERNI-KI
+# Автоматизация проверок качества кода перед коммитом
+# https://pre-commit.com/
+
+default_language_version:
+  python: python3.12
+  node: "20.18.0"
+
+default_stages: [pre-commit]
+
+repos:
+  # ===================================================================
+  # БАЗОВЫЕ ПРОВЕРКИ ФАЙЛОВ
+  # ===================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # Проверка trailing whitespace
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        exclude: |
+          (?x)^(
+            \.env.*|
+            conf/litellm/config\.yaml|
+            conf/.*\.conf|
+            conf/.*\.ini|
+            .*\.key|
+            .*\.pem|
+            .*\.crt|
+            secrets/.*|
+            data/.*|
+            logs/.*|
+            \.config-backup/.*
+          )$
+
+      # Проверка end-of-file
+      - id: end-of-file-fixer
+        exclude: |
+          (?x)^(
+            \.env.*|
+            conf/litellm/config\.yaml|
+            conf/.*\.conf|
+            conf/.*\.ini|
+            .*\.key|
+            .*\.pem|
+            .*\.crt|
+            secrets/.*|
+            data/.*|
+            logs/.*|
+            \.config-backup/.*
+          )$
+
+      # Проверка больших файлов (>500KB)
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+        exclude: |
+          (?x)^(
+            data/.*|
+            logs/.*|
+            \.config-backup/.*|
+            node_modules/.*|
+            .*\.pdf|
+            .*\.zip|
+            .*\.tar\.gz
+          )$
+
+      # Проверка merge conflicts
+      - id: check-merge-conflict
+
+      # Проверка case conflicts (важно для Windows/macOS)
+      - id: check-case-conflict
+
+      # Проверка исполняемых файлов
+      - id: check-executables-have-shebangs
+        exclude: |
+          (?x)^(
+            node_modules/.*|
+            \.git/.*
+          )$
+
+      # Проверка shebang в исполняемых файлах
+      - id: check-shebang-scripts-are-executable
+
+  # ===================================================================
+  # ВАЛИДАЦИЯ YAML И JSON
+  # ===================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # Валидация YAML файлов
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+        exclude: |
+          (?x)^(
+            \.env.*|
+            conf/litellm/config\.yaml|
+            conf/.*\.yml|
+            conf/.*\.yaml|
+            data/.*|
+            logs/.*|
+            \.config-backup/.*
+          )$
+
+      # Валидация JSON файлов
+      - id: check-json
+        exclude: |
+          (?x)^(
+            \.env.*|
+            conf/.*\.json|
+            data/.*|
+            logs/.*|
+            \.config-backup/.*|
+            \.vscode/.*
+          )$
+
+      # Проверка синтаксиса TOML
+      - id: check-toml
+        exclude: |
+          (?x)^(
+            conf/.*\.toml|
+            data/.*|
+            logs/.*|
+            \.config-backup/.*
+          )$
+
+  # ===================================================================
+  # PRETTIER ФОРМАТИРОВАНИЕ
+  # ===================================================================
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        name: "Prettier: форматирование кода"
+        files: \.(md|yml|yaml|json|js|jsx|ts|tsx)$
+        exclude: |
+          (?x)^(
+            \.env.*|
+            conf/litellm/config\.yaml|
+            conf/.*\.conf|
+            conf/.*\.ini|
+            conf/.*\.yml|
+            conf/.*\.yaml|
+            conf/.*\.json|
+            package-lock\.json|
+            .*\.key|
+            .*\.pem|
+            .*\.crt|
+            secrets/.*|
+            data/.*|
+            logs/.*|
+            \.config-backup/.*|
+            node_modules/.*|
+            dist/.*|
+            build/.*
+          )$
+        additional_dependencies:
+          - prettier@3.6.2
+
+  # ===================================================================
+  # ESLINT ПРОВЕРКИ
+  # ===================================================================
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.15.0
+    hooks:
+      - id: eslint
+        name: "ESLint: проверка TypeScript/JavaScript"
+        files: \.(js|jsx|ts|tsx)$
+        exclude: |
+          (?x)^(
+            node_modules/.*|
+            dist/.*|
+            build/.*|
+            data/.*|
+            logs/.*|
+            \.config-backup/.*|
+            vendor/.*|
+            .*\.min\.js|
+            .*\.pb\.js|
+            .*\.pb\.ts
+          )$
+        additional_dependencies:
+          - eslint@9.15.0
+          - "@typescript-eslint/eslint-plugin@8.18.1"
+          - "@typescript-eslint/parser@8.18.1"
+          - eslint-plugin-security@3.0.1
+          - eslint-plugin-n@17.13.2
+          - eslint-plugin-promise@7.1.0
+        args: [--fix]
+
+  # ===================================================================
+  # БЕЗОПАСНОСТЬ И СЕКРЕТЫ
+  # ===================================================================
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: "Detect Secrets: поиск секретов в коде"
+        args: ["--baseline", ".secrets.baseline"]
+        exclude: |
+          (?x)^(
+            \.env.*|
+            conf/litellm/config\.yaml|
+            conf/.*\.conf|
+            conf/.*\.ini|
+            .*\.key|
+            .*\.pem|
+            .*\.crt|
+            secrets/.*|
+            data/.*|
+            logs/.*|
+            \.config-backup/.*|
+            node_modules/.*|
+            package-lock\.json|
+            \.secrets\.baseline
+          )$
+
+  # ===================================================================
+  # COMMITLINT (ПРОВЕРКА СООБЩЕНИЙ КОММИТОВ)
+  # Отключен - используется через Husky в commitlint.config.cjs
+  # ===================================================================
+
+  # ===================================================================
+  # ДОПОЛНИТЕЛЬНЫЕ ПРОВЕРКИ
+  # ===================================================================
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
+    hooks:
+      # Проверка на TODO/FIXME комментарии
+      - id: python-check-blanket-noqa
+        exclude: |
+          (?x)^(
+            data/.*|
+            logs/.*|
+            \.config-backup/.*
+          )$
+
+  # ===================================================================
+  # ЛОКАЛЬНЫЕ HOOKS
+  # ===================================================================
+  - repo: local
+    hooks:
+      # Проверка Docker Compose файлов
+      - id: docker-compose-check
+        name: "Docker Compose: валидация конфигурации"
+        entry: docker compose config -q
+        language: system
+        files: ^compose\.yml$
+        pass_filenames: false
+
+      # Проверка Go форматирования
+      - id: gofmt
+        name: "Go: форматирование кода"
+        entry: gofmt
+        language: system
+        files: \.go$
+        args: [-w]
+
+      # Проверка Go импортов
+      - id: goimports
+        name: "Go: организация импортов"
+        entry: goimports
+        language: system
+        files: \.go$
+        args: [-w]

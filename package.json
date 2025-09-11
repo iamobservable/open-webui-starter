@@ -63,7 +63,10 @@
     "commit": "git-cz",
     "release": "semantic-release",
     "precommit": "lint-staged",
-    "postinstall": "npm run prepare"
+    "postinstall": "npm run prepare",
+    "pre-commit:install": "source .venv/bin/activate && pre-commit install && pre-commit install --hook-type commit-msg",
+    "pre-commit:run": "source .venv/bin/activate && pre-commit run --all-files",
+    "pre-commit:update": "source .venv/bin/activate && pre-commit autoupdate"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.6.1",
