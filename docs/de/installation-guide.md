@@ -303,6 +303,15 @@ curl -s "http://localhost:8080/api/searxng/search?q=test&format=json" | head -5
 # Erwartetes Ergebnis: JSON mit Suchergebnissen
 ```
 
+### 3. Monitoring-Dienste (lokal)
+
+- Prometheus: http://localhost:9091
+- Grafana: http://localhost:3000
+- Alertmanager: http://localhost:9093
+- Loki: http://localhost:3100
+- Fluent Bit (Prometheus): http://localhost:2020/api/v1/metrics/prometheus
+- RAG Exporter: http://localhost:9808/metrics
+
 ### 2. GPU prüfen (falls installiert)
 
 ```bash

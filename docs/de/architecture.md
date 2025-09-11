@@ -1,8 +1,9 @@
 # 🏗️ ERNI-KI Systemarchitektur
 
-> **Dokumentversion:** 8.0 **Aktualisierungsdatum:** 2025-08-29 **Status:**
-> Production Ready (Vollständig funktionsfähiges System mit behobenen
-> Cloudflare-Tunneln + Aktualisierte Dokumentation + Umfassende Diagnose)
+> **Dokumentversion:** 9.0 **Aktualisierungsdatum:** 2025-09-11 **Status:**
+> Production Ready (Vollständig optimiertes System mit korrigierten
+> nginx-Konfigurationen, wiederhergestellter SearXNG API, verbesserter
+> HTTPS-Unterstützung und aktualisierter Dokumentation)
 
 ## 📋 Architektur-Überblick
 
@@ -14,19 +15,36 @@ Monitoring-Stack mit 33/33 Containern im Status Healthy, AI-Metriken,
 nginx-exporter für Web-Analytik und zentralisierter Protokollierung über
 Fluent-bit → Loki.
 
-### 🚀 Neueste Updates (v8.0 - 29. August 2025)
+### 🚀 Neueste Updates (v9.0 - September 2025)
 
-#### 🔴 Kritische Korrekturen (29. August 2025)
+#### 🔧 Kritische Optimierungen (11. September 2025)
+
+- **Nginx-Konfiguration**: Vollständige Optimierung und Deduplizierung
+  - 91 Zeilen doppelten Codes eliminiert (-20% Konfigurationsgröße)
+  - 4 Include-Dateien für Wiederverwendung erstellt (openwebui-common.conf,
+    searxng-api-common.conf, websocket-common.conf, searxng-web-common.conf)
+  - Map-Direktiven für bedingte Logik hinzugefügt
+  - Verbesserte Wartbarkeit und Konsistenz der Einstellungen
+
+- **HTTPS und CSP Korrekturen**: Vollständige Funktionalität wiederhergestellt
+  - Content Security Policy für localhost-Unterstützung optimiert
+  - CORS-Header für Entwicklung und Production erweitert
+  - SSL-Konfiguration mit ssl_verify_client off korrigiert
+  - Kritische Skript-Ladefehler behoben
+
+- **SearXNG API Wiederherstellung**: Vollständige Routing-Korrektur
+  - Problem mit $universal_request_id Variable behoben
+  - Funktionalität des /api/searxng/search Endpunkts wiederhergestellt
+  - API gibt korrekte JSON-Antworten mit Suchergebnissen zurück (31 Ergebnisse
+    von 4500)
+  - Unterstützung für 4 Suchmaschinen: Google, Bing, DuckDuckGo, Brave
+  - Antwortzeit <2 Sekunden (entspricht SLA-Anforderungen)
+
+#### 🔴 Vorherige Korrekturen (29. August 2025)
 
 - **Cloudflare-Tunnel**: DNS-Resolution-Fehler behoben
-  - Container-Namen in Tunnel-Konfiguration aktualisiert
-  - "server misbehaving" und "connection refused" Fehler beseitigt
-  - Externer Zugriff über alle 5 Domains wiederhergestellt
-  - Wiederherstellungszeit: 15 Minuten (schneller als geplant)
 - **System-Diagnose**: Umfassende Überprüfung von 29 Microservices
-  - Alle Services im Status "Healthy" (33/33 Container)
-  - Systemantwortzeit: <0,01 Sekunden
-  - GPU-Auslastung: 25% (optimal für Quadro P2200)
+- **Alle Services im Status "Healthy"** (15+ Container)
 
 #### 🛡️ Architektur-Komponenten (aktualisiert)
 
@@ -41,9 +59,11 @@ Fluent-bit → Loki.
 
 - **Prometheus v2.55.1**: Metriken-Sammlung mit 35+ Targets
 - **Grafana**: Visualisierung und Dashboards
-- **Loki**: Zentralisierte Protokollierung über Fluent-bit
+- **Loki**: Zentralisierte Protokollierung über Fluent Bit
 - **8 Exporter**: node, postgres, redis, nginx, ollama, nvidia, cadvisor,
   blackbox
+- **RAG Exporter**: SLA für RAG (Latenz & Quellen)
+- **Fluent Bit**: Prometheus-Metriken unter `/api/v1/metrics/prometheus`
 - **Backrest**: Lokale Backups (7 Tage + 4 Wochen)
 
 ## 🎯 Architektur-Prinzipien
@@ -396,6 +416,26 @@ graph TB
 - Minimale Berechtigungen für alle Container
 - Netzwerk- und Dateisystem-Isolation
 - Regelmäßige Sicherheitsupdates über Watchtower
+
+## 🔌 Ports & Endpoints (lokal)
+
+- Nginx: 80, 443, 8080
+- OpenWebUI: 8080
+- LiteLLM: 4000 (`/health/liveliness`, `/health/readiness`)
+- PostgreSQL Exporter: 9187 (`/metrics`)
+- Redis Exporter: 9121 (`/metrics`)
+- Node Exporter: 9101 (`/metrics`)
+- cAdvisor: 8081 → Container 8080 (`/metrics`)
+- NVIDIA GPU Exporter: 9445 (`/metrics`)
+- Nginx Exporter: 9113 (`/metrics`)
+- Blackbox Exporter: 9115 (`/probe`)
+- Prometheus: 9091 (`/-/ready`, `/api/v1/targets`)
+- Grafana: 3000 (`/api/health`)
+- Alertmanager: 9093–9094 (`/-/healthy`, `/api/v2/status`)
+- Loki: 3100 (`/ready`)
+- Fluent Bit Service: 2020 (`/api/v1/metrics`, Prometheus:
+  `/api/v1/metrics/prometheus`)
+- RAG Exporter: 9808 (`/metrics`)
 
 ---
 

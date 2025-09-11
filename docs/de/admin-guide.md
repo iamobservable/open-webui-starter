@@ -1,18 +1,62 @@
 # 👨‍💼 ERNI-KI Administrator-Handbuch
 
-> **Dokumentversion:** 2.0 **Aktualisierungsdatum:** 2025-07-04 **Zielgruppe:**
-> Systemadministratoren
+> **Dokumentversion:** 7.0 **Aktualisierungsdatum:** 2025-09-11 **Zielgruppe:**
+> Systemadministratoren (Optimiertes Nginx + Korrigierte APIs + Verbesserte
+> Diagnose)
 
 ## 🎯 Überblick der administrativen Aufgaben
 
 Als ERNI-KI Administrator sind Sie verantwortlich für:
 
-- Überwachung des Status aller 14 Services
+- Überwachung des Status aller 15+ Services
 - Benutzer- und Zugriffsverwaltung
 - Backup-Konfiguration
 - Systemsicherheit gewährleisten
 - Performance und Skalierung
 - Fehlerbehebung
+
+## 🚀 Kritische Updates (September 2025)
+
+### 🔧 Nginx-Optimierung und Korrekturen (11. September 2025)
+
+#### ✅ Modulare Nginx-Architektur
+
+- **Konfigurationsdeduplizierung**: 91 Zeilen doppelten Codes eliminiert (-20%)
+- **Include-Dateien**: 4 wiederverwendbare Module erstellt
+  - `openwebui-common.conf` - gemeinsame OpenWebUI Proxy-Einstellungen
+  - `searxng-api-common.conf` - SearXNG API-Konfiguration
+  - `searxng-web-common.conf` - SearXNG Web-Interface
+  - `websocket-common.conf` - WebSocket Proxy-Einstellungen
+- **Map-Direktiven**: Bedingte Logik für verschiedene Ports
+- **Universelle Variablen**: `$universal_request_id` für alle Include-Dateien
+
+#### ✅ HTTPS und CSP Korrekturen
+
+- **Content Security Policy**: Für localhost und Production optimiert
+- **CORS-Header**: Für Entwicklungs- und Produktionsumgebungen erweitert
+- **SSL-Konfiguration**: `ssl_verify_client off` für localhost hinzugefügt
+- **Kritische Fehler**: Skript-Ladefehler behoben
+
+#### ✅ SearXNG API Wiederherstellung
+
+- **Routing korrigiert**: 404-Fehler für `/api/searxng/search` behoben
+- **RAG-Funktionalität**: Vollständig für OpenWebUI wiederhergestellt
+- **Performance**: Antwortzeit <2 Sekunden (entspricht SLA)
+- **Suchmaschinen**: Unterstützung für Google, Bing, DuckDuckGo, Brave
+- **Suchergebnisse**: 31+ Ergebnisse von 4500+ verfügbaren
+
+### 🔧 Hot-Reload Verfahren
+
+```bash
+# Nginx-Konfiguration überprüfen
+docker exec erni-ki-nginx-1 nginx -t
+
+# Änderungen ohne Systemneustart anwenden
+docker exec erni-ki-nginx-1 nginx -s reload
+
+# Aktualisierte Include-Dateien kopieren
+docker cp conf/nginx/includes/ erni-ki-nginx-1:/etc/nginx/
+```
 
 ## 📊 System-Monitoring
 
@@ -404,3 +448,11 @@ docker compose up -d
 ---
 
 **⚠️ Wichtig**: Erstellen Sie immer Backups vor kritischen Systemänderungen!
+
+## ⏱️ RAG SLA Exporter
+
+- **URL:** http://localhost:9808/metrics
+- **Metriken:**
+  - `erni_ki_rag_response_latency_seconds` — Latenz-Histogramm
+  - `erni_ki_rag_sources_count` — Anzahl der Quellen
+- **Grafana:** RAG-Panels auf dem OpenWebUI-Dashboard (Schwellwert 2s für p95)

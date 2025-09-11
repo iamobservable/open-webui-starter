@@ -205,6 +205,8 @@ curl -s http://localhost:9095/health
 - **Prometheus:** <http://localhost:9091>
 - **AlertManager:** <http://localhost:9093>
 - **Webhook Receiver:** <http://localhost:9095/health>
+ - **Fluent Bit (Prometheus формат):** <http://localhost:2020/api/v1/metrics/prometheus>
+ - **RAG Exporter:** <http://localhost:9808/metrics>
 
 **Примечание:** Для внешнего доступа используйте домен ki.erni-gruppe.ch
 
@@ -237,6 +239,21 @@ docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET auto
 # Включение логирования
 docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET log_connections = 'on';"
 docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "ALTER SYSTEM SET log_min_duration_statement = '100ms';"
+
+## 🔎 Мониторинг RAG (SLA)
+
+- В составе системы доступен сервис `rag-exporter` (порт 9808), публикующий метрики:
+  - `erni_ki_rag_response_latency_seconds` (гистограмма латентности)
+  - `erni_ki_rag_sources_count` (количество источников в ответе)
+- Настройте `RAG_TEST_URL` в `compose.yml` для измерения реального RAG endpoint.
+- В Grafana дашборд OpenWebUI содержит панели p95 < 2с и Sources Count.
+
+## 🔁 Горячая перезагрузка Prometheus/Alertmanager
+
+```bash
+curl -X POST http://localhost:9091/-/reload  # Prometheus
+curl -X POST http://localhost:9093/-/reload  # Alertmanager
+```
 
 # Перезапуск для применения изменений
 docker-compose restart db
