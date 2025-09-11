@@ -1,0 +1,8 @@
+FROM python:3.11-slim
+WORKDIR /app
+RUN pip install --no-cache-dir flask prometheus_client requests
+COPY rag_exporter.py /app/rag_exporter.py
+ENV PORT=9808
+EXPOSE 9808
+CMD ["python", "-u", "/app/rag_exporter.py"]
+

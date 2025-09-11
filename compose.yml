@@ -113,7 +113,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-    image: pgvector/pgvector:pg15
+    image: pgvector/pgvector:pg17
     logging: *critical-logging
     restart: unless-stopped
     volumes:
@@ -157,7 +157,7 @@ services:
   # LiteLLM Context Engineering Gateway (оптимизированная сетевая конфигурация)
   litellm:
     # Используем последнюю версию LiteLLM с поддержкой thinking tokens
-    image: ghcr.io/berriai/litellm:main-stable
+    image: ghcr.io/berriai/litellm:v1.76.1-stable
     container_name: erni-ki-litellm
 
     # Зависимости - запускаем после критически важных сервисов
@@ -209,14 +209,14 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-    # Resource limits для стабильности (оптимизированы после аудита)
+    # Resource limits для стабильности (критическое увеличение памяти)
     deploy:
       resources:
         limits:
-          memory: 6G # Лимит памяти (увеличен с 4G до 6G после аудита)
+          memory: 8G # Лимит памяти (критическое увеличение с 6G до 8G)
           cpus: "1.0" # Лимит CPU
         reservations:
-          memory: 1.5G # Минимальная память (увеличена с 1G до 1.5G после аудита)
+          memory: 4G # Минимальная память (увеличена с 1.5G до 4G для стабильности)
           cpus: "0.5" # Минимальный CPU
 
     # Используем стандартную Docker bridge сеть
@@ -488,7 +488,7 @@ services:
       timeout: 3s
       retries: 5
       start_period: 10s
-    image: ollama/ollama:0.11.8
+    image: ollama/ollama:latest
     logging: *critical-logging
     ports:
       - 11434:11434
@@ -498,6 +498,64 @@ services:
     # Используем стандартную Docker bridge сеть
     labels:
       # КРИТИЧЕСКИ ВАЖНО: Запретить автообновление Ollama с GPU
+      - "com.centurylinklabs.watchtower.enable=false"
+      - "com.centurylinklabs.watchtower.monitor-only=true"
+      - "com.centurylinklabs.watchtower.scope=critical-ai-gpu"
+
+  # vLLM высокопроизводительный inference сервер с GPU ускорением
+  vllm:
+    depends_on:
+      watchtower:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    # CPU-only режим (согласно официальной документации vLLM)
+    environment:
+      - VLLM_TARGET_DEVICE=cpu
+      - VLLM_DEVICE=cpu
+      - VLLM_CPU_KVCACHE_SPACE=4
+      - VLLM_CPU_OMP_THREADS_BIND=0-6
+      - VLLM_CPU_NUM_OF_RESERVED_CPU=1
+      - VLLM_LOGGING_LEVEL=DEBUG
+      - CUDA_VISIBLE_DEVICES=""
+    env_file: env/vllm.env
+
+    # CPU Memory Limits для vLLM
+    deploy:
+      resources:
+        limits:
+          memory: 6G # Лимит памяти для vLLM (CPU-only)
+        reservations:
+          memory: 2G # Минимальная память для CPU режима
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s # Увеличено время для загрузки модели
+
+    image: vllm/vllm-openai:v0.6.3.post1
+    logging: *critical-logging
+    ports:
+      - "8003:8000" # Избежать конфликта с MCP Server на 8000, Redis на 8001
+    restart: unless-stopped
+
+    volumes:
+      - ./data/vllm-models:/root/.cache/huggingface
+      - /dev/shm:/dev/shm # Shared memory для tensor operations
+
+    # Command с оптимизированными параметрами для ERNI-KI
+    command:
+      [
+        "python",
+        "-c",
+        "import os; os.environ['VLLM_TARGET_DEVICE']='cpu'; os.environ['CUDA_VISIBLE_DEVICES']=''; from vllm import LLM, SamplingParams; import time; llm = LLM(model='gpt2', device='cpu', dtype='bfloat16', max_model_len=1024, enforce_eager=True, max_num_batched_tokens=1024, max_num_seqs=64, block_size=16); print('vLLM CPU model loaded successfully'); while True: time.sleep(60)",
+      ]
+
+    # Используем стандартную Docker bridge сеть
+    labels:
+      # КРИТИЧЕСКИ ВАЖНО: Запретить автообновление vLLM с GPU
       - "com.centurylinklabs.watchtower.enable=false"
       - "com.centurylinklabs.watchtower.monitor-only=true"
       - "com.centurylinklabs.watchtower.scope=critical-ai-gpu"
@@ -546,6 +604,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    image: ghcr.io/open-webui/open-webui:latest
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
@@ -557,7 +616,6 @@ services:
       timeout: 3s
       retries: 5
       start_period: 10s
-    image: ghcr.io/open-webui/open-webui:v0.6.26
     logging: *critical-logging
     restart: unless-stopped
     volumes:
@@ -608,7 +666,7 @@ services:
     depends_on:
       watchtower:
         condition: service_healthy
-    image: prom/prometheus:v2.55.1
+    image: prom/prometheus:latest
     container_name: erni-ki-prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -762,7 +820,8 @@ services:
       - "--path.rootfs=/rootfs"
       - "--path.sysfs=/host/sys"
       - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
-      - "--collector.systemd"
+      - "--no-collector.systemd" # Отключаем systemd collector (нет доступа к dbus в контейнере)
+      - "--log.level=warn" # Снижаем уровень логирования для уменьшения шума
       - "--collector.processes"
     volumes:
       - /proc:/host/proc:ro
@@ -945,8 +1004,8 @@ services:
     image: nginx/nginx-prometheus-exporter:1.1.0
     container_name: erni-ki-nginx-exporter
     command:
-      - "-nginx.scrape-uri=http://nginx:8080/nginx_status"
-      - "-web.listen-address=:9113"
+      - "--nginx.scrape-uri=http://nginx:80/nginx_status" # Исправлен порт с 8080 на 80
+      - "--web.listen-address=:9113"
     ports:
       - "9113:9113"
     restart: unless-stopped
@@ -1040,6 +1099,39 @@ services:
       # Разрешить автообновление для Fluent Bit
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=logging-stack"
+
+  # RAG Exporter - метрики SLA RAG (latency, sources)
+  rag-exporter:
+    depends_on:
+      watchtower:
+        condition: service_healthy
+    build:
+      context: ./conf
+      dockerfile: Dockerfile.rag-exporter
+    container_name: erni-ki-rag-exporter
+    environment:
+      - PORT=9808
+      # URL тестового запроса (по умолчанию health OpenWebUI);
+      # можно заменить на реальный RAG endpoint приложения
+      - RAG_TEST_URL=http://openwebui:8080/health
+      - RAG_TEST_INTERVAL=30
+    ports:
+      - "9808:9808"
+    restart: unless-stopped
+    logging: *monitoring-logging
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'python -c ''import urllib.request,sys; urllib.request.urlopen("http://localhost:9808/metrics", timeout=5); print("ok")'' || exit 1',
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "com.centurylinklabs.watchtower.scope=monitoring-stack"
 
   # Webhook Receiver - обработка алертов от Alertmanager
   webhook-receiver:
