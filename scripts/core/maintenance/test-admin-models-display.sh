@@ -23,12 +23,12 @@ echo "=================================================="
 test_api_endpoint() {
     local endpoint=$1
     local description=$2
-    
+
     echo -n "Testing $description... "
-    
+
     local response=$(curl -s --max-time 10 "$LOCAL_URL$endpoint" 2>/dev/null || echo "ERROR")
     local http_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$LOCAL_URL$endpoint" 2>/dev/null || echo "000")
-    
+
     if [ "$http_code" = "200" ]; then
         echo -e "${GREEN}✅ OK (HTTP $http_code)${NC}"
         return 0

@@ -14,7 +14,7 @@
     "snyk.scanOnSave": false,
     "snyk.scanOnOpen": false,
     "snyk.trustedFolders": [],
-    
+
     // Исключения для файлового менеджера
     "files.exclude": {
       "**/data": true,
@@ -30,7 +30,7 @@
       "**/build": true,
       "**/.config-backup": true
     },
-    
+
     // Исключения для поиска
     "search.exclude": {
       "**/data": true,
@@ -45,7 +45,7 @@
       "**/*.min.css": true,
       "**/.config-backup": true
     },
-    
+
     // Исключения для watcher
     "files.watcherExclude": {
       "**/data/**": true,

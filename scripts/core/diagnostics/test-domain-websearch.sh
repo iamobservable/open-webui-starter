@@ -34,33 +34,33 @@ test_websearch() {
     local domain=$1
     local protocol=$2
     local url="${protocol}://${domain}"
-    
+
     log "Тестирование веб-поиска через ${url}..."
-    
+
     # Тест API endpoint
     local api_url="${url}/api/searxng/search"
     local search_data="q=test&category_general=1&format=json"
-    
+
     echo "  🔍 Тестирование API endpoint: ${api_url}"
-    
+
     # Выполняем запрос с таймаутом
     local response
     local http_code
     local result_count
-    
+
     if response=$(curl -k -s -w "%{http_code}" -X POST \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "$search_data" \
         --max-time 15 \
         "$api_url" 2>/dev/null); then
-        
+
         # Извлекаем HTTP код (последние 3 символа)
         http_code="${response: -3}"
         # Извлекаем JSON (все кроме последних 3 символов)
         json_response="${response%???}"
-        
+
         echo "    HTTP код: $http_code"
-        
+
         if [ "$http_code" = "200" ]; then
             # Проверяем, что ответ - валидный JSON
             if echo "$json_response" | jq . >/dev/null 2>&1; then
@@ -93,15 +93,15 @@ test_main_interface() {
     local domain=$1
     local protocol=$2
     local url="${protocol}://${domain}"
-    
+
     echo "  🌐 Тестирование основного интерфейса: ${url}/"
-    
+
     local response
     local http_code
-    
+
     if response=$(curl -k -s -w "%{http_code}" --max-time 10 "$url/" 2>/dev/null); then
         http_code="${response: -3}"
-        
+
         if [ "$http_code" = "200" ]; then
             success "    ✅ Основной интерфейс доступен"
             return 0
@@ -120,15 +120,15 @@ test_health() {
     local domain=$1
     local protocol=$2
     local url="${protocol}://${domain}"
-    
+
     echo "  💚 Тестирование health check: ${url}/health"
-    
+
     local response
     local http_code
-    
+
     if response=$(curl -k -s -w "%{http_code}" --max-time 5 "$url/health" 2>/dev/null); then
         http_code="${response: -3}"
-        
+
         if [ "$http_code" = "200" ]; then
             success "    ✅ Health check работает"
             return 0
@@ -146,33 +146,33 @@ test_health() {
 test_domain() {
     local domain=$1
     local protocol=$2
-    
+
     echo ""
     echo "=================================================="
     echo "🧪 ТЕСТИРОВАНИЕ ДОМЕНА: ${protocol}://${domain}"
     echo "=================================================="
-    
+
     local tests_passed=0
     local total_tests=3
-    
+
     # Тест 1: Health check
     if test_health "$domain" "$protocol"; then
         ((tests_passed++))
     fi
-    
+
     # Тест 2: Основной интерфейс
     if test_main_interface "$domain" "$protocol"; then
         ((tests_passed++))
     fi
-    
+
     # Тест 3: Веб-поиск API
     if test_websearch "$domain" "$protocol"; then
         ((tests_passed++))
     fi
-    
+
     echo ""
     echo "📊 Результат для ${domain}: $tests_passed/$total_tests тестов пройдено"
-    
+
     if [ $tests_passed -eq $total_tests ]; then
         success "🎉 Все тесты пройдены для ${domain}!"
         return 0
@@ -186,23 +186,23 @@ test_domain() {
 generate_report() {
     local results=("$@")
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    
+
     echo ""
     echo "=================================================="
     echo "📋 ИТОГОВЫЙ ОТЧЕТ ТЕСТИРОВАНИЯ"
     echo "=================================================="
     echo "Время: $timestamp"
     echo ""
-    
+
     local total_domains=0
     local passed_domains=0
-    
+
     for result in "${results[@]}"; do
         domain=$(echo "$result" | cut -d: -f1)
         status=$(echo "$result" | cut -d: -f2)
-        
+
         ((total_domains++))
-        
+
         if [ "$status" = "PASS" ]; then
             success "✅ $domain - ВСЕ ТЕСТЫ ПРОЙДЕНЫ"
             ((passed_domains++))
@@ -210,13 +210,13 @@ generate_report() {
             error "❌ $domain - ЕСТЬ ПРОБЛЕМЫ"
         fi
     done
-    
+
     echo ""
     echo "📈 ОБЩАЯ СТАТИСТИКА:"
     echo "   Всего доменов протестировано: $total_domains"
     echo "   Успешно прошли все тесты: $passed_domains"
     echo "   Процент успеха: $((passed_domains * 100 / total_domains))%"
-    
+
     if [ $passed_domains -eq $total_domains ]; then
         echo ""
         success "🎉 ВСЕ ДОМЕНЫ РАБОТАЮТ КОРРЕКТНО!"
@@ -231,40 +231,40 @@ generate_report() {
 # Основная функция
 main() {
     log "Запуск комплексного тестирования веб-поиска через разные домены..."
-    
+
     # Проверка доступности jq
     if ! command -v jq >/dev/null 2>&1; then
         error "jq не установлен. Установите: sudo apt-get install jq"
         exit 1
     fi
-    
+
     # Массив для результатов
     local results=()
-    
+
     # Тестируем localhost (HTTP и HTTPS)
     if test_domain "localhost" "http"; then
         results+=("localhost:PASS")
     else
         results+=("localhost:FAIL")
     fi
-    
+
     if test_domain "localhost" "https"; then
         results+=("localhost-https:PASS")
     else
         results+=("localhost-https:FAIL")
     fi
-    
+
     # Примечание: diz.zone и webui.diz.zone требуют настройки DNS/hosts
     # Для полного тестирования нужно добавить в /etc/hosts:
     # 127.0.0.1 diz.zone webui.diz.zone
-    
+
     echo ""
     warning "ПРИМЕЧАНИЕ: Для тестирования diz.zone и webui.diz.zone"
     warning "добавьте в /etc/hosts: 127.0.0.1 diz.zone webui.diz.zone"
-    
+
     # Генерируем отчет
     generate_report "${results[@]}"
-    
+
     # Сохраняем отчет в файл
     local report_file="domain_websearch_test_$(date +%Y%m%d_%H%M%S).txt"
     {
@@ -276,7 +276,7 @@ main() {
             echo "$result"
         done
     } > "$report_file"
-    
+
     log "Отчет сохранен в: $report_file"
 }
 

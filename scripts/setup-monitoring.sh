@@ -38,18 +38,18 @@ log_error() {
 # === СОЗДАНИЕ ДИРЕКТОРИЙ ===
 setup_directories() {
     log_info "Создание директорий для мониторинга..."
-    
+
     mkdir -p "$PROJECT_DIR/.config-backup/monitoring"
     mkdir -p "$PROJECT_DIR/.config-backup/logs"
     mkdir -p "$PROJECT_DIR/scripts"
-    
+
     log_success "Директории созданы"
 }
 
 # === НАСТРОЙКА CRON ЗАДАЧ ===
 setup_cron() {
     log_info "Настройка cron задач для автоматического мониторинга..."
-    
+
     # Создание cron файла
     cat > "$CRON_FILE" << EOF
 # ERNI-KI System Monitoring
@@ -64,7 +64,7 @@ setup_cron() {
 # Еженедельный полный отчет (воскресенье в 3:00)
 0 3 * * 0 cd $PROJECT_DIR && ./scripts/health-monitor.sh > .config-backup/monitoring/weekly-report-\$(date +\%Y\%m\%d).md 2>&1
 EOF
-    
+
     # Установка cron задач
     if crontab -l > /dev/null 2>&1; then
         # Добавление к существующему crontab
@@ -73,9 +73,9 @@ EOF
         # Создание нового crontab
         crontab "$CRON_FILE"
     fi
-    
+
     rm -f "$CRON_FILE"
-    
+
     log_success "Cron задачи настроены:"
     log_info "  - Ежечасная проверка системы"
     log_info "  - Ежедневная очистка логов"
@@ -85,24 +85,24 @@ EOF
 # === НАСТРОЙКА УРОВНЕЙ ЛОГИРОВАНИЯ ===
 setup_logging_levels() {
     log_info "Настройка оптимальных уровней логирования..."
-    
+
     cd "$PROJECT_DIR"
-    
+
     # Создание резервной копии конфигураций
     local backup_dir=".config-backup/logging-backup-$(date +%Y%m%d-%H%M%S)"
     mkdir -p "$backup_dir"
-    
+
     # Резервное копирование важных конфигураций
     if [[ -f "env/openwebui.env" ]]; then
         cp "env/openwebui.env" "$backup_dir/"
     fi
-    
+
     if [[ -f "env/ollama.env" ]]; then
         cp "env/ollama.env" "$backup_dir/"
     fi
-    
+
     log_success "Резервные копии созданы в $backup_dir"
-    
+
     # Настройка логирования для OpenWebUI (уменьшение шума)
     if grep -q "LOG_LEVEL" env/openwebui.env; then
         log_info "LOG_LEVEL уже настроен в OpenWebUI"
@@ -113,7 +113,7 @@ setup_logging_levels() {
         echo "LOG_LEVEL=INFO" >> env/openwebui.env
         log_success "Добавлен LOG_LEVEL=INFO в OpenWebUI"
     fi
-    
+
     # Настройка логирования для Ollama
     if grep -q "OLLAMA_LOG_LEVEL" env/ollama.env; then
         log_info "OLLAMA_LOG_LEVEL уже настроен"
@@ -129,7 +129,7 @@ setup_logging_levels() {
 # === СОЗДАНИЕ АЛЕРТОВ ===
 setup_alerts() {
     log_info "Создание системы алертов..."
-    
+
     # Создание скрипта для критических алертов
     cat > "$PROJECT_DIR/scripts/critical-alert.sh" << 'EOF'
 #!/bin/bash
@@ -152,29 +152,29 @@ echo "CRITICAL ALERT: $ALERT_TYPE"
 echo "Message: $MESSAGE"
 echo "Time: $TIMESTAMP"
 EOF
-    
+
     chmod +x "$PROJECT_DIR/scripts/critical-alert.sh"
-    
+
     log_success "Система алертов создана"
 }
 
 # === ТЕСТИРОВАНИЕ МОНИТОРИНГА ===
 test_monitoring() {
     log_info "Тестирование системы мониторинга..."
-    
+
     cd "$PROJECT_DIR"
-    
+
     # Запуск тестовой проверки
     if ./scripts/health-monitor.sh; then
         log_success "Тест мониторинга прошел успешно"
     else
         log_warning "Тест мониторинга выявил проблемы (это нормально для первого запуска)"
     fi
-    
+
     # Проверка создания отчета
     local latest_report
     latest_report=$(find .config-backup/monitoring -name "health-report-*.md" -type f -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2- || echo "")
-    
+
     if [[ -n "$latest_report" && -f "$latest_report" ]]; then
         log_success "Отчет создан: $latest_report"
         log_info "Размер отчета: $(wc -l < "$latest_report") строк"
@@ -188,13 +188,13 @@ test_monitoring() {
 main() {
     log_info "🔧 Настройка системы мониторинга ERNI-KI"
     echo ""
-    
+
     setup_directories
     setup_logging_levels
     setup_cron
     setup_alerts
     test_monitoring
-    
+
     echo ""
     log_success "🎉 НАСТРОЙКА МОНИТОРИНГА ЗАВЕРШЕНА!"
     echo ""

@@ -28,51 +28,51 @@ check_sudo() {
 # 1. Создание отсутствующих директорий
 fix_missing_directories() {
     log "Создание отсутствующих директорий..."
-    
+
     # Создание директорий для конфигураций
     mkdir -p conf/nginx/ssl
     mkdir -p conf/backrest
     mkdir -p conf/searxng
     mkdir -p conf/tika
     mkdir -p logs
-    
+
     # Создание директорий для данных
     mkdir -p data/prometheus
     mkdir -p data/grafana
-    
+
     success "Директории созданы"
 }
 
 # 2. Исправление прав доступа к файлам
 fix_file_permissions() {
     log "Исправление прав доступа к файлам..."
-    
+
     # Права для .env файлов
     find env/ -name "*.env" -exec chmod 600 {} \;
-    
+
     # Права для конфигурационных файлов
     find conf/ -type f -exec chmod 644 {} \;
     find conf/ -type d -exec chmod 755 {} \;
-    
+
     # Права для скриптов
     find scripts/ -name "*.sh" -exec chmod +x {} \;
-    
+
     success "Права доступа исправлены"
 }
 
 # 3. Генерация самоподписанного SSL сертификата
 generate_ssl_certificate() {
     log "Генерация самоподписанного SSL сертификата..."
-    
+
     if [ ! -f "conf/nginx/ssl/nginx.crt" ]; then
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
             -keyout conf/nginx/ssl/nginx.key \
             -out conf/nginx/ssl/nginx.crt \
             -subj "/C=RU/ST=Moscow/L=Moscow/O=ERNI-KI/CN=localhost"
-        
+
         chmod 600 conf/nginx/ssl/nginx.key
         chmod 644 conf/nginx/ssl/nginx.crt
-        
+
         success "SSL сертификат создан"
     else
         warning "SSL сертификат уже существует"
@@ -82,30 +82,30 @@ generate_ssl_certificate() {
 # 4. Обновление Nginx конфигурации для SSL
 update_nginx_ssl_config() {
     log "Обновление Nginx конфигурации для SSL..."
-    
+
     if [ ! -f "conf/nginx/conf.d/ssl.conf" ]; then
         cat > conf/nginx/conf.d/ssl.conf << 'EOF'
 # SSL Configuration
 server {
     listen 443 ssl http2;
     server_name localhost;
-    
+
     ssl_certificate /etc/nginx/ssl/nginx.crt;
     ssl_certificate_key /etc/nginx/ssl/nginx.key;
-    
+
     # SSL Security
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
     ssl_prefer_server_ciphers off;
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 10m;
-    
+
     # Security Headers
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     add_header X-Frame-Options DENY always;
     add_header X-Content-Type-Options nosniff always;
     add_header X-XSS-Protection "1; mode=block" always;
-    
+
     # Proxy settings
     location / {
         proxy_pass http://openwebui:8080;
@@ -134,17 +134,17 @@ EOF
 # 5. Замена placeholder API ключей
 fix_api_keys() {
     log "Генерация новых API ключей..."
-    
+
     # Генерация новых ключей
     NEW_API_KEY=$(openssl rand -hex 32)
     NEW_SECRET_KEY=$(openssl rand -hex 32)
-    
+
     # Обновление OpenWebUI конфигурации
     if grep -q "your_api_key_here" env/openwebui.env 2>/dev/null; then
         sed -i "s/your_api_key_here/$NEW_API_KEY/g" env/openwebui.env
         success "API ключи OpenWebUI обновлены"
     fi
-    
+
     # Сохранение ключей в безопасном файле
     cat > .generated_keys << EOF
 # Сгенерированные API ключи - $(date)
@@ -152,14 +152,14 @@ NEW_API_KEY=$NEW_API_KEY
 NEW_SECRET_KEY=$NEW_SECRET_KEY
 EOF
     chmod 600 .generated_keys
-    
+
     success "Новые API ключи сгенерированы и сохранены в .generated_keys"
 }
 
 # 6. Добавление ограничений ресурсов в compose.yml
 add_resource_limits() {
     log "Добавление ограничений ресурсов..."
-    
+
     # Создание патча для ресурсных ограничений
     cat > resource_limits_patch.yml << 'EOF'
 # Patch для добавления ограничений ресурсов
@@ -195,7 +195,7 @@ deploy:
       memory: 128M
       cpus: '0.1'
 EOF
-    
+
     warning "Ограничения ресурсов нужно добавить вручную в compose.yml"
     warning "См. файл resource_limits_patch.yml для примеров"
 }
@@ -203,7 +203,7 @@ EOF
 # 7. Создание базовой конфигурации мониторинга
 create_monitoring_config() {
     log "Создание базовой конфигурации мониторинга..."
-    
+
     # Создание docker-compose.monitoring.yml
     cat > docker-compose.monitoring.yml << 'EOF'
 version: '3.8'
@@ -276,7 +276,7 @@ EOF
 # 8. Создание скрипта проверки здоровья
 create_health_check_script() {
     log "Создание скрипта проверки здоровья..."
-    
+
     cat > scripts/check-system-health.sh << 'EOF'
 #!/bin/bash
 # Скрипт проверки здоровья системы ERNI-KI
@@ -334,29 +334,29 @@ EOF
 # 9. Создание firewall правил
 setup_basic_firewall() {
     log "Настройка базовых firewall правил..."
-    
+
     if command -v ufw >/dev/null 2>&1; then
         # Базовые правила UFW
         sudo ufw --force reset
         sudo ufw default deny incoming
         sudo ufw default allow outgoing
-        
+
         # Разрешить SSH
         sudo ufw allow ssh
-        
+
         # Разрешить HTTP/HTTPS
         sudo ufw allow 80/tcp
         sudo ufw allow 443/tcp
-        
+
         # Разрешить только локальный доступ к админ портам
         sudo ufw allow from 127.0.0.1 to any port 9090  # Auth
         sudo ufw allow from 127.0.0.1 to any port 9898  # Backrest
         sudo ufw allow from 127.0.0.1 to any port 3000  # Grafana
         sudo ufw allow from 127.0.0.1 to any port 9091  # Prometheus
-        
+
         # Активировать firewall
         sudo ufw --force enable
-        
+
         success "UFW firewall настроен"
     else
         warning "UFW не установлен, пропускаем настройку firewall"
@@ -367,9 +367,9 @@ setup_basic_firewall() {
 # 10. Создание отчета об исправлениях
 create_fix_report() {
     log "Создание отчета об исправлениях..."
-    
+
     REPORT_FILE="critical-fixes-report-$(date +%Y%m%d_%H%M%S).md"
-    
+
     cat > "$REPORT_FILE" << EOF
 # Отчет об исправлении критических проблем ERNI-KI
 
@@ -433,10 +433,10 @@ main() {
     echo "🔧 Запуск исправления критических проблем ERNI-KI..."
     echo "Дата: $(date)"
     echo ""
-    
+
     # Проверка sudo для firewall
     check_sudo
-    
+
     # Выполнение исправлений
     fix_missing_directories
     fix_file_permissions
@@ -448,7 +448,7 @@ main() {
     create_health_check_script
     setup_basic_firewall
     create_fix_report
-    
+
     echo ""
     success "🎉 Критические исправления завершены!"
     echo ""

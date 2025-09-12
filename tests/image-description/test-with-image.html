@@ -44,29 +44,29 @@
 <body>
     <div class="container">
         <h1>🖼️ ERNI-KI Image Description Test</h1>
-        
+
         <div class="status info">
             <strong>Test Status:</strong> Bereit für Bildbeschreibung
         </div>
-        
+
         <h2>Test Image</h2>
-        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNGY4MWJkIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5URVNUIElNQUdFPC90ZXh0Pgo8L3N2Zz4K" 
-             alt="Test image for ERNI-KI image description functionality" 
-             class="test-image" 
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjNGY4MWJkIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5URVNUIElNQUdFPC90ZXh0Pgo8L3N2Zz4K"
+             alt="Test image for ERNI-KI image description functionality"
+             class="test-image"
              id="testImage">
-        
+
         <div class="description">
             <h3>Erwartete Beschreibung:</h3>
             <p>Ein blaues Rechteck mit weißem Text "TEST IMAGE" in der Mitte. Dies ist ein SVG-Testbild für die Bildbeschreibungsfunktionalität von ERNI-KI.</p>
         </div>
-        
+
         <h2>Test Ergebnisse</h2>
         <div id="results">
             <div class="status info">
                 <strong>Status:</strong> Warten auf Test-Ausführung...
             </div>
         </div>
-        
+
         <h2>Test Informationen</h2>
         <ul>
             <li><strong>Bildformat:</strong> SVG (Base64 kodiert)</li>
@@ -74,7 +74,7 @@
             <li><strong>Test-Zweck:</strong> Überprüfung der AI-Bildbeschreibung</li>
             <li><strong>Erwartetes Verhalten:</strong> AI sollte das Bild korrekt beschreiben</li>
         </ul>
-        
+
         <script>
             // Test-Funktionalität für automatisierte Tests
             window.testImageDescription = function() {
@@ -82,7 +82,7 @@
                 results.innerHTML = '<div class="status success"><strong>Test erfolgreich:</strong> Bild wurde korrekt erkannt und beschrieben.</div>';
                 return true;
             };
-            
+
             // Automatischer Test beim Laden der Seite
             document.addEventListener('DOMContentLoaded', function() {
                 console.log('ERNI-KI Image Description Test geladen');

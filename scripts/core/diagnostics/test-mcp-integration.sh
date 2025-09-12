@@ -24,11 +24,11 @@ test_endpoint() {
     local url=$1
     local description=$2
     local timeout=${3:-10}
-    
+
     echo -n "Testing $description... "
-    
+
     local http_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time $timeout "$url" 2>/dev/null || echo "000")
-    
+
     if [ "$http_code" = "200" ]; then
         echo -e "${GREEN}✅ OK${NC}"
         return 0
@@ -46,11 +46,11 @@ test_json_endpoint() {
     local url=$1
     local description=$2
     local expected_key=$3
-    
+
     echo -n "Testing $description... "
-    
+
     local response=$(curl -s --max-time 10 "$url" 2>/dev/null || echo "{}")
-    
+
     if echo "$response" | jq -e ".$expected_key" >/dev/null 2>&1; then
         local count=$(echo "$response" | jq ".$expected_key | length" 2>/dev/null || echo "0")
         echo -e "${GREEN}✅ OK ($count items)${NC}"

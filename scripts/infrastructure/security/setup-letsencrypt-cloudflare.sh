@@ -110,10 +110,10 @@ install_acme_sh() {
     if [ ! -f "$ACME_HOME/acme.sh" ]; then
         log "Загрузка и установка acme.sh..."
         curl https://get.acme.sh | sh -s email="$EMAIL"
-        
+
         # Перезагрузка переменных окружения
         source "$HOME/.bashrc" 2>/dev/null || true
-        
+
         if [ ! -f "$ACME_HOME/acme.sh" ]; then
             error "Ошибка установки acme.sh"
         fi
@@ -132,7 +132,7 @@ create_backup() {
     log "Создание резервной копии текущих сертификатов..."
 
     mkdir -p "$BACKUP_DIR"
-    
+
     if [ -f "$SSL_DIR/nginx.crt" ]; then
         cp "$SSL_DIR"/*.crt "$BACKUP_DIR/" 2>/dev/null || true
         cp "$SSL_DIR"/*.key "$BACKUP_DIR/" 2>/dev/null || true
@@ -172,17 +172,17 @@ install_certificate() {
         --key-file "$TEMP_SSL_DIR/nginx.key" \
         --fullchain-file "$TEMP_SSL_DIR/nginx-fullchain.crt" \
         --ca-file "$TEMP_SSL_DIR/nginx-ca.crt"; then
-        
+
         # Копирование сертификатов в рабочую директорию
         cp "$TEMP_SSL_DIR"/* "$SSL_DIR/"
-        
+
         # Установка правильных прав доступа
         chmod 644 "$SSL_DIR"/*.crt
         chmod 600 "$SSL_DIR"/*.key
-        
+
         # Очистка временной директории
         rm -rf "$TEMP_SSL_DIR"
-        
+
         success "Сертификат установлен в nginx"
     else
         rm -rf "$TEMP_SSL_DIR"
@@ -198,7 +198,7 @@ verify_certificate() {
         # Проверка срока действия
         local expiry_date=$(openssl x509 -in "$SSL_DIR/nginx.crt" -noout -enddate | cut -d= -f2)
         log "Сертификат действителен до: $expiry_date"
-        
+
         # Проверка домена
         local cert_domain=$(openssl x509 -in "$SSL_DIR/nginx.crt" -noout -subject | grep -o "CN=[^,]*" | cut -d= -f2)
         if [ "$cert_domain" = "$DOMAIN" ]; then
@@ -206,11 +206,11 @@ verify_certificate() {
         else
             warning "Домен в сертификате ($cert_domain) не соответствует ожидаемому ($DOMAIN)"
         fi
-        
+
         # Проверка издателя
         local issuer=$(openssl x509 -in "$SSL_DIR/nginx.crt" -noout -issuer | grep -o "CN=[^,]*" | cut -d= -f2)
         log "Издатель сертификата: $issuer"
-        
+
     else
         error "Файл сертификата не найден: $SSL_DIR/nginx.crt"
     fi
@@ -240,7 +240,7 @@ setup_auto_renewal() {
 
     # Создание hook скрипта для перезагрузки nginx
     local hook_script="$ACME_HOME/nginx-reload-hook.sh"
-    
+
     cat > "$hook_script" << 'EOF'
 #!/bin/bash
 # Hook скрипт для перезагрузки nginx после обновления сертификата

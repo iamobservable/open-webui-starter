@@ -40,30 +40,30 @@ check_root() {
 # Создание резервной копии текущих настроек
 backup_current_settings() {
     log "Создание резервной копии текущих сетевых настроек..."
-    
+
     local backup_dir=".config-backup/network-settings-$(date +%Y%m%d-%H%M%S)"
     mkdir -p "$backup_dir"
-    
+
     # Сохраняем текущие настройки ядра
     sysctl -a > "$backup_dir/sysctl-current.conf" 2>/dev/null || true
-    
+
     # Сохраняем настройки Docker
     if command -v docker &> /dev/null; then
         docker network ls > "$backup_dir/docker-networks.txt" 2>/dev/null || true
         docker system info > "$backup_dir/docker-info.txt" 2>/dev/null || true
     fi
-    
+
     # Сохраняем настройки сети
     ip addr show > "$backup_dir/ip-addr.txt" 2>/dev/null || true
     ip route show > "$backup_dir/ip-route.txt" 2>/dev/null || true
-    
+
     log "Резервная копия создана в $backup_dir"
 }
 
 # Оптимизация параметров ядра для сетевой производительности
 optimize_kernel_parameters() {
     log "Оптимизация параметров ядра для сетевой производительности..."
-    
+
     # Создаем файл конфигурации для sysctl
     cat > /etc/sysctl.d/99-erni-ki-network.conf << 'EOF'
 # ERNI-KI Network Optimization Settings
@@ -133,25 +133,25 @@ EOF
 
     # Применяем настройки
     sysctl -p /etc/sysctl.d/99-erni-ki-network.conf
-    
+
     log "Параметры ядра оптимизированы"
 }
 
 # Оптимизация Docker для сетевой производительности
 optimize_docker_settings() {
     log "Оптимизация настроек Docker..."
-    
+
     # Создаем или обновляем daemon.json
     local docker_config="/etc/docker/daemon.json"
     local temp_config="/tmp/docker-daemon.json"
-    
+
     # Читаем существующую конфигурацию или создаем новую
     if [[ -f "$docker_config" ]]; then
         cp "$docker_config" "$temp_config"
     else
         echo '{}' > "$temp_config"
     fi
-    
+
     # Добавляем оптимизации с помощью jq
     if command -v jq &> /dev/null; then
         jq '. + {
@@ -161,7 +161,7 @@ optimize_docker_settings() {
                     "size": 24
                 },
                 {
-                    "base": "172.21.0.0/16", 
+                    "base": "172.21.0.0/16",
                     "size": 24
                 },
                 {
@@ -198,7 +198,7 @@ optimize_docker_settings() {
             "size": 24
         },
         {
-            "base": "172.21.0.0/16", 
+            "base": "172.21.0.0/16",
             "size": 24
         },
         {
@@ -227,19 +227,19 @@ optimize_docker_settings() {
 }
 EOF
     fi
-    
+
     rm -f "$temp_config"
-    
+
     log "Настройки Docker оптимизированы"
 }
 
 # Создание оптимизированных Docker сетей
 create_optimized_networks() {
     log "Создание оптимизированных Docker сетей..."
-    
+
     # Удаляем существующие сети (если они есть)
     docker network rm erni-ki-backend erni-ki-monitoring erni-ki-internal 2>/dev/null || true
-    
+
     # Создаем backend сеть
     docker network create \
         --driver bridge \
@@ -250,7 +250,7 @@ create_optimized_networks() {
         --opt com.docker.network.bridge.enable_icc=true \
         --opt com.docker.network.bridge.enable_ip_masquerade=true \
         erni-ki-backend
-    
+
     # Создаем monitoring сеть
     docker network create \
         --driver bridge \
@@ -261,7 +261,7 @@ create_optimized_networks() {
         --opt com.docker.network.bridge.enable_icc=true \
         --opt com.docker.network.bridge.enable_ip_masquerade=true \
         erni-ki-monitoring
-    
+
     # Создаем internal сеть с jumbo frames
     docker network create \
         --driver bridge \
@@ -272,17 +272,17 @@ create_optimized_networks() {
         --opt com.docker.network.driver.mtu=9000 \
         --opt com.docker.network.bridge.enable_icc=true \
         erni-ki-internal
-    
+
     log "Оптимизированные Docker сети созданы"
 }
 
 # Проверка и установка необходимых пакетов
 install_dependencies() {
     log "Проверка и установка необходимых пакетов..."
-    
+
     # Обновляем список пакетов
     apt-get update -qq
-    
+
     # Устанавливаем необходимые пакеты
     apt-get install -y \
         net-tools \
@@ -294,73 +294,73 @@ install_dependencies() {
         jq \
         curl \
         wget
-    
+
     log "Необходимые пакеты установлены"
 }
 
 # Оптимизация сетевых интерфейсов
 optimize_network_interfaces() {
     log "Оптимизация сетевых интерфейсов..."
-    
+
     # Получаем список активных интерфейсов
     local interfaces=$(ip link show | grep -E '^[0-9]+:' | grep -v 'lo:' | cut -d: -f2 | tr -d ' ')
-    
+
     for interface in $interfaces; do
         if [[ "$interface" =~ ^(eth|ens|enp) ]]; then
             info "Оптимизация интерфейса $interface"
-            
+
             # Увеличиваем размеры буферов (если поддерживается)
             ethtool -G "$interface" rx 4096 tx 4096 2>/dev/null || warn "Не удалось изменить размеры буферов для $interface"
-            
+
             # Включаем offloading (если поддерживается)
             ethtool -K "$interface" gso on tso on gro on lro on 2>/dev/null || warn "Не удалось включить offloading для $interface"
-            
+
             # Оптимизируем настройки прерываний
             ethtool -C "$interface" rx-usecs 50 tx-usecs 50 2>/dev/null || warn "Не удалось оптимизировать прерывания для $interface"
         fi
     done
-    
+
     log "Сетевые интерфейсы оптимизированы"
 }
 
 # Проверка результатов оптимизации
 verify_optimization() {
     log "Проверка результатов оптимизации..."
-    
+
     info "Текущие настройки TCP буферов:"
     sysctl net.core.rmem_max net.core.wmem_max net.ipv4.tcp_rmem net.ipv4.tcp_wmem
-    
+
     info "Настройки соединений:"
     sysctl net.core.somaxconn net.ipv4.tcp_max_syn_backlog
-    
+
     info "Docker сети:"
     docker network ls | grep erni-ki
-    
+
     info "Статус Docker:"
     systemctl is-active docker
-    
+
     log "Проверка завершена"
 }
 
 # Основная функция
 main() {
     log "Запуск оптимизации сетевой производительности ERNI-KI..."
-    
+
     check_root
     backup_current_settings
     install_dependencies
     optimize_kernel_parameters
     optimize_docker_settings
-    
+
     # Перезапускаем Docker для применения настроек
     log "Перезапуск Docker для применения настроек..."
     systemctl restart docker
     sleep 10
-    
+
     create_optimized_networks
     optimize_network_interfaces
     verify_optimization
-    
+
     log "Оптимизация сетевой производительности завершена!"
     warn "Рекомендуется перезагрузить систему для полного применения всех настроек"
     info "Для применения изменений в ERNI-KI выполните: docker-compose down && docker-compose up -d"

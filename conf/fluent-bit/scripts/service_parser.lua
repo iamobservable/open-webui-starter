@@ -10,16 +10,16 @@
 function parse_service_name(tag, timestamp, record)
     -- Получаем исходное имя контейнера
     local service_raw = record["service_raw"]
-    
+
     if service_raw == nil then
         record["service"] = "unknown"
         return 1, timestamp, record
     end
-    
+
     -- Убираем префикс "erni-ki-" и суффикс "-1", "-2" и т.д.
     local service_name = string.gsub(service_raw, "^erni%-ki%-", "")
     service_name = string.gsub(service_name, "%-[0-9]+$", "")
-    
+
     -- Маппинг специальных случаев
     local service_mapping = {
         ["db"] = "postgres",
@@ -34,15 +34,15 @@ function parse_service_name(tag, timestamp, record)
         ["blackbox-exporter"] = "network-metrics",
         ["webhook-receiver"] = "webhooks"
     }
-    
+
     -- Применяем маппинг если есть
     if service_mapping[service_name] then
         service_name = service_mapping[service_name]
     end
-    
+
     -- Устанавливаем финальное имя сервиса
     record["service"] = service_name
-    
+
     -- Добавляем категорию сервиса для лучшей группировки
     local service_categories = {
         ["nginx"] = "web",
@@ -66,10 +66,10 @@ function parse_service_name(tag, timestamp, record)
         ["tika"] = "processing",
         ["edgetts"] = "processing"
     }
-    
+
     -- Добавляем категорию
     record["service_category"] = service_categories[service_name] or "other"
-    
+
     -- Добавляем метрики для мониторинга
     if string.find(service_name, "metrics") then
         record["service_category"] = "metrics"
@@ -77,6 +77,6 @@ function parse_service_name(tag, timestamp, record)
     else
         record["is_metrics"] = false
     end
-    
+
     return 1, timestamp, record
 end

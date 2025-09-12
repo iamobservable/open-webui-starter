@@ -50,14 +50,14 @@ check_http_status() {
     local url=$1
     local name=$2
     local expected_status=${3:-200}
-    
+
     log "Проверка $name ($url)..."
-    
+
     local start_time=$(date +%s.%N)
     local status_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout $TIMEOUT "$url" 2>/dev/null || echo "000")
     local end_time=$(date +%s.%N)
     local response_time=$(echo "$end_time - $start_time" | bc -l)
-    
+
     if [ "$status_code" = "$expected_status" ]; then
         success "$name: HTTP $status_code (${response_time}s)"
         return 0
@@ -71,9 +71,9 @@ check_http_status() {
 check_service_health() {
     local service=$1
     log "Проверка статуса сервиса $service..."
-    
+
     local status=$(docker-compose ps --format "table {{.Service}}\t{{.Status}}" | grep "^$service" | awk '{print $2}')
-    
+
     if echo "$status" | grep -q "healthy"; then
         success "Сервис $service: $status"
         return 0

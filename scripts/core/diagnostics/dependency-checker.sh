@@ -83,7 +83,7 @@ SERVICE_CRITICALITY=(
 check_service_status() {
     local service_name="$1"
     local status=$(docker-compose ps "$service_name" --format "{{.Status}}" 2>/dev/null || echo "not_found")
-    
+
     case $status in
         *"Up"*"healthy"*)
             echo "healthy"
@@ -111,18 +111,18 @@ check_service_dependencies() {
     local service_name="$1"
     local dependencies="${SERVICE_DEPENDENCIES[$service_name]:-}"
     local all_healthy=true
-    
+
     if [[ -z "$dependencies" ]]; then
         success "Сервис $service_name не имеет зависимостей"
         return 0
     fi
-    
+
     log "Проверка зависимостей для сервиса: $service_name"
-    
+
     for dep in $dependencies; do
         local dep_status=$(check_service_status "$dep")
         local criticality="${SERVICE_CRITICALITY[$dep]:-low}"
-        
+
         case $dep_status in
             "healthy")
                 success "  ✓ $dep: здоров ($criticality)"
@@ -153,7 +153,7 @@ check_service_dependencies() {
                 ;;
         esac
     done
-    
+
     if [[ "$all_healthy" == "true" ]]; then
         success "Все зависимости для $service_name готовы"
         return 0
@@ -166,44 +166,44 @@ check_service_dependencies() {
 # Построение графа зависимостей
 build_dependency_graph() {
     log "Построение графа зависимостей"
-    
+
     echo "digraph ERNI_KI_Dependencies {" > /tmp/dependencies.dot
     echo "  rankdir=TB;" >> /tmp/dependencies.dot
     echo "  node [shape=box];" >> /tmp/dependencies.dot
     echo "" >> /tmp/dependencies.dot
-    
+
     # Добавление узлов с цветами по критичности
     for service in "${!SERVICE_CRITICALITY[@]}"; do
         local criticality="${SERVICE_CRITICALITY[$service]}"
         local color=""
-        
+
         case $criticality in
             "critical") color="red" ;;
             "high") color="orange" ;;
             "medium") color="yellow" ;;
             "low") color="lightblue" ;;
         esac
-        
+
         echo "  $service [fillcolor=$color, style=filled];" >> /tmp/dependencies.dot
     done
-    
+
     echo "" >> /tmp/dependencies.dot
-    
+
     # Добавление связей
     for service in "${!SERVICE_DEPENDENCIES[@]}"; do
         local dependencies="${SERVICE_DEPENDENCIES[$service]}"
-        
+
         if [[ -n "$dependencies" ]]; then
             for dep in $dependencies; do
                 echo "  $dep -> $service;" >> /tmp/dependencies.dot
             done
         fi
     done
-    
+
     echo "}" >> /tmp/dependencies.dot
-    
+
     success "Граф зависимостей сохранен в /tmp/dependencies.dot"
-    
+
     # Попытка создать PNG если доступен graphviz
     if command -v dot &> /dev/null; then
         if dot -Tpng /tmp/dependencies.dot -o "$PROJECT_ROOT/.config-backup/dependency-graph.png" 2>/dev/null; then
@@ -215,21 +215,21 @@ build_dependency_graph() {
 # Анализ циклических зависимостей
 check_circular_dependencies() {
     log "Проверка циклических зависимостей"
-    
+
     local visited=()
     local recursion_stack=()
     local has_cycle=false
-    
+
     # Функция DFS для поиска циклов
     dfs_check_cycle() {
         local node="$1"
-        
+
         # Добавляем в стек рекурсии
         recursion_stack+=("$node")
-        
+
         # Получаем зависимости
         local dependencies="${SERVICE_DEPENDENCIES[$node]:-}"
-        
+
         for dep in $dependencies; do
             # Проверяем, есть ли узел в стеке рекурсии
             for stack_node in "${recursion_stack[@]}"; do
@@ -239,23 +239,23 @@ check_circular_dependencies() {
                     return 1
                 fi
             done
-            
+
             # Рекурсивно проверяем зависимости
             if [[ -n "${SERVICE_DEPENDENCIES[$dep]:-}" ]]; then
                 dfs_check_cycle "$dep"
             fi
         done
-        
+
         # Удаляем из стека рекурсии
         recursion_stack=("${recursion_stack[@]/$node}")
     }
-    
+
     # Проверяем каждый сервис
     for service in "${!SERVICE_DEPENDENCIES[@]}"; do
         recursion_stack=()
         dfs_check_cycle "$service"
     done
-    
+
     if [[ "$has_cycle" == "false" ]]; then
         success "Циклические зависимости не обнаружены"
         return 0
@@ -268,37 +268,37 @@ check_circular_dependencies() {
 # Определение порядка запуска
 calculate_startup_order() {
     log "Вычисление порядка запуска сервисов"
-    
+
     local startup_order=()
     local processed=()
-    
+
     # Функция для добавления сервиса в порядок запуска
     add_to_startup_order() {
         local service="$1"
-        
+
         # Проверяем, не обработан ли уже
         for proc in "${processed[@]}"; do
             if [[ "$proc" == "$service" ]]; then
                 return 0
             fi
         done
-        
+
         # Сначала добавляем все зависимости
         local dependencies="${SERVICE_DEPENDENCIES[$service]:-}"
         for dep in $dependencies; do
             add_to_startup_order "$dep"
         done
-        
+
         # Затем добавляем сам сервис
         startup_order+=("$service")
         processed+=("$service")
     }
-    
+
     # Обрабатываем все сервисы
     for service in "${!SERVICE_DEPENDENCIES[@]}"; do
         add_to_startup_order "$service"
     done
-    
+
     log "Рекомендуемый порядок запуска:"
     local order_num=1
     for service in "${startup_order[@]}"; do
@@ -306,7 +306,7 @@ calculate_startup_order() {
         log "  $order_num. $service ($criticality)"
         ((order_num++))
     done
-    
+
     # Сохранение порядка в файл
     printf '%s\n' "${startup_order[@]}" > "$PROJECT_ROOT/.config-backup/startup-order.txt"
     success "Порядок запуска сохранен в $PROJECT_ROOT/.config-backup/startup-order.txt"
@@ -315,14 +315,14 @@ calculate_startup_order() {
 # Определение порядка остановки
 calculate_shutdown_order() {
     log "Вычисление порядка остановки сервисов"
-    
+
     # Читаем порядок запуска и обращаем его
     if [[ -f "$PROJECT_ROOT/.config-backup/startup-order.txt" ]]; then
         local shutdown_order=()
         while IFS= read -r line; do
             shutdown_order=("$line" "${shutdown_order[@]}")
         done < "$PROJECT_ROOT/.config-backup/startup-order.txt"
-        
+
         log "Рекомендуемый порядок остановки:"
         local order_num=1
         for service in "${shutdown_order[@]}"; do
@@ -330,7 +330,7 @@ calculate_shutdown_order() {
             log "  $order_num. $service ($criticality)"
             ((order_num++))
         done
-        
+
         # Сохранение порядка в файл
         printf '%s\n' "${shutdown_order[@]}" > "$PROJECT_ROOT/.config-backup/shutdown-order.txt"
         success "Порядок остановки сохранен в $PROJECT_ROOT/.config-backup/shutdown-order.txt"
@@ -343,16 +343,16 @@ calculate_shutdown_order() {
 # Проверка всех зависимостей
 check_all_dependencies() {
     log "Проверка зависимостей всех сервисов"
-    
+
     local failed_services=()
-    
+
     for service in "${!SERVICE_DEPENDENCIES[@]}"; do
         echo ""
         if ! check_service_dependencies "$service"; then
             failed_services+=("$service")
         fi
     done
-    
+
     echo ""
     if [[ ${#failed_services[@]} -eq 0 ]]; then
         success "Все зависимости сервисов выполнены"
@@ -366,20 +366,20 @@ check_all_dependencies() {
 # Генерация отчета о зависимостях
 generate_dependency_report() {
     log "Генерация отчета о зависимостях"
-    
+
     local report_file="$PROJECT_ROOT/.config-backup/dependency-report-$(date +%Y%m%d_%H%M%S).txt"
-    
+
     {
         echo "=== ОТЧЕТ О ЗАВИСИМОСТЯХ ERNI-KI ==="
         echo "Дата: $(date)"
         echo "Хост: $(hostname)"
         echo ""
-        
+
         echo "=== ГРАФ ЗАВИСИМОСТЕЙ ==="
         for service in "${!SERVICE_DEPENDENCIES[@]}"; do
             local dependencies="${SERVICE_DEPENDENCIES[$service]:-}"
             local criticality="${SERVICE_CRITICALITY[$service]:-low}"
-            
+
             if [[ -n "$dependencies" ]]; then
                 echo "$service ($criticality) зависит от: $dependencies"
             else
@@ -387,7 +387,7 @@ generate_dependency_report() {
             fi
         done
         echo ""
-        
+
         echo "=== СОСТОЯНИЕ СЕРВИСОВ ==="
         for service in "${!SERVICE_DEPENDENCIES[@]}"; do
             local status=$(check_service_status "$service")
@@ -395,7 +395,7 @@ generate_dependency_report() {
             echo "$service: $status ($criticality)"
         done
         echo ""
-        
+
         echo "=== ПОРЯДОК ЗАПУСКА ==="
         if [[ -f "$PROJECT_ROOT/.config-backup/startup-order.txt" ]]; then
             cat "$PROJECT_ROOT/.config-backup/startup-order.txt"
@@ -403,16 +403,16 @@ generate_dependency_report() {
             echo "Порядок запуска не вычислен"
         fi
         echo ""
-        
+
         echo "=== ПОРЯДОК ОСТАНОВКИ ==="
         if [[ -f "$PROJECT_ROOT/.config-backup/shutdown-order.txt" ]]; then
             cat "$PROJECT_ROOT/.config-backup/shutdown-order.txt"
         else
             echo "Порядок остановки не вычислен"
         fi
-        
+
     } > "$report_file"
-    
+
     success "Отчет о зависимостях сохранен: $report_file"
 }
 
@@ -424,29 +424,29 @@ main() {
     echo "║               Проверка зависимостей сервисов                ║"
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
-    
+
     # Создание директории для отчетов
     mkdir -p "$PROJECT_ROOT/.config-backup"
-    
+
     # Переход в рабочую директорию
     cd "$PROJECT_ROOT"
-    
+
     # Выполнение всех проверок
     check_circular_dependencies
     echo ""
-    
+
     calculate_startup_order
     echo ""
-    
+
     calculate_shutdown_order
     echo ""
-    
+
     build_dependency_graph
     echo ""
-    
+
     check_all_dependencies
     echo ""
-    
+
     generate_dependency_report
 }
 

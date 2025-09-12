@@ -33,20 +33,20 @@ error() {
 # Резервное копирование конфигурации
 backup_config() {
     log "Создание резервной копии конфигурации..."
-    
+
     local backup_dir="config-backup-$(date +%Y%m%d_%H%M%S)"
     mkdir -p "$backup_dir"
-    
+
     cp conf/nginx/conf.d/default.conf "$backup_dir/" 2>/dev/null || warning "Не удалось скопировать default.conf"
     cp env/openwebui.env "$backup_dir/" 2>/dev/null || warning "Не удалось скопировать openwebui.env"
-    
+
     success "Резервная копия создана в: $backup_dir"
 }
 
 # Исправление конфигурации Nginx
 fix_nginx_config() {
     log "Исправление конфигурации Nginx..."
-    
+
     # Создаем новую оптимизированную конфигурацию
     cat > conf/nginx/conf.d/default.conf << 'EOF'
 # Rate limiting zones
@@ -152,23 +152,23 @@ server {
     # Ограничение скорости для API
     limit_req zone=searxng_api burst=10 nodelay;
     limit_req_status 429;
-    
+
     # Разрешаем только внутренние запросы от OpenWebUI
     allow 172.16.0.0/12;  # Docker networks
     allow 10.0.0.0/8;     # Private networks
     allow 192.168.0.0/16; # Private networks
     allow 127.0.0.1;      # Localhost
     deny all;
-    
+
     # Убираем префикс /api/searxng и проксируем к SearXNG
     rewrite ^/api/searxng/(.*) /$1 break;
-    
+
     proxy_pass http://searxngUpstream;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-    
+
     # Таймауты и буферизация для API
     proxy_connect_timeout 5s;
     proxy_send_timeout 10s;
@@ -176,17 +176,17 @@ server {
     proxy_buffering on;
     proxy_buffer_size 4k;
     proxy_buffers 8 4k;
-    
+
     # HTTP/1.1 для keepalive
     proxy_http_version 1.1;
     proxy_set_header Connection "";
-    
+
     # CORS заголовки для API
     add_header Access-Control-Allow-Origin $http_origin always;
     add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
     add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
     add_header Access-Control-Allow-Credentials true always;
-    
+
     # Обработка preflight запросов
     if ($request_method = 'OPTIONS') {
       return 204;
@@ -196,7 +196,7 @@ server {
   # SearXNG веб-интерфейс С аутентификацией
   location /searxng {
     limit_req zone=searxng_web burst=5 nodelay;
-    
+
     auth_request /auth-server/validate;
     auth_request_set $auth_status $upstream_status;
 
@@ -210,7 +210,7 @@ server {
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-    
+
     # Таймауты и буферизация
     proxy_connect_timeout 5s;
     proxy_send_timeout 10s;
@@ -218,7 +218,7 @@ server {
     proxy_buffering on;
     proxy_buffer_size 4k;
     proxy_buffers 8 4k;
-    
+
     # HTTP/1.1 для keepalive
     proxy_http_version 1.1;
     proxy_set_header Connection "";
@@ -227,7 +227,7 @@ server {
   # Остальные защищенные сервисы
   location ~ ^/(docs|redis|backrest) {
     limit_req zone=general burst=20 nodelay;
-    
+
     auth_request /auth-server/validate;
     auth_request_set $auth_status $upstream_status;
 
@@ -241,7 +241,7 @@ server {
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-    
+
     # Дополнительные заголовки для WebUI
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
@@ -257,7 +257,7 @@ server {
   location /auth-server/ {
     internal;
     limit_req zone=auth burst=10 nodelay;
-    
+
     proxy_pass http://authUpstream/;
     proxy_buffers 8 16k;
     proxy_buffer_size 32k;
@@ -269,7 +269,7 @@ server {
   # Основное приложение (OpenWebUI)
   location / {
     limit_req zone=general burst=50 nodelay;
-    
+
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -324,7 +324,7 @@ EOF
 # Обновление конфигурации OpenWebUI
 update_openwebui_config() {
     log "Обновление конфигурации OpenWebUI..."
-    
+
     # Обновляем SEARXNG_QUERY_URL для использования нового API endpoint
     if grep -q "SEARXNG_QUERY_URL" env/openwebui.env; then
         sed -i 's|SEARXNG_QUERY_URL=.*|SEARXNG_QUERY_URL=http://nginx/api/searxng/search?q=<query>|' env/openwebui.env
@@ -333,28 +333,28 @@ update_openwebui_config() {
         echo "SEARXNG_QUERY_URL=http://nginx/api/searxng/search?q=<query>" >> env/openwebui.env
         success "SEARXNG_QUERY_URL добавлен в конфигурацию"
     fi
-    
+
     # Убеждаемся, что WEBUI_URL правильно настроен
     if grep -q "WEBUI_URL" env/openwebui.env; then
         sed -i 's|WEBUI_URL=.*|WEBUI_URL=https://diz.zone|' env/openwebui.env
     else
         echo "WEBUI_URL=https://diz.zone" >> env/openwebui.env
     fi
-    
+
     success "Конфигурация OpenWebUI обновлена"
 }
 
 # Проверка конфигурации
 validate_config() {
     log "Проверка конфигурации..."
-    
+
     # Проверка Nginx конфигурации
     if docker-compose exec -T nginx nginx -t >/dev/null 2>&1; then
         success "Конфигурация Nginx валидна"
     else
         error "Ошибка в конфигурации Nginx"
     fi
-    
+
     # Проверка Docker Compose
     if docker-compose config >/dev/null 2>&1; then
         success "Docker Compose конфигурация валидна"
@@ -366,51 +366,51 @@ validate_config() {
 # Перезапуск сервисов
 restart_services() {
     log "Перезапуск сервисов..."
-    
+
     # Перезапуск Nginx для применения новой конфигурации
     docker-compose restart nginx
-    
+
     # Перезапуск OpenWebUI для применения новых переменных окружения
     docker-compose restart openwebui
-    
+
     # Ждем запуска сервисов
     sleep 10
-    
+
     success "Сервисы перезапущены"
 }
 
 # Тестирование исправления
 test_fix() {
     log "Тестирование исправления..."
-    
+
     local max_attempts=30
     local attempt=1
-    
+
     # Ждем запуска сервисов
     while [ $attempt -le $max_attempts ]; do
         if curl -f -s http://localhost/health >/dev/null 2>&1; then
             success "Nginx доступен"
             break
         fi
-        
+
         log "Попытка $attempt/$max_attempts: ожидание запуска Nginx..."
         sleep 2
         ((attempt++))
     done
-    
+
     if [ $attempt -gt $max_attempts ]; then
         error "Nginx не отвечает после $max_attempts попыток"
     fi
-    
+
     # Тестирование API endpoint
     log "Тестирование нового API endpoint..."
-    
+
     local api_response
     api_response=$(curl -s -X POST \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "q=test&category_general=1&format=json" \
         http://localhost/api/searxng/search)
-    
+
     if echo "$api_response" | jq . >/dev/null 2>&1; then
         success "API endpoint работает корректно"
         echo "Количество результатов: $(echo "$api_response" | jq '.results | length')"
@@ -418,10 +418,10 @@ test_fix() {
         warning "API endpoint может работать некорректно"
         echo "Ответ: ${api_response:0:200}..."
     fi
-    
+
     # Тестирование веб-интерфейса
     log "Тестирование веб-интерфейса SearXNG..."
-    
+
     if curl -f -s http://localhost/searxng/ >/dev/null 2>&1; then
         success "Веб-интерфейс SearXNG доступен"
     else
@@ -432,22 +432,22 @@ test_fix() {
 # Основная функция
 main() {
     log "Запуск исправления проблем с веб-поиском..."
-    
+
     # Проверка, что мы в корне проекта
     if [ ! -f "compose.yml" ] && [ ! -f "docker-compose.yml" ]; then
         error "Файл compose.yml не найден. Запустите скрипт из корня проекта."
     fi
-    
+
     backup_config
     fix_nginx_config
     update_openwebui_config
     validate_config
     restart_services
     test_fix
-    
+
     echo ""
     success "Исправление завершено успешно!"
-    
+
     echo ""
     log "Что было исправлено:"
     echo "1. ✅ Создан отдельный API endpoint /api/searxng/ без аутентификации"
@@ -455,13 +455,13 @@ main() {
     echo "3. ✅ Обновлен SEARXNG_QUERY_URL в OpenWebUI для использования нового endpoint"
     echo "4. ✅ Добавлены CORS заголовки для корректной работы API"
     echo "5. ✅ Сохранена аутентификация для веб-интерфейса /searxng"
-    
+
     echo ""
     log "Тестирование:"
     echo "1. Проверьте веб-поиск в OpenWebUI через diz.zone"
     echo "2. API endpoint: http://localhost/api/searxng/search"
     echo "3. Веб-интерфейс: https://diz.zone/searxng (требует аутентификации)"
-    
+
     echo ""
     warning "Если проблема не решена, проверьте логи:"
     echo "- docker-compose logs nginx"

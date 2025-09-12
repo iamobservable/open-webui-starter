@@ -33,7 +33,7 @@ error() {
 # Проверка статуса всех сервисов
 check_all_services() {
     log "Проверка статуса всех сервисов..."
-    
+
     local services=(
         "auth"
         "backrest"
@@ -51,18 +51,18 @@ check_all_services() {
         "watchtower"
         "cloudflared"
     )
-    
+
     local healthy_count=0
     local total_count=${#services[@]}
-    
+
     echo ""
     echo "=== СТАТУС СЕРВИСОВ ==="
     printf "%-15s %-10s %-20s\n" "SERVICE" "STATUS" "HEALTH"
     echo "----------------------------------------"
-    
+
     for service in "${services[@]}"; do
         local status=$(docker-compose ps "$service" --format "{{.Status}}" 2>/dev/null || echo "Not found")
-        
+
         if [[ "$status" == *"healthy"* ]]; then
             printf "%-15s %-10s %-20s\n" "$service" "✅ UP" "🟢 HEALTHY"
             ((healthy_count++))
@@ -75,10 +75,10 @@ check_all_services() {
             printf "%-15s %-10s %-20s\n" "$service" "❌ DOWN" "🔴 UNHEALTHY"
         fi
     done
-    
+
     echo "----------------------------------------"
     echo "Работающих сервисов: $healthy_count/$total_count"
-    
+
     if [ $healthy_count -eq $total_count ]; then
         success "Все сервисы работают корректно!"
         return 0
@@ -91,10 +91,10 @@ check_all_services() {
 # Проверка доступности веб-интерфейса
 check_web_access() {
     log "Проверка доступности веб-интерфейса..."
-    
+
     local url="https://diz.zone"
     local response=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
-    
+
     if [ "$response" = "200" ]; then
         success "Веб-интерфейс доступен: $url (HTTP $response)"
         return 0
@@ -107,10 +107,10 @@ check_web_access() {
 # Проверка ключевых интеграций
 check_integrations() {
     log "Проверка ключевых интеграций..."
-    
+
     echo ""
     echo "=== ТЕСТ ИНТЕГРАЦИЙ ==="
-    
+
     # TTS интеграция
     log "Тестирование EdgeTTS..."
     if curl -s -H "Authorization: Bearer your_api_key_here" \
@@ -119,12 +119,12 @@ check_integrations() {
     else
         error "EdgeTTS API не работает"
     fi
-    
+
     # Ollama интеграция
     log "Тестирование Ollama..."
     if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then
         success "Ollama API работает"
-        
+
         # Проверка моделей
         local models=$(curl -s http://localhost:11434/api/tags | jq -r '.models | length' 2>/dev/null || echo "0")
         if [ "$models" -gt 0 ]; then
@@ -135,7 +135,7 @@ check_integrations() {
     else
         error "Ollama API не работает"
     fi
-    
+
     # PostgreSQL интеграция
     log "Тестирование PostgreSQL..."
     if docker-compose exec -T db pg_isready >/dev/null 2>&1; then
@@ -143,7 +143,7 @@ check_integrations() {
     else
         error "PostgreSQL не работает"
     fi
-    
+
     # SearXNG интеграция
     log "Тестирование SearXNG..."
     if curl -s http://localhost:8080/search?q=test >/dev/null 2>&1; then
@@ -156,22 +156,22 @@ check_integrations() {
 # Проверка ресурсов системы
 check_system_resources() {
     log "Проверка ресурсов системы..."
-    
+
     echo ""
     echo "=== РЕСУРСЫ СИСТЕМЫ ==="
-    
+
     # CPU
     local cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
     echo "CPU Usage: ${cpu_usage}%"
-    
+
     # Memory
     local mem_info=$(free -h | grep "Mem:")
     echo "Memory: $mem_info"
-    
+
     # Disk
     local disk_usage=$(df -h / | tail -1 | awk '{print $5}')
     echo "Disk Usage: $disk_usage"
-    
+
     # Docker
     local containers=$(docker ps | wc -l)
     echo "Running Containers: $((containers-1))"
@@ -185,26 +185,26 @@ main() {
     echo "Дата: $(date '+%Y-%m-%d %H:%M:%S')"
     echo "Хост: $(hostname)"
     echo ""
-    
+
     # Выполнение проверок
     local all_good=true
-    
+
     if ! check_all_services; then
         all_good=false
     fi
     echo ""
-    
+
     if ! check_web_access; then
         all_good=false
     fi
     echo ""
-    
+
     check_integrations
     echo ""
-    
+
     check_system_resources
     echo ""
-    
+
     echo "=================================================="
     if [ "$all_good" = true ]; then
         success "🎉 СИСТЕМА ПОЛНОСТЬЮ ГОТОВА К РАБОТЕ!"

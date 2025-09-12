@@ -107,11 +107,11 @@ install_staging_certificate() {
         --key-file "$STAGING_DIR/nginx.key" \
         --fullchain-file "$STAGING_DIR/nginx-fullchain.crt" \
         --ca-file "$STAGING_DIR/nginx-ca.crt"; then
-        
+
         # Установка правильных прав доступа
         chmod 644 "$STAGING_DIR"/*.crt
         chmod 600 "$STAGING_DIR"/*.key
-        
+
         success "Тестовый сертификат установлен"
     else
         error "Ошибка установки тестового сертификата"
@@ -126,7 +126,7 @@ verify_staging_certificate() {
         # Проверка срока действия
         local expiry_date=$(openssl x509 -in "$STAGING_DIR/nginx.crt" -noout -enddate | cut -d= -f2)
         log "Тестовый сертификат действителен до: $expiry_date"
-        
+
         # Проверка домена
         local cert_domain=$(openssl x509 -in "$STAGING_DIR/nginx.crt" -noout -subject | grep -o "CN=[^,]*" | cut -d= -f2)
         if [ "$cert_domain" = "$DOMAIN" ]; then
@@ -134,17 +134,17 @@ verify_staging_certificate() {
         else
             warning "Домен в сертификате ($cert_domain) не соответствует ожидаемому ($DOMAIN)"
         fi
-        
+
         # Проверка издателя (должен быть Fake LE)
         local issuer=$(openssl x509 -in "$STAGING_DIR/nginx.crt" -noout -issuer)
         log "Издатель тестового сертификата: $issuer"
-        
+
         if echo "$issuer" | grep -q "Fake LE"; then
             success "Сертификат получен с правильного staging сервера"
         else
             warning "Сертификат может быть получен не с staging сервера"
         fi
-        
+
     else
         error "Файл тестового сертификата не найден: $STAGING_DIR/nginx.crt"
     fi
@@ -153,38 +153,38 @@ verify_staging_certificate() {
 # Очистка тестовых данных
 cleanup_staging() {
     log "Очистка тестовых данных..."
-    
+
     # Удаление staging сертификата из acme.sh
     "$ACME_HOME/acme.sh" --remove -d "$DOMAIN" || true
-    
+
     # Очистка staging директории
     rm -rf "$STAGING_DIR"
-    
+
     # Возврат к production серверу
     "$ACME_HOME/acme.sh" --set-default-ca --server letsencrypt
-    
+
     success "Тестовые данные очищены"
 }
 
 # Генерация отчета
 generate_test_report() {
     log "Генерация отчета тестирования..."
-    
+
     local report_file="$(pwd)/logs/ssl-staging-test-report-$(date +%Y%m%d-%H%M%S).txt"
-    
+
     {
         echo "ERNI-KI Let's Encrypt Staging Test Report"
         echo "Generated: $(date)"
         echo "=========================================="
         echo ""
-        
+
         echo "Test Configuration:"
         echo "- Domain: $DOMAIN"
         echo "- Email: $EMAIL"
         echo "- Staging Server: Let's Encrypt Staging"
         echo "- Challenge Type: DNS-01 (Cloudflare)"
         echo ""
-        
+
         echo "API Credentials Test:"
         if [ -n "${CF_Token:-}" ]; then
             echo "- Type: Cloudflare API Token"
@@ -196,7 +196,7 @@ generate_test_report() {
             echo "- Status: NOT CONFIGURED"
         fi
         echo ""
-        
+
         echo "Certificate Information:"
         if [ -f "$STAGING_DIR/nginx.crt" ]; then
             openssl x509 -in "$STAGING_DIR/nginx.crt" -noout -subject -issuer -dates 2>/dev/null || echo "Error reading certificate"
@@ -204,16 +204,16 @@ generate_test_report() {
             echo "No staging certificate found"
         fi
         echo ""
-        
+
         echo "Next Steps:"
         echo "1. If test successful, run production script:"
         echo "   ./scripts/ssl/setup-letsencrypt-cloudflare.sh"
         echo "2. Monitor certificate installation"
         echo "3. Test HTTPS access to $DOMAIN"
         echo ""
-        
+
     } > "$report_file"
-    
+
     success "Отчет сохранен: $report_file"
     cat "$report_file"
 }
@@ -226,10 +226,10 @@ main() {
     echo "  Тестирование с безопасным staging сервером"
     echo "=================================================="
     echo -e "${NC}"
-    
+
     # Проверка аргументов
     local action="${1:-test}"
-    
+
     case "$action" in
         "test")
             check_cloudflare_credentials
@@ -249,7 +249,7 @@ main() {
             exit 1
             ;;
     esac
-    
+
     echo ""
     success "🧪 Тестирование Let's Encrypt завершено!"
     echo ""

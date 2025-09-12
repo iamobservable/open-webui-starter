@@ -20,9 +20,9 @@ check_endpoint() {
     local url=$1
     local description=$2
     local timeout=${3:-5}
-    
+
     echo -n "Checking $description... "
-    
+
     if curl -s --max-time $timeout "$url" > /dev/null 2>&1; then
         echo -e "${GREEN}✅ OK${NC}"
         return 0
@@ -37,14 +37,14 @@ test_tool() {
     local url=$1
     local payload=$2
     local description=$3
-    
+
     echo -n "Testing $description... "
-    
+
     local response=$(curl -s -X POST "$url" \
         -H "Content-Type: application/json" \
         -d "$payload" \
         --max-time 10 2>/dev/null || echo '{"error": "failed"}')
-    
+
     if echo "$response" | jq -e . >/dev/null 2>&1 && ! echo "$response" | jq -e '.error' >/dev/null 2>&1; then
         echo -e "${GREEN}✅ OK${NC}"
         return 0

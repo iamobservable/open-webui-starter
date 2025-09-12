@@ -29,7 +29,7 @@ def save_alert_to_file(alert_data, alert_type='general'):
     """Сохранить алерт в файл для дальнейшей обработки"""
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = LOG_DIR / f'alert_{alert_type}_{timestamp}.json'
-    
+
     try:
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(alert_data, f, indent=2, ensure_ascii=False)
@@ -41,12 +41,12 @@ def process_alert(alert_data, alert_type='general'):
     """Обработать алерт и выполнить необходимые действия"""
     try:
         alerts = alert_data.get('alerts', [])
-        
+
         for alert in alerts:
             labels = alert.get('labels', {})
             annotations = alert.get('annotations', {})
             status = alert.get('status', 'unknown')
-            
+
             # Логирование алерта
             logger.info(f"Processing {alert_type} alert:")
             logger.info(f"  Status: {status}")
@@ -54,15 +54,15 @@ def process_alert(alert_data, alert_type='general'):
             logger.info(f"  Service: {labels.get('service', 'Unknown')}")
             logger.info(f"  Severity: {labels.get('severity', 'Unknown')}")
             logger.info(f"  Summary: {annotations.get('summary', 'No summary')}")
-            
+
             # Специальная обработка для критических алертов
             if alert_type == 'critical' or labels.get('severity') == 'critical':
                 handle_critical_alert(alert)
-            
+
             # Специальная обработка для GPU алертов
             if alert_type == 'gpu' or labels.get('service') == 'gpu':
                 handle_gpu_alert(alert)
-                
+
     except Exception as e:
         logger.error(f"Error processing alert: {e}")
 
@@ -70,14 +70,14 @@ def handle_critical_alert(alert):
     """Обработка критических алертов"""
     labels = alert.get('labels', {})
     service = labels.get('service', 'unknown')
-    
+
     logger.critical(f"🚨 CRITICAL ALERT for service: {service}")
-    
+
     # Здесь можно добавить автоматические действия:
     # - Отправка SMS/email
     # - Запуск скриптов восстановления
     # - Уведомления в Slack/Teams
-    
+
     # Пример: запуск скрипта восстановления для определенных сервисов
     if service in ['ollama', 'openwebui', 'searxng']:
         logger.info(f"Triggering recovery script for {service}")
@@ -88,9 +88,9 @@ def handle_gpu_alert(alert):
     labels = alert.get('labels', {})
     gpu_id = labels.get('gpu_id', 'unknown')
     component = labels.get('component', 'unknown')
-    
+
     logger.warning(f"🎮 GPU Alert - GPU {gpu_id}, Component: {component}")
-    
+
     # Специальная обработка для GPU температуры
     if component == 'nvidia' and 'temperature' in labels.get('alertname', '').lower():
         logger.warning("GPU temperature alert - consider reducing workload")
@@ -111,12 +111,12 @@ def webhook_general():
         alert_data = request.get_json()
         if not alert_data:
             return jsonify({'error': 'No JSON data received'}), 400
-            
+
         save_alert_to_file(alert_data, 'general')
         process_alert(alert_data, 'general')
-        
+
         return jsonify({'status': 'success', 'message': 'Alert processed'})
-        
+
     except Exception as e:
         logger.error(f"Error in general webhook: {e}")
         return jsonify({'error': str(e)}), 500
@@ -128,12 +128,12 @@ def webhook_critical():
         alert_data = request.get_json()
         if not alert_data:
             return jsonify({'error': 'No JSON data received'}), 400
-            
+
         save_alert_to_file(alert_data, 'critical')
         process_alert(alert_data, 'critical')
-        
+
         return jsonify({'status': 'success', 'message': 'Critical alert processed'})
-        
+
     except Exception as e:
         logger.error(f"Error in critical webhook: {e}")
         return jsonify({'error': str(e)}), 500
@@ -145,12 +145,12 @@ def webhook_warning():
         alert_data = request.get_json()
         if not alert_data:
             return jsonify({'error': 'No JSON data received'}), 400
-            
+
         save_alert_to_file(alert_data, 'warning')
         process_alert(alert_data, 'warning')
-        
+
         return jsonify({'status': 'success', 'message': 'Warning alert processed'})
-        
+
     except Exception as e:
         logger.error(f"Error in warning webhook: {e}")
         return jsonify({'error': str(e)}), 500
@@ -162,12 +162,12 @@ def webhook_gpu():
         alert_data = request.get_json()
         if not alert_data:
             return jsonify({'error': 'No JSON data received'}), 400
-            
+
         save_alert_to_file(alert_data, 'gpu')
         process_alert(alert_data, 'gpu')
-        
+
         return jsonify({'status': 'success', 'message': 'GPU alert processed'})
-        
+
     except Exception as e:
         logger.error(f"Error in GPU webhook: {e}")
         return jsonify({'error': str(e)}), 500
@@ -179,12 +179,12 @@ def webhook_ai():
         alert_data = request.get_json()
         if not alert_data:
             return jsonify({'error': 'No JSON data received'}), 400
-            
+
         save_alert_to_file(alert_data, 'ai')
         process_alert(alert_data, 'ai')
-        
+
         return jsonify({'status': 'success', 'message': 'AI alert processed'})
-        
+
     except Exception as e:
         logger.error(f"Error in AI webhook: {e}")
         return jsonify({'error': str(e)}), 500
@@ -196,12 +196,12 @@ def webhook_database():
         alert_data = request.get_json()
         if not alert_data:
             return jsonify({'error': 'No JSON data received'}), 400
-            
+
         save_alert_to_file(alert_data, 'database')
         process_alert(alert_data, 'database')
-        
+
         return jsonify({'status': 'success', 'message': 'Database alert processed'})
-        
+
     except Exception as e:
         logger.error(f"Error in database webhook: {e}")
         return jsonify({'error': str(e)}), 500
@@ -212,7 +212,7 @@ def list_alerts():
     try:
         alert_files = sorted(LOG_DIR.glob('alert_*.json'), reverse=True)[:20]
         alerts = []
-        
+
         for alert_file in alert_files:
             try:
                 with open(alert_file, 'r', encoding='utf-8') as f:
@@ -224,9 +224,9 @@ def list_alerts():
                     })
             except Exception as e:
                 logger.error(f"Error reading alert file {alert_file}: {e}")
-                
+
         return jsonify({'alerts': alerts})
-        
+
     except Exception as e:
         logger.error(f"Error listing alerts: {e}")
         return jsonify({'error': str(e)}), 500

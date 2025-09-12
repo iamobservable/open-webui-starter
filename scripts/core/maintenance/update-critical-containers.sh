@@ -37,36 +37,36 @@ error() {
 # === ПРОВЕРКА ПРЕДВАРИТЕЛЬНЫХ УСЛОВИЙ ===
 check_prerequisites() {
     log "Проверка предварительных условий..."
-    
+
     # Проверка Docker
     if ! command -v docker &> /dev/null; then
         error "Docker не установлен"
     fi
-    
+
     # Проверка docker-compose
     if ! command -v docker-compose &> /dev/null; then
         error "docker-compose не установлен"
     fi
-    
+
     # Проверка compose файла
     if [[ ! -f "$COMPOSE_FILE" ]]; then
         error "Файл $COMPOSE_FILE не найден"
     fi
-    
+
     # Проверка доступности сервисов
     if ! docker-compose ps | grep -q "Up"; then
         error "ERNI-KI сервисы не запущены. Запустите: docker-compose up -d"
     fi
-    
+
     success "Предварительные условия выполнены"
 }
 
 # === СОЗДАНИЕ BACKUP ===
 create_backup() {
     log "Создание backup критических данных..."
-    
+
     mkdir -p "$BACKUP_DIR"
-    
+
     # Backup PostgreSQL
     log "Backup базы данных PostgreSQL..."
     if docker-compose exec -T db pg_dump -U postgres openwebui > "$BACKUP_DIR/openwebui-backup.sql"; then
@@ -74,7 +74,7 @@ create_backup() {
     else
         error "Не удалось создать backup PostgreSQL"
     fi
-    
+
     # Backup Ollama моделей
     log "Backup списка Ollama моделей..."
     if docker-compose exec -T ollama ollama list > "$BACKUP_DIR/ollama-models.txt"; then
@@ -82,7 +82,7 @@ create_backup() {
     else
         warning "Не удалось создать backup Ollama моделей"
     fi
-    
+
     # Backup конфигурации
     log "Backup конфигурационных файлов..."
     cp "$COMPOSE_FILE" "$BACKUP_DIR/compose.yml.backup"
@@ -92,54 +92,54 @@ create_backup() {
     if [[ -d "conf" ]]; then
         cp -r conf "$BACKUP_DIR/"
     fi
-    
+
     success "Backup завершен: $BACKUP_DIR"
 }
 
 # === ОБНОВЛЕНИЕ OLLAMA ===
 update_ollama() {
     log "Обновление Ollama: 0.11.6 → 0.11.8..."
-    
+
     # Проверка текущей версии
     local current_version
     current_version=$(docker-compose exec -T ollama ollama --version 2>/dev/null | grep -o "v[0-9]\+\.[0-9]\+\.[0-9]\+" || echo "unknown")
     log "Текущая версия Ollama: $current_version"
-    
+
     # Загрузка нового образа
     log "Загрузка ollama/ollama:0.11.8..."
     if ! docker pull ollama/ollama:0.11.8; then
         error "Не удалось загрузить новый образ Ollama"
     fi
-    
+
     # Остановка сервиса
     log "Остановка Ollama..."
     docker-compose stop ollama
-    
+
     # Обновление compose файла
     log "Обновление compose.yml..."
     sed -i.bak 's|ollama/ollama:0\.11\.6|ollama/ollama:0.11.8|g' "$COMPOSE_FILE"
-    
+
     # Запуск обновленного сервиса
     log "Запуск обновленного Ollama..."
     docker-compose up -d ollama
-    
+
     # Ожидание запуска
     log "Ожидание запуска Ollama (30 секунд)..."
     sleep 30
-    
+
     # Проверка работоспособности
     local retry_count=0
     local max_retries=5
-    
+
     while [[ $retry_count -lt $max_retries ]]; do
         if curl -f http://localhost:11434/api/tags >/dev/null 2>&1; then
             success "✅ Ollama обновлен успешно до версии 0.11.8"
-            
+
             # Проверка новой версии
             local new_version
             new_version=$(docker-compose exec -T ollama ollama --version 2>/dev/null | grep -o "v[0-9]\+\.[0-9]\+\.[0-9]\+" || echo "unknown")
             log "Новая версия Ollama: $new_version"
-            
+
             return 0
         else
             ((retry_count++))
@@ -147,40 +147,40 @@ update_ollama() {
             sleep 10
         fi
     done
-    
+
     error "❌ Ollama не отвечает после обновления. Проверьте логи: docker-compose logs ollama"
 }
 
 # === ОБНОВЛЕНИЕ OPENWEBUI ===
 update_openwebui() {
     log "Обновление OpenWebUI: cuda → v0.6.26..."
-    
+
     # Загрузка нового образа
     log "Загрузка ghcr.io/open-webui/open-webui:v0.6.26..."
     if ! docker pull ghcr.io/open-webui/open-webui:v0.6.26; then
         error "Не удалось загрузить новый образ OpenWebUI"
     fi
-    
+
     # Остановка сервиса
     log "Остановка OpenWebUI..."
     docker-compose stop openwebui
-    
+
     # Обновление compose файла
     log "Обновление compose.yml..."
     sed -i.bak 's|ghcr\.io/open-webui/open-webui:cuda|ghcr.io/open-webui/open-webui:v0.6.26|g' "$COMPOSE_FILE"
-    
+
     # Запуск обновленного сервиса
     log "Запуск обновленного OpenWebUI..."
     docker-compose up -d openwebui
-    
+
     # Ожидание запуска
     log "Ожидание запуска OpenWebUI (60 секунд)..."
     sleep 60
-    
+
     # Проверка работоспособности
     local retry_count=0
     local max_retries=10
-    
+
     while [[ $retry_count -lt $max_retries ]]; do
         if curl -f http://localhost:8080/health >/dev/null 2>&1; then
             success "✅ OpenWebUI обновлен успешно до версии v0.6.26"
@@ -191,46 +191,46 @@ update_openwebui() {
             sleep 15
         fi
     done
-    
+
     error "❌ OpenWebUI не отвечает после обновления. Проверьте логи: docker-compose logs openwebui"
 }
 
 # === ПРОВЕРКА СИСТЕМЫ ПОСЛЕ ОБНОВЛЕНИЯ ===
 post_update_check() {
     log "Проверка системы после обновления..."
-    
+
     echo ""
     echo "=== Статус контейнеров ==="
     docker-compose ps
-    
+
     echo ""
     echo "=== Проверка доступности сервисов ==="
-    
+
     # Проверка Ollama
     if curl -f http://localhost:11434/api/tags >/dev/null 2>&1; then
         success "✅ Ollama доступен"
     else
         warning "⚠️ Ollama недоступен"
     fi
-    
+
     # Проверка OpenWebUI
     if curl -f http://localhost:8080/health >/dev/null 2>&1; then
         success "✅ OpenWebUI доступен"
     else
         warning "⚠️ OpenWebUI недоступен"
     fi
-    
+
     # Проверка PostgreSQL
     if docker-compose exec -T db pg_isready -U postgres >/dev/null 2>&1; then
         success "✅ PostgreSQL доступен"
     else
         warning "⚠️ PostgreSQL недоступен"
     fi
-    
+
     echo ""
     echo "=== Использование ресурсов ==="
     docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}"
-    
+
     echo ""
     echo "=== Последние логи (возможные ошибки) ==="
     docker-compose logs --tail=20 | grep -i error || echo "Ошибок не найдено"
@@ -239,9 +239,9 @@ post_update_check() {
 # === ФУНКЦИЯ ОТКАТА ===
 rollback() {
     local service="$1"
-    
+
     error "Выполняется откат $service..."
-    
+
     case "$service" in
         "ollama")
             docker-compose stop ollama
@@ -254,7 +254,7 @@ rollback() {
             docker-compose up -d openwebui
             ;;
     esac
-    
+
     warning "Откат $service завершен. Проверьте работоспособность."
 }
 
@@ -267,18 +267,18 @@ main() {
     echo "- Ollama: 0.11.6 → 0.11.8"
     echo "- OpenWebUI: cuda → v0.6.26"
     echo ""
-    
+
     read -p "Продолжить обновление? (y/N): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         log "Обновление отменено пользователем"
         exit 0
     fi
-    
+
     # Выполнение обновлений
     check_prerequisites
     create_backup
-    
+
     # Обновление Ollama
     if update_ollama; then
         success "Ollama обновлен успешно"
@@ -286,7 +286,7 @@ main() {
         rollback "ollama"
         exit 1
     fi
-    
+
     # Обновление OpenWebUI
     if update_openwebui; then
         success "OpenWebUI обновлен успешно"
@@ -294,10 +294,10 @@ main() {
         rollback "openwebui"
         exit 1
     fi
-    
+
     # Финальная проверка
     post_update_check
-    
+
     echo ""
     success "✅ Критические обновления завершены успешно!"
     echo ""

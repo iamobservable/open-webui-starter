@@ -75,7 +75,7 @@ check_prerequisites() {
     echo ""
     echo -n "Вы подтверждаете, что выполнили эти требования? (y/N): "
     read -r confirm
-    
+
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
         error "Настройка отменена. Выполните требования и запустите скрипт снова."
     fi
@@ -120,7 +120,7 @@ location /.well-known/acme-challenge/ {
     try_files \$uri =404;
     access_log off;
     log_not_found off;
-    
+
     # Заголовки для ACME challenge
     add_header Content-Type "text/plain" always;
     add_header Cache-Control "no-cache, no-store, must-revalidate" always;
@@ -134,7 +134,7 @@ EOF
     if ! docker-compose config | grep -q "/var/www/certbot"; then
         warning "Webroot volume не настроен в docker-compose.yml"
         log "Создание временного bind mount..."
-        
+
         # Создание временного контейнера с webroot
         docker-compose exec nginx mkdir -p /var/www/certbot
         docker cp "$WEBROOT_DIR/." erni-ki-nginx-1:/var/www/certbot/
@@ -178,11 +178,11 @@ install_certificate() {
         --fullchain-file "$SSL_DIR/nginx-fullchain.crt" \
         --ca-file "$SSL_DIR/nginx-ca.crt" \
         --reloadcmd "docker-compose exec nginx nginx -s reload"; then
-        
+
         # Установка правильных прав доступа
         chmod 644 "$SSL_DIR"/*.crt
         chmod 600 "$SSL_DIR"/*.key
-        
+
         success "Сертификат установлен в nginx"
     else
         error "Ошибка установки сертификата"
@@ -213,17 +213,17 @@ verify_certificate() {
         # Проверка издателя
         local issuer=$(openssl x509 -in "$SSL_DIR/nginx.crt" -noout -issuer | grep -o "CN=[^,]*" | cut -d= -f2)
         log "Издатель сертификата: $issuer"
-        
+
         if echo "$issuer" | grep -q "Let's Encrypt"; then
             success "Сертификат выдан Let's Encrypt"
         else
             warning "Сертификат не от Let's Encrypt: $issuer"
         fi
-        
+
         # Проверка срока действия
         local expiry_date=$(openssl x509 -in "$SSL_DIR/nginx.crt" -noout -enddate | cut -d= -f2)
         log "Сертификат действителен до: $expiry_date"
-        
+
     else
         error "Файл сертификата не найден: $SSL_DIR/nginx.crt"
     fi
@@ -243,15 +243,15 @@ test_https() {
 # Генерация отчета
 generate_report() {
     log "Генерация отчета..."
-    
+
     local report_file="$(pwd)/logs/ssl-http01-report-$(date +%Y%m%d-%H%M%S).txt"
-    
+
     {
         echo "ERNI-KI Let's Encrypt HTTP-01 Setup Report"
         echo "Generated: $(date)"
         echo "==========================================="
         echo ""
-        
+
         echo "Configuration:"
         echo "- Domain: $DOMAIN"
         echo "- Method: HTTP-01 Challenge"
@@ -259,7 +259,7 @@ generate_report() {
         echo "- SSL Directory: $SSL_DIR"
         echo "- Backup: $BACKUP_DIR"
         echo ""
-        
+
         echo "Certificate Information:"
         if [ -f "$SSL_DIR/nginx.crt" ]; then
             openssl x509 -in "$SSL_DIR/nginx.crt" -noout -subject -issuer -dates 2>/dev/null || echo "Error reading certificate"
@@ -267,7 +267,7 @@ generate_report() {
             echo "Certificate not found"
         fi
         echo ""
-        
+
         echo "HTTPS Test:"
         if curl -I "https://$DOMAIN/" --connect-timeout 5 >/dev/null 2>&1; then
             echo "✓ HTTPS accessible"
@@ -275,15 +275,15 @@ generate_report() {
             echo "✗ HTTPS not accessible"
         fi
         echo ""
-        
+
         echo "Important Notes:"
         echo "- Remember to re-enable Cloudflare proxying if needed"
         echo "- Monitor certificate expiry (90 days)"
         echo "- Set up automatic renewal"
         echo ""
-        
+
     } > "$report_file"
-    
+
     success "Отчет сохранен: $report_file"
     cat "$report_file"
 }

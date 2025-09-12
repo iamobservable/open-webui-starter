@@ -11,7 +11,7 @@
     notifempty
     create 644 konstantin konstantin
     copytruncate
-    
+
     # Перезапуск сервисов после ротации (если необходимо)
     postrotate
         # Отправить сигнал HUP nginx для переоткрытия логов
@@ -41,7 +41,7 @@
     notifempty
     create 644 konstantin konstantin
     copytruncate
-    
+
     # Уведомление о критических ошибках
     postrotate
         if [ -s "$1" ]; then

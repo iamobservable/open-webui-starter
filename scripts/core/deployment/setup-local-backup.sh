@@ -40,11 +40,11 @@ get_credentials() {
     if [ -f ".backrest_secrets" ]; then
         BACKREST_PASSWORD=$(grep "BACKREST_PASSWORD=" .backrest_secrets | cut -d'=' -f2)
         RESTIC_PASSWORD=$(grep "RESTIC_PASSWORD=" .backrest_secrets | cut -d'=' -f2)
-        
+
         if [ -z "$BACKREST_PASSWORD" ] || [ -z "$RESTIC_PASSWORD" ]; then
             error "Не удалось получить учетные данные из .backrest_secrets"
         fi
-        
+
         success "Учетные данные загружены"
     else
         error "Файл .backrest_secrets не найден. Запустите сначала ./scripts/backrest-setup.sh"
@@ -54,18 +54,18 @@ get_credentials() {
 # Проверка доступности Backrest
 check_backrest() {
     log "Проверка доступности Backrest..."
-    
+
     if ! curl -s -o /dev/null -w "%{http_code}" "$BACKREST_URL/" | grep -q "200"; then
         error "Backrest недоступен по адресу $BACKREST_URL"
     fi
-    
+
     success "Backrest доступен"
 }
 
 # Создание репозитория через веб-интерфейс (инструкции)
 create_repository_instructions() {
     log "Создание локального репозитория..."
-    
+
     echo ""
     echo "=== ИНСТРУКЦИИ ПО СОЗДАНИЮ РЕПОЗИТОРИЯ ==="
     echo ""
@@ -93,7 +93,7 @@ create_repository_instructions() {
 # Создание плана бэкапа (инструкции)
 create_backup_plan_instructions() {
     log "Создание плана бэкапа..."
-    
+
     echo ""
     echo "=== ИНСТРУКЦИИ ПО СОЗДАНИЮ ПЛАНА БЭКАПА ==="
     echo ""
@@ -134,7 +134,7 @@ create_backup_plan_instructions() {
 # Создание тестового бэкапа (инструкции)
 create_test_backup_instructions() {
     log "Создание тестового бэкапа..."
-    
+
     echo ""
     echo "=== ИНСТРУКЦИИ ПО СОЗДАНИЮ ТЕСТОВОГО БЭКАПА ==="
     echo ""
@@ -149,7 +149,7 @@ create_test_backup_instructions() {
 # Проверка созданного бэкапа
 check_backup() {
     log "Проверка созданного бэкапа..."
-    
+
     if [ -d ".config-backup" ] && [ "$(ls -A .config-backup 2>/dev/null)" ]; then
         success "Директория .config-backup содержит данные бэкапа"
         echo "Содержимое директории:"
@@ -163,7 +163,7 @@ check_backup() {
 # Создание инструкций по восстановлению
 create_restore_instructions() {
     log "Создание инструкций по восстановлению..."
-    
+
     cat > docs/local-backup-restore-guide.md << 'EOF'
 # Руководство по восстановлению из локального бэкапа ERNI-KI
 
@@ -324,7 +324,7 @@ docker-compose logs --tail=50
 
 1. **Open WebUI**: http://localhost (или ваш домен)
 2. **Backrest**: http://localhost:9898
-3. **База данных**: 
+3. **База данных**:
    ```bash
    docker-compose exec db psql -U postgres -d openwebui -c "SELECT COUNT(*) FROM users;"
    ```
@@ -362,14 +362,14 @@ EOF
 # Основная функция
 main() {
     log "Настройка локального бэкапа ERNI-KI..."
-    
+
     get_credentials
     check_backrest
     create_repository_instructions
     create_backup_plan_instructions
     create_test_backup_instructions
     create_restore_instructions
-    
+
     echo ""
     success "Настройка локального бэкапа завершена!"
     echo ""

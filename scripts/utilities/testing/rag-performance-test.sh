@@ -29,13 +29,13 @@ test_api_endpoint() {
     local url=$2
     local expected_code=${3:-200}
     local timeout=${4:-10}
-    
+
     echo -n "Testing $name... "
-    
+
     local result=$(curl -s -k -w "%{http_code}:%{time_total}" --connect-timeout $timeout "$url" -o /tmp/api_response.json 2>/dev/null)
     local http_code=$(echo $result | cut -d: -f1)
     local response_time=$(echo $result | cut -d: -f2)
-    
+
     if [[ "$http_code" == "$expected_code" ]]; then
         echo -e "${GREEN}✓ OK${NC} (${response_time}s)"
         return 0
@@ -49,21 +49,21 @@ test_api_endpoint() {
 test_search_functionality() {
     local query=$1
     local min_results=${2:-3}
-    
+
     echo -n "Search test: '$query'... "
-    
+
     local start_time=$(date +%s.%N)
     local response=$(curl -s -k "https://localhost/api/searxng/search?q=$query&format=json&engines=duckduckgo" 2>/dev/null)
     local end_time=$(date +%s.%N)
     local duration=$(echo "$end_time - $start_time" | bc -l)
-    
+
     if [[ -z "$response" ]]; then
         echo -e "${RED}✗ No response${NC}"
         return 1
     fi
-    
+
     local result_count=$(echo "$response" | jq -r '.results | length' 2>/dev/null || echo "0")
-    
+
     if [[ "$result_count" -ge "$min_results" ]]; then
         echo -e "${GREEN}✓ OK${NC} (${duration}s, $result_count results)"
         return 0
@@ -137,7 +137,7 @@ echo -n "Available models... "
 model_count=$(curl -s "http://localhost:11434/api/tags" | jq -r '.models | length' 2>/dev/null || echo "0")
 if [[ "$model_count" -gt 0 ]]; then
     echo -e "${GREEN}✓ OK${NC} ($model_count models)"
-    
+
     # List models
     echo "   Models available:"
     curl -s "http://localhost:11434/api/tags" | jq -r '.models[] | "   - \(.name) (\(.details.parameter_size))"' 2>/dev/null | head -5
@@ -190,18 +190,18 @@ total_tests=$((failed_tests + search_failed))
 if [[ $total_tests -eq 0 ]]; then
     echo -e "${GREEN}✅ All RAG components operational${NC}"
     echo "🚀 System ready for production RAG workloads"
-    
+
     echo -e "\n📈 Performance Metrics:"
     echo "- Search response time: <2s ✓"
     echo "- API endpoint latency: <1s ✓"
     echo "- End-to-end RAG time: <5s ✓"
     echo "- Vector database: Operational ✓"
     echo "- AI models: Available ($model_count) ✓"
-    
+
 elif [[ $total_tests -le 2 ]]; then
     echo -e "${YELLOW}⚠ Minor issues detected ($total_tests)${NC}"
     echo "🔧 System functional but needs optimization"
-    
+
 else
     echo -e "${RED}❌ Significant issues detected ($total_tests)${NC}"
     echo "🚨 RAG functionality compromised - requires attention"

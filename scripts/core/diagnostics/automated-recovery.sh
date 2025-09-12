@@ -49,12 +49,12 @@ check_service_health() {
     local service_name="$1"
     local max_attempts="${2:-3}"
     local attempt=1
-    
+
     log "Проверка состояния сервиса: $service_name"
-    
+
     while [[ $attempt -le $max_attempts ]]; do
         local status=$(docker-compose ps "$service_name" --format "{{.Status}}" 2>/dev/null || echo "not_found")
-        
+
         case $status in
             *"Up"*"healthy"*)
                 success "Сервис $service_name работает и здоров"
@@ -81,10 +81,10 @@ check_service_health() {
                 return 3
                 ;;
         esac
-        
+
         ((attempt++))
     done
-    
+
     error "Сервис $service_name не прошел проверку здоровья за $max_attempts попыток"
     return 1
 }
@@ -93,9 +93,9 @@ check_service_health() {
 restart_service_with_dependencies() {
     local service_name="$1"
     local restart_dependencies="${2:-false}"
-    
+
     log "Перезапуск сервиса: $service_name"
-    
+
     # Получение зависимостей сервиса
     local dependencies=()
     case $service_name in
@@ -118,7 +118,7 @@ restart_service_with_dependencies() {
             dependencies=("db" "redis")
             ;;
     esac
-    
+
     # Проверка зависимостей
     if [[ "$restart_dependencies" == "true" ]]; then
         for dep in "${dependencies[@]}"; do
@@ -131,26 +131,26 @@ restart_service_with_dependencies() {
             fi
         done
     fi
-    
+
     # Graceful остановка сервиса
     log "Graceful остановка сервиса $service_name"
     if ! docker-compose stop "$service_name" --timeout=30; then
         warning "Graceful остановка не удалась, принудительная остановка"
         docker-compose kill "$service_name"
     fi
-    
+
     # Ожидание полной остановки
     sleep 5
-    
+
     # Запуск сервиса
     log "Запуск сервиса $service_name"
     if docker-compose up -d "$service_name"; then
         success "Сервис $service_name запущен"
-        
+
         # Ожидание готовности
         log "Ожидание готовности сервиса $service_name"
         sleep $DEPENDENCY_WAIT_TIME
-        
+
         # Проверка здоровья
         if check_service_health "$service_name" 5; then
             success "Сервис $service_name успешно восстановлен"
@@ -168,7 +168,7 @@ restart_service_with_dependencies() {
 # Очистка ресурсов Docker
 cleanup_docker_resources() {
     log "Очистка ресурсов Docker"
-    
+
     # Удаление остановленных контейнеров
     local stopped_containers=$(docker ps -a -q --filter "status=exited" 2>/dev/null || true)
     if [[ -n "$stopped_containers" ]]; then
@@ -176,41 +176,41 @@ cleanup_docker_resources() {
         docker rm $stopped_containers || true
         success "Остановленные контейнеры удалены"
     fi
-    
+
     # Удаление неиспользуемых образов
     log "Удаление неиспользуемых образов"
     docker image prune -f || true
-    
+
     # Удаление неиспользуемых томов
     log "Удаление неиспользуемых томов"
     docker volume prune -f || true
-    
+
     # Удаление неиспользуемых сетей
     log "Удаление неиспользуемых сетей"
     docker network prune -f || true
-    
+
     success "Очистка ресурсов Docker завершена"
 }
 
 # Проверка и исправление проблем с GPU
 fix_gpu_issues() {
     log "Проверка состояния GPU"
-    
+
     # Проверка доступности nvidia-smi
     if ! command -v nvidia-smi &> /dev/null; then
         warning "nvidia-smi недоступен, пропускаем проверку GPU"
         return 0
     fi
-    
+
     # Проверка состояния GPU
     if ! nvidia-smi &> /dev/null; then
         error "GPU недоступен"
-        
+
         # Попытка перезапуска NVIDIA Container Runtime
         log "Перезапуск NVIDIA Container Runtime"
         sudo systemctl restart docker || true
         sleep 10
-        
+
         # Повторная проверка
         if nvidia-smi &> /dev/null; then
             success "GPU восстановлен"
@@ -221,47 +221,47 @@ fix_gpu_issues() {
     else
         success "GPU работает нормально"
     fi
-    
+
     # Проверка температуры GPU
     local gpu_temp=$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits 2>/dev/null || echo "0")
     if [[ $gpu_temp -gt 85 ]]; then
         warning "Высокая температура GPU: ${gpu_temp}°C"
-        
+
         # Снижение нагрузки на GPU
         log "Временное снижение нагрузки на Ollama"
         docker-compose exec ollama pkill -STOP ollama || true
         sleep 30
         docker-compose exec ollama pkill -CONT ollama || true
     fi
-    
+
     return 0
 }
 
 # Проверка и исправление проблем с базой данных
 fix_database_issues() {
     log "Проверка состояния базы данных"
-    
+
     # Проверка подключения к PostgreSQL
     if ! docker-compose exec -T db pg_isready -U postgres &> /dev/null; then
         warning "База данных недоступна"
-        
+
         # Проверка логов базы данных
         local db_logs=$(docker-compose logs db --tail=50 2>/dev/null || echo "")
         if echo "$db_logs" | grep -i "corrupt\|error\|fatal" &> /dev/null; then
             error "Обнаружены ошибки в логах базы данных"
-            
+
             # Попытка восстановления
             log "Попытка восстановления базы данных"
             restart_service_with_dependencies "db" false
         fi
     else
         success "База данных работает нормально"
-        
+
         # Проверка количества соединений
         local connections=$(docker-compose exec -T db psql -U postgres -t -c "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d ' ' || echo "0")
         if [[ $connections -gt 80 ]]; then
             warning "Много активных соединений к базе данных: $connections"
-            
+
             # Завершение длительных запросов
             log "Завершение длительных запросов"
             docker-compose exec -T db psql -U postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'active' AND query_start < now() - interval '5 minutes';" || true
@@ -272,18 +272,18 @@ fix_database_issues() {
 # Проверка и исправление проблем с Redis
 fix_redis_issues() {
     log "Проверка состояния Redis"
-    
+
     # Проверка подключения к Redis
     if ! docker-compose exec -T redis redis-cli ping &> /dev/null; then
         warning "Redis недоступен"
         restart_service_with_dependencies "redis" false
     else
         success "Redis работает нормально"
-        
+
         # Проверка использования памяти
         local memory_usage=$(docker-compose exec -T redis redis-cli info memory | grep "used_memory_human" | cut -d: -f2 | tr -d '\r' || echo "0B")
         log "Использование памяти Redis: $memory_usage"
-        
+
         # Очистка кеша при высоком использовании
         local memory_percent=$(docker-compose exec -T redis redis-cli info memory | grep "used_memory_rss_human" | cut -d: -f2 | tr -d '\r' | sed 's/[^0-9]//g' || echo "0")
         if [[ $memory_percent -gt 500 ]]; then  # Более 500MB
@@ -297,22 +297,22 @@ fix_redis_issues() {
 # Проверка дискового пространства
 check_disk_space() {
     log "Проверка дискового пространства"
-    
+
     # Проверка основного диска
     local disk_usage=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
     log "Использование диска /: ${disk_usage}%"
-    
+
     if [[ $disk_usage -gt 90 ]]; then
         error "Критически мало места на диске: ${disk_usage}%"
-        
+
         # Очистка логов Docker
         log "Очистка логов Docker"
         docker system prune -f --volumes || true
-        
+
         # Очистка старых архивов
         log "Очистка старых архивов логов"
         find "$PROJECT_ROOT/.config-backup/logs" -name "*.gz" -mtime +7 -delete 2>/dev/null || true
-        
+
         # Повторная проверка
         disk_usage=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
         if [[ $disk_usage -gt 85 ]]; then
@@ -330,27 +330,27 @@ check_disk_space() {
 # Автоматическое восстановление всех сервисов
 auto_recovery() {
     log "Запуск автоматического восстановления ERNI-KI"
-    
+
     # Проверка системных ресурсов
     check_disk_space
     echo ""
-    
+
     # Очистка ресурсов Docker
     cleanup_docker_resources
     echo ""
-    
+
     # Исправление проблем с GPU
     fix_gpu_issues
     echo ""
-    
+
     # Исправление проблем с базой данных
     fix_database_issues
     echo ""
-    
+
     # Исправление проблем с Redis
     fix_redis_issues
     echo ""
-    
+
     # Проверка критических сервисов
     local critical_services=("db" "redis" "nginx" "auth")
     for service in "${critical_services[@]}"; do
@@ -361,7 +361,7 @@ auto_recovery() {
         fi
         echo ""
     done
-    
+
     # Проверка AI сервисов
     local ai_services=("ollama" "openwebui" "searxng")
     for service in "${ai_services[@]}"; do
@@ -372,18 +372,18 @@ auto_recovery() {
         fi
         echo ""
     done
-    
+
     # Финальная проверка всех сервисов
     log "Финальная проверка всех сервисов"
     local all_services=("db" "redis" "nginx" "auth" "ollama" "openwebui" "searxng" "docling" "edgetts" "tika" "mcposerver" "cloudflared" "watchtower" "backrest")
     local unhealthy_count=0
-    
+
     for service in "${all_services[@]}"; do
         if ! check_service_health "$service" 1; then
             ((unhealthy_count++))
         fi
     done
-    
+
     if [[ $unhealthy_count -eq 0 ]]; then
         success "Все сервисы здоровы! Автоматическое восстановление завершено успешно"
     else
@@ -400,10 +400,10 @@ main() {
     echo "║              Автоматическое восстановление                  ║"
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
-    
+
     # Переход в рабочую директорию
     cd "$PROJECT_ROOT"
-    
+
     # Выполнение восстановления
     auto_recovery
 }

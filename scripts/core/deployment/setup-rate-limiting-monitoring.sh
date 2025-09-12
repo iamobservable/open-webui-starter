@@ -25,9 +25,9 @@ success() {
 # === Создание cron задачи ===
 setup_cron_monitoring() {
     log "Настройка cron мониторинга..."
-    
+
     local cron_entry="*/1 * * * * cd $PROJECT_ROOT && ./scripts/monitor-rate-limiting.sh monitor >/dev/null 2>&1"
-    
+
     # Проверка существующей cron задачи
     if crontab -l 2>/dev/null | grep -q "monitor-rate-limiting.sh"; then
         log "Cron задача уже существует"
@@ -41,10 +41,10 @@ setup_cron_monitoring() {
 # === Создание systemd сервиса ===
 setup_systemd_service() {
     log "Создание systemd сервиса..."
-    
+
     local service_file="/etc/systemd/system/erni-ki-rate-monitor.service"
     local timer_file="/etc/systemd/system/erni-ki-rate-monitor.timer"
-    
+
     # Создание сервиса
     sudo tee "$service_file" > /dev/null <<EOF
 [Unit]
@@ -82,16 +82,16 @@ EOF
     sudo systemctl daemon-reload
     sudo systemctl enable erni-ki-rate-monitor.timer
     sudo systemctl start erni-ki-rate-monitor.timer
-    
+
     success "Systemd сервис настроен и запущен"
 }
 
 # === Настройка логротации ===
 setup_log_rotation() {
     log "Настройка ротации логов..."
-    
+
     local logrotate_config="/etc/logrotate.d/erni-ki-rate-limiting"
-    
+
     sudo tee "$logrotate_config" > /dev/null <<EOF
 $PROJECT_ROOT/logs/rate-limiting-*.log {
     daily
@@ -113,7 +113,7 @@ EOF
 # === Создание dashboard скрипта ===
 create_dashboard() {
     log "Создание dashboard скрипта..."
-    
+
     cat > "$PROJECT_ROOT/scripts/rate-limiting-dashboard.sh" <<'EOF'
 #!/bin/bash
 
@@ -184,7 +184,7 @@ EOF
 # === Настройка уведомлений ===
 setup_notifications() {
     log "Настройка интеграции уведомлений..."
-    
+
     # Создание конфигурационного файла для уведомлений
     cat > "$PROJECT_ROOT/conf/rate-limiting-notifications.conf" <<EOF
 # ERNI-KI Rate Limiting Notifications Configuration
@@ -221,7 +221,7 @@ EOF
 # === Тестирование системы ===
 test_monitoring() {
     log "Тестирование системы мониторинга..."
-    
+
     # Запуск тестовой проверки
     if "$PROJECT_ROOT/scripts/monitor-rate-limiting.sh" monitor; then
         success "Мониторинг работает корректно"
@@ -229,25 +229,25 @@ test_monitoring() {
         error "Ошибка в работе мониторинга"
         return 1
     fi
-    
+
     # Проверка создания файлов
     if [[ -f "$PROJECT_ROOT/logs/rate-limiting-monitor.log" ]]; then
         success "Лог файл создан"
     else
         error "Лог файл не создан"
     fi
-    
+
     return 0
 }
 
 # === Основная функция ===
 main() {
     log "Настройка системы мониторинга rate limiting для ERNI-KI"
-    
+
     # Создание директорий
     mkdir -p "$PROJECT_ROOT/logs"
     mkdir -p "$PROJECT_ROOT/conf"
-    
+
     # Выбор метода мониторинга
     case "${1:-cron}" in
         "cron")
@@ -266,16 +266,16 @@ main() {
             exit 1
             ;;
     esac
-    
+
     # Общие настройки
     setup_log_rotation
     create_dashboard
     setup_notifications
-    
+
     # Тестирование
     if test_monitoring; then
         success "Система мониторинга настроена успешно!"
-        
+
         echo
         echo "📋 Что было настроено:"
         echo "  ✅ Мониторинг rate limiting каждую минуту"
@@ -283,13 +283,13 @@ main() {
         echo "  ✅ Ротация логов (30 дней)"
         echo "  ✅ Dashboard для просмотра статистики"
         echo "  ✅ Интеграция с Backrest для уведомлений"
-        
+
         echo
         echo "🚀 Полезные команды:"
         echo "  ./scripts/monitor-rate-limiting.sh stats    # Показать статистику"
         echo "  ./scripts/rate-limiting-dashboard.sh        # Запустить dashboard"
         echo "  tail -f logs/rate-limiting-monitor.log      # Просмотр логов"
-        
+
     else
         error "Ошибка при настройке системы мониторинга"
         exit 1

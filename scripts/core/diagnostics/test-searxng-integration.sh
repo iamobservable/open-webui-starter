@@ -32,7 +32,7 @@ error() {
 # Проверка доступности SearXNG
 test_searxng_availability() {
     log "Тестирование доступности SearXNG..."
-    
+
     # Прямое подключение к контейнеру
     if curl -f -s http://localhost:8081/ >/dev/null; then
         success "SearXNG доступен напрямую (порт 8081)"
@@ -40,7 +40,7 @@ test_searxng_availability() {
         error "SearXNG недоступен напрямую"
         return 1
     fi
-    
+
     # Проверка через Nginx (если настроен)
     if curl -f -s -H "Host: localhost" http://localhost/searxng/ >/dev/null 2>&1; then
         success "SearXNG доступен через Nginx proxy"
@@ -52,17 +52,17 @@ test_searxng_availability() {
 # Тестирование поиска
 test_search_functionality() {
     log "Тестирование функциональности поиска..."
-    
+
     local search_query="test search"
     local search_url="http://localhost:8081/search"
-    
+
     # POST запрос для поиска
     local response
     response=$(curl -s -X POST \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "q=${search_query}&category_general=1&language=auto&time_range=&safesearch=0&theme=simple" \
         "$search_url")
-    
+
     if echo "$response" | grep -q "search results" || echo "$response" | grep -q "результат"; then
         success "Поиск работает корректно"
     else
@@ -73,14 +73,14 @@ test_search_functionality() {
 # Проверка Redis подключения
 test_redis_connection() {
     log "Проверка подключения к Redis..."
-    
+
     if docker-compose exec -T redis redis-cli ping | grep -q "PONG"; then
         success "Redis доступен"
     else
         error "Redis недоступен"
         return 1
     fi
-    
+
     # Проверка подключения SearXNG к Redis
     if docker-compose logs searxng | grep -q "redis" && ! docker-compose logs searxng | grep -q "redis.*error"; then
         success "SearXNG успешно подключен к Redis"
@@ -92,10 +92,10 @@ test_redis_connection() {
 # Проверка health check
 test_health_checks() {
     log "Проверка health checks..."
-    
+
     local health_status
     health_status=$(docker-compose ps searxng --format "table {{.Name}}\t{{.Status}}")
-    
+
     if echo "$health_status" | grep -q "healthy"; then
         success "Health check SearXNG проходит успешно"
     elif echo "$health_status" | grep -q "unhealthy"; then
@@ -109,10 +109,10 @@ test_health_checks() {
 # Проверка логов на ошибки
 check_logs_for_errors() {
     log "Проверка логов на критические ошибки..."
-    
+
     local logs
     logs=$(docker-compose logs --tail=50 searxng)
-    
+
     # Проверка на критические ошибки
     if echo "$logs" | grep -i "error\|exception\|failed\|critical"; then
         warning "Обнаружены ошибки в логах SearXNG:"
@@ -120,7 +120,7 @@ check_logs_for_errors() {
     else
         success "Критические ошибки в логах не обнаружены"
     fi
-    
+
     # Проверка на предупреждения о limiter.toml
     if echo "$logs" | grep -q "missing config file.*limiter.toml"; then
         warning "Отсутствует файл limiter.toml (это нормально, если он не монтируется)"
@@ -130,7 +130,7 @@ check_logs_for_errors() {
 # Тестирование интеграции с OpenWebUI
 test_openwebui_integration() {
     log "Тестирование интеграции с OpenWebUI..."
-    
+
     # Проверка переменных окружения OpenWebUI
     local openwebui_env
     if openwebui_env=$(docker-compose exec -T openwebui env | grep SEARXNG); then
@@ -139,7 +139,7 @@ test_openwebui_integration() {
     else
         warning "Переменные окружения SearXNG не найдены в OpenWebUI"
     fi
-    
+
     # Проверка доступности SearXNG из контейнера OpenWebUI
     if docker-compose exec -T openwebui curl -f -s http://searxng:8080/ >/dev/null; then
         success "OpenWebUI может подключиться к SearXNG"
@@ -152,18 +152,18 @@ test_openwebui_integration() {
 # Проверка производительности
 test_performance() {
     log "Тестирование производительности..."
-    
+
     local start_time end_time duration
     start_time=$(date +%s.%N)
-    
+
     curl -s -X POST \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "q=performance test&category_general=1" \
         "http://localhost:8081/search" >/dev/null
-    
+
     end_time=$(date +%s.%N)
     duration=$(echo "$end_time - $start_time" | bc)
-    
+
     if (( $(echo "$duration < 5.0" | bc -l) )); then
         success "Время ответа поиска: ${duration}s (хорошо)"
     elif (( $(echo "$duration < 10.0" | bc -l) )); then
@@ -176,17 +176,17 @@ test_performance() {
 # Проверка безопасности
 test_security_features() {
     log "Проверка функций безопасности..."
-    
+
     # Проверка заголовков безопасности
     local headers
     headers=$(curl -s -I http://localhost:8081/)
-    
+
     if echo "$headers" | grep -q "X-Content-Type-Options"; then
         success "Заголовки безопасности настроены"
     else
         warning "Заголовки безопасности могут быть не настроены"
     fi
-    
+
     # Проверка rate limiting (если настроен)
     log "Проверка rate limiting..."
     local rate_limit_test=0
@@ -197,7 +197,7 @@ test_security_features() {
         fi
         sleep 0.1
     done
-    
+
     if [ $rate_limit_test -eq 1 ]; then
         success "Rate limiting работает"
     else
@@ -208,47 +208,47 @@ test_security_features() {
 # Генерация отчета
 generate_report() {
     log "Генерация отчета тестирования..."
-    
+
     local report_file="searxng_test_report_$(date +%Y%m%d_%H%M%S).txt"
-    
+
     {
         echo "SearXNG Integration Test Report"
         echo "Generated: $(date)"
         echo "================================"
         echo ""
-        
+
         echo "Container Status:"
         docker-compose ps searxng nginx redis
         echo ""
-        
+
         echo "SearXNG Configuration:"
         echo "- Image: $(docker-compose images searxng | tail -1 | awk '{print $2":"$3}')"
         echo "- Ports: $(docker-compose port searxng 8080 2>/dev/null || echo 'Not exposed')"
         echo ""
-        
+
         echo "Recent Logs (last 20 lines):"
         docker-compose logs --tail=20 searxng
         echo ""
-        
+
         echo "Environment Variables:"
         docker-compose exec -T searxng env | grep SEARXNG || echo "No SEARXNG env vars found"
-        
+
     } > "$report_file"
-    
+
     success "Отчет сохранен в: $report_file"
 }
 
 # Основная функция
 main() {
     log "Запуск тестирования интеграции SearXNG..."
-    
+
     # Проверка, что мы в корне проекта
     if [ ! -f "compose.yml" ] && [ ! -f "docker-compose.yml" ]; then
         error "Файл compose.yml или docker-compose.yml не найден"
     fi
-    
+
     local failed_tests=0
-    
+
     # Выполнение тестов
     test_searxng_availability || ((failed_tests++))
     test_search_functionality || ((failed_tests++))
@@ -258,16 +258,16 @@ main() {
     test_openwebui_integration || ((failed_tests++))
     test_performance
     test_security_features
-    
+
     generate_report
-    
+
     echo ""
     if [ $failed_tests -eq 0 ]; then
         success "Все критические тесты пройдены успешно!"
     else
         warning "$failed_tests критических тестов не пройдено"
     fi
-    
+
     log "Рекомендации:"
     echo "1. Проверьте логи: docker-compose logs searxng"
     echo "2. Убедитесь, что все сервисы запущены: docker-compose ps"

@@ -33,10 +33,10 @@ error() {
 # Проверка зависимостей
 check_dependencies() {
     log "Проверка зависимостей..."
-    
+
     command -v openssl >/dev/null 2>&1 || error "openssl не найден"
     command -v docker >/dev/null 2>&1 || error "docker не найден"
-    
+
     if command -v docker-compose >/dev/null 2>&1; then
         DOCKER_COMPOSE="docker-compose"
     elif docker compose version >/dev/null 2>&1; then
@@ -44,17 +44,17 @@ check_dependencies() {
     else
         error "docker-compose или docker compose не найден"
     fi
-    
+
     success "Все зависимости найдены"
 }
 
 # Генерация безопасного секретного ключа
 generate_searxng_secret() {
     log "Генерация безопасного секретного ключа для SearXNG..."
-    
+
     local secret_key
     secret_key=$(openssl rand -hex 32)
-    
+
     # Обновление env файла
     if [ -f "env/searxng.env" ]; then
         # Обновляем существующий файл
@@ -64,14 +64,14 @@ generate_searxng_secret() {
         cp env/searxng.example env/searxng.env
         sed -i "s/SEARXNG_SECRET=.*/SEARXNG_SECRET=${secret_key}/" env/searxng.env
     fi
-    
+
     success "Секретный ключ сгенерирован и сохранен в env/searxng.env"
 }
 
 # Копирование конфигурационных файлов
 copy_config_files() {
     log "Копирование обновленных конфигурационных файлов..."
-    
+
     # SearXNG конфигурации
     if [ ! -f "conf/searxng/settings.yml" ]; then
         cp conf/searxng/settings.yml.example conf/searxng/settings.yml
@@ -82,7 +82,7 @@ copy_config_files() {
         cp conf/searxng/settings.yml.example conf/searxng/settings.yml
         success "Обновлен conf/searxng/settings.yml (создана резервная копия)"
     fi
-    
+
     if [ ! -f "conf/searxng/uwsgi.ini" ]; then
         cp conf/searxng/uwsgi.ini.example conf/searxng/uwsgi.ini
         success "Скопирован conf/searxng/uwsgi.ini"
@@ -92,7 +92,7 @@ copy_config_files() {
         cp conf/searxng/uwsgi.ini.example conf/searxng/uwsgi.ini
         success "Обновлен conf/searxng/uwsgi.ini (создана резервная копия)"
     fi
-    
+
     # Nginx конфигурации
     if [ ! -f "conf/nginx/conf.d/default.conf" ]; then
         cp conf/nginx/conf.d/default.example conf/nginx/conf.d/default.conf
@@ -103,7 +103,7 @@ copy_config_files() {
         cp conf/nginx/conf.d/default.example conf/nginx/conf.d/default.conf
         success "Обновлен conf/nginx/conf.d/default.conf (создана резервная копия)"
     fi
-    
+
     # Docker Compose
     if [ ! -f "compose.yml" ]; then
         cp compose.yml.example compose.yml
@@ -119,13 +119,13 @@ copy_config_files() {
 # Проверка конфигурации
 validate_config() {
     log "Проверка конфигурации..."
-    
+
     # Проверка YAML файлов
     if command -v python3 >/dev/null 2>&1; then
         python3 -c "import yaml; yaml.safe_load(open('conf/searxng/settings.yml', 'r'))" || error "Ошибка в conf/searxng/settings.yml"
         success "conf/searxng/settings.yml валиден"
     fi
-    
+
     # Проверка Docker Compose
     $DOCKER_COMPOSE config >/dev/null || error "Ошибка в compose.yml"
     success "compose.yml валиден"
@@ -134,34 +134,34 @@ validate_config() {
 # Перезапуск сервисов
 restart_services() {
     log "Перезапуск SearXNG и связанных сервисов..."
-    
+
     # Остановка SearXNG
     $DOCKER_COMPOSE stop searxng nginx || warning "Не удалось остановить некоторые сервисы"
-    
+
     # Запуск с новой конфигурацией
     $DOCKER_COMPOSE up -d searxng nginx || error "Не удалось запустить сервисы"
-    
+
     success "Сервисы перезапущены"
 }
 
 # Проверка работоспособности
 health_check() {
     log "Проверка работоспособности SearXNG..."
-    
+
     local max_attempts=30
     local attempt=1
-    
+
     while [ $attempt -le $max_attempts ]; do
         if curl -f -s http://localhost:8081/ >/dev/null 2>&1; then
             success "SearXNG доступен и работает"
             return 0
         fi
-        
+
         log "Попытка $attempt/$max_attempts: ожидание запуска SearXNG..."
         sleep 2
         ((attempt++))
     done
-    
+
     error "SearXNG не отвечает после $max_attempts попыток"
 }
 
@@ -169,7 +169,7 @@ health_check() {
 show_status() {
     log "Статус сервисов:"
     $DOCKER_COMPOSE ps searxng nginx redis
-    
+
     echo ""
     log "Проверка логов SearXNG (последние 10 строк):"
     $DOCKER_COMPOSE logs --tail=10 searxng
@@ -178,12 +178,12 @@ show_status() {
 # Основная функция
 main() {
     log "Запуск оптимизации SearXNG для ERNI-KI..."
-    
+
     # Проверка, что мы в корне проекта
     if [ ! -f "compose.yml.example" ]; then
         error "Скрипт должен запускаться из корня проекта ERNI-KI"
     fi
-    
+
     check_dependencies
     generate_searxng_secret
     copy_config_files
@@ -191,16 +191,16 @@ main() {
     restart_services
     health_check
     show_status
-    
+
     success "Оптимизация SearXNG завершена успешно!"
-    
+
     echo ""
     log "Следующие шаги:"
     echo "1. Проверьте работу SearXNG: http://localhost:8081/"
     echo "2. Проверьте интеграцию с OpenWebUI"
     echo "3. Мониторьте логи: $DOCKER_COMPOSE logs -f searxng"
     echo "4. Настройте мониторинг метрик uWSGI: http://localhost:9191"
-    
+
     warning "ВАЖНО: Сохраните сгенерированный секретный ключ в безопасном месте!"
 }
 

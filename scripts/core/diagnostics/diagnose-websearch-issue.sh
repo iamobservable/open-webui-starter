@@ -32,7 +32,7 @@ error() {
 # Проверка доступности сервисов
 check_services() {
     log "Проверка статуса сервисов..."
-    
+
     echo "=== Docker Compose Services ==="
     docker-compose ps openwebui searxng nginx cloudflared auth
     echo ""
@@ -41,16 +41,16 @@ check_services() {
 # Тестирование SearXNG напрямую
 test_searxng_direct() {
     log "Тестирование SearXNG напрямую..."
-    
+
     echo "=== Прямое подключение к SearXNG ==="
-    
+
     # Тест через localhost:8081
     if curl -s -f http://localhost:8081/ >/dev/null; then
         success "SearXNG доступен через localhost:8081"
     else
         error "SearXNG недоступен через localhost:8081"
     fi
-    
+
     # Тест поиска через localhost
     echo "Тестирование поиска через localhost..."
     local search_response
@@ -58,7 +58,7 @@ test_searxng_direct() {
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "q=test&category_general=1&format=json" \
         http://localhost:8081/search)
-    
+
     if echo "$search_response" | jq . >/dev/null 2>&1; then
         success "Поиск через localhost возвращает валидный JSON"
         echo "Количество результатов: $(echo "$search_response" | jq '.results | length')"
@@ -72,18 +72,18 @@ test_searxng_direct() {
 # Тестирование через Nginx proxy
 test_nginx_proxy() {
     log "Тестирование через Nginx proxy..."
-    
+
     echo "=== Тест через Nginx (localhost) ==="
-    
+
     # Тест доступности через Nginx
     if curl -s -f -H "Host: localhost" http://localhost/searxng/ >/dev/null 2>&1; then
         success "SearXNG доступен через Nginx proxy (localhost)"
     else
         warning "SearXNG недоступен через Nginx proxy (localhost) - возможно требуется аутентификация"
     fi
-    
+
     echo "=== Тест через Nginx (diz.zone) ==="
-    
+
     # Тест через diz.zone (если доступен)
     if curl -s -f -k https://diz.zone/searxng/ >/dev/null 2>&1; then
         success "SearXNG доступен через diz.zone"
@@ -96,20 +96,20 @@ test_nginx_proxy() {
 # Анализ конфигурации OpenWebUI
 analyze_openwebui_config() {
     log "Анализ конфигурации OpenWebUI..."
-    
+
     echo "=== Переменные окружения OpenWebUI ==="
     docker-compose exec -T openwebui env | grep -E "(SEARXNG|WEB_SEARCH|WEBUI_URL)" || echo "Переменные не найдены"
-    
+
     echo ""
     echo "=== Проверка подключения OpenWebUI -> SearXNG ==="
-    
+
     # Тест подключения изнутри контейнера OpenWebUI
     if docker-compose exec -T openwebui curl -s -f http://searxng:8080/ >/dev/null; then
         success "OpenWebUI может подключиться к SearXNG напрямую"
     else
         error "OpenWebUI не может подключиться к SearXNG"
     fi
-    
+
     # Тест поиска изнутри OpenWebUI
     echo "Тестирование поиска изнутри OpenWebUI..."
     local internal_search
@@ -117,7 +117,7 @@ analyze_openwebui_config() {
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "q=test&category_general=1&format=json" \
         http://searxng:8080/search)
-    
+
     if echo "$internal_search" | jq . >/dev/null 2>&1; then
         success "Внутренний поиск OpenWebUI -> SearXNG работает"
     else
@@ -130,14 +130,14 @@ analyze_openwebui_config() {
 # Проверка Nginx конфигурации
 check_nginx_config() {
     log "Проверка конфигурации Nginx..."
-    
+
     echo "=== Nginx Configuration Test ==="
     if docker-compose exec -T nginx nginx -t; then
         success "Конфигурация Nginx валидна"
     else
         error "Ошибка в конфигурации Nginx"
     fi
-    
+
     echo ""
     echo "=== Анализ маршрутов Nginx ==="
     echo "Проверка маршрута /searxng в конфигурации:"
@@ -148,18 +148,18 @@ check_nginx_config() {
 # Проверка логов
 check_logs() {
     log "Анализ логов сервисов..."
-    
+
     echo "=== Логи OpenWebUI (последние 20 строк) ==="
     docker-compose logs --tail=20 openwebui | grep -E "(search|searxng|error)" || echo "Релевантные записи не найдены"
-    
+
     echo ""
     echo "=== Логи SearXNG (последние 20 строк) ==="
     docker-compose logs --tail=20 searxng | grep -E "(error|warning|search)" || echo "Релевантные записи не найдены"
-    
+
     echo ""
     echo "=== Логи Nginx (последние 20 строк) ==="
     docker-compose logs --tail=20 nginx | grep -E "(searxng|error|upstream)" || echo "Релевантные записи не найдены"
-    
+
     echo ""
     echo "=== Логи Cloudflared (последние 10 строк) ==="
     docker-compose logs --tail=10 cloudflared | grep -E "(error|tunnel)" || echo "Релевантные записи не найдены"
@@ -169,14 +169,14 @@ check_logs() {
 # Тестирование HTTP заголовков
 test_http_headers() {
     log "Анализ HTTP заголовков..."
-    
+
     echo "=== Заголовки localhost:8081 (прямое подключение) ==="
     curl -s -I http://localhost:8081/ | head -10
-    
+
     echo ""
     echo "=== Заголовки через Nginx (localhost) ==="
     curl -s -I -H "Host: localhost" http://localhost/searxng/ | head -10 || echo "Недоступно"
-    
+
     echo ""
     echo "=== Заголовки через diz.zone ==="
     curl -s -I -k https://diz.zone/searxng/ | head -10 || echo "Недоступно"
@@ -186,23 +186,23 @@ test_http_headers() {
 # Симуляция запроса веб-поиска
 simulate_websearch() {
     log "Симуляция запроса веб-поиска..."
-    
+
     echo "=== Симуляция запроса через localhost ==="
     local localhost_result
     localhost_result=$(curl -s -X POST \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "q=test search&category_general=1&format=json" \
         http://localhost:8081/search)
-    
+
     echo "Размер ответа: $(echo "$localhost_result" | wc -c) байт"
     echo "Первые 200 символов: ${localhost_result:0:200}"
-    
+
     if echo "$localhost_result" | jq . >/dev/null 2>&1; then
         success "Localhost возвращает валидный JSON"
     else
         warning "Localhost не возвращает валидный JSON"
     fi
-    
+
     echo ""
     echo "=== Симуляция запроса через diz.zone (если доступен) ==="
     # Этот тест может не работать без аутентификации
@@ -213,15 +213,15 @@ simulate_websearch() {
 # Проверка сетевых подключений
 check_network() {
     log "Проверка сетевых подключений..."
-    
+
     echo "=== Docker Networks ==="
     docker network ls | grep erni-ki || echo "Сети не найдены"
-    
+
     echo ""
     echo "=== Подключения контейнеров ==="
     echo "OpenWebUI -> SearXNG:"
     docker-compose exec -T openwebui nslookup searxng || echo "DNS не работает"
-    
+
     echo ""
     echo "Nginx -> SearXNG:"
     docker-compose exec -T nginx nslookup searxng || echo "DNS не работает"
@@ -231,35 +231,35 @@ check_network() {
 # Генерация отчета
 generate_report() {
     log "Генерация отчета диагностики..."
-    
+
     local report_file="websearch_diagnosis_$(date +%Y%m%d_%H%M%S).txt"
-    
+
     {
         echo "Web Search Issue Diagnosis Report"
         echo "Generated: $(date)"
         echo "================================="
         echo ""
-        
+
         echo "PROBLEM DESCRIPTION:"
         echo "- Web search works via localhost/local IPs"
         echo "- Web search fails via diz.zone domain"
         echo "- Error: SyntaxError: JSON.parse: unexpected character"
         echo ""
-        
+
         echo "CURRENT CONFIGURATION:"
         echo "- SEARXNG_QUERY_URL: $(docker-compose exec -T openwebui env | grep SEARXNG_QUERY_URL || echo 'Not set')"
         echo "- WEBUI_URL: $(docker-compose exec -T openwebui env | grep WEBUI_URL || echo 'Not set')"
         echo "- WEB_SEARCH_ENGINE: $(docker-compose exec -T openwebui env | grep WEB_SEARCH_ENGINE || echo 'Not set')"
         echo ""
-        
+
         echo "SERVICE STATUS:"
         docker-compose ps openwebui searxng nginx cloudflared auth
         echo ""
-        
+
         echo "NGINX SEARXNG ROUTE:"
         docker-compose exec -T nginx grep -A 15 -B 5 "searxng" /etc/nginx/conf.d/default.conf || echo "Route not found"
         echo ""
-        
+
         echo "RECENT ERRORS:"
         echo "OpenWebUI errors:"
         docker-compose logs --tail=50 openwebui | grep -i error | tail -10 || echo "No errors found"
@@ -269,22 +269,22 @@ generate_report() {
         echo ""
         echo "Nginx errors:"
         docker-compose logs --tail=50 nginx | grep -i error | tail -10 || echo "No errors found"
-        
+
     } > "$report_file"
-    
+
     success "Отчет сохранен в: $report_file"
 }
 
 # Основная функция
 main() {
     log "Запуск диагностики проблем с веб-поиском..."
-    
+
     # Проверка, что мы в корне проекта
     if [ ! -f "compose.yml" ] && [ ! -f "docker-compose.yml" ]; then
         error "Файл compose.yml не найден. Запустите скрипт из корня проекта."
         exit 1
     fi
-    
+
     check_services
     test_searxng_direct
     test_nginx_proxy
@@ -295,7 +295,7 @@ main() {
     simulate_websearch
     check_network
     generate_report
-    
+
     echo ""
     log "Диагностика завершена. Основные проблемы:"
     echo "1. Маршрут /searxng в Nginx требует аутентификации"

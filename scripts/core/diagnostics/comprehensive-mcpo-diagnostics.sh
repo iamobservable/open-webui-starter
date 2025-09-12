@@ -36,14 +36,14 @@ test_endpoint_detailed() {
     local url=$1
     local description=$2
     local timeout=${3:-10}
-    
+
     echo -n "Testing $description... "
-    
+
     local start_time=$(date +%s%3N)
     local http_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time $timeout "$url" 2>/dev/null || echo "000")
     local end_time=$(date +%s%3N)
     local response_time=$((end_time - start_time))
-    
+
     if [ "$http_code" = "200" ]; then
         echo -e "${GREEN}✅ OK (${response_time}ms)${NC}"
         log_result "✅ $description: OK (${response_time}ms)"
@@ -65,9 +65,9 @@ test_mcp_tool() {
     local endpoint=$2
     local payload=$3
     local description=$4
-    
+
     echo -n "Testing $description... "
-    
+
     local start_time=$(date +%s%3N)
     local response=$(curl -s -X POST "$MCPO_URL/$server/$endpoint" \
         -H "Content-Type: application/json" \
@@ -75,7 +75,7 @@ test_mcp_tool() {
         --max-time 10 2>/dev/null || echo '{"error": "request_failed"}')
     local end_time=$(date +%s%3N)
     local response_time=$((end_time - start_time))
-    
+
     if echo "$response" | jq -e . >/dev/null 2>&1 && ! echo "$response" | jq -e '.error' >/dev/null 2>&1; then
         echo -e "${GREEN}✅ OK (${response_time}ms)${NC}"
         log_result "✅ $description: OK (${response_time}ms)"
@@ -131,21 +131,21 @@ servers=$(curl -s "$MCPO_URL/openapi.json" 2>/dev/null | jq -r '.info.descriptio
 
 if [ -n "$servers" ]; then
     echo "$servers" | tee -a "$REPORT_FILE"
-    
+
     # Тестирование каждого сервера
     for server in time postgres filesystem memory searxng; do
         echo -e "\n--- $server server ---"
-        
+
         ((total_tests++))
         if test_endpoint_detailed "$MCPO_URL/$server/docs" "$server server docs"; then
             ((passed_tests++))
         fi
-        
+
         ((total_tests++))
         if test_endpoint_detailed "$MCPO_URL/$server/openapi.json" "$server server OpenAPI"; then
             ((passed_tests++))
         fi
-        
+
         # Подсчет доступных инструментов
         tools_count=$(curl -s "$MCPO_URL/$server/openapi.json" 2>/dev/null | jq '.paths | keys | length' 2>/dev/null || echo "0")
         echo "Available tools: $tools_count" | tee -a "$REPORT_FILE"
@@ -216,7 +216,7 @@ for endpoint in "docs" "openapi.json" "time/docs" "postgres/docs"; do
     curl -s "$MCPO_URL/$endpoint" > /dev/null 2>&1
     end_time=$(date +%s%3N)
     response_time=$((end_time - start_time))
-    
+
     if [ $response_time -lt 2000 ]; then
         echo -e "  $endpoint: ${GREEN}${response_time}ms${NC}"
         log_result "✅ $endpoint response time: ${response_time}ms"

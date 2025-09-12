@@ -37,7 +37,7 @@ header() {
 # Проверка основных компонентов мониторинга
 check_monitoring_services() {
     header "Проверка компонентов мониторинга..."
-    
+
     local services=(
         "prometheus:9091:Prometheus"
         "grafana:3000:Grafana"
@@ -50,17 +50,17 @@ check_monitoring_services() {
         "cadvisor:8081:cAdvisor"
         "blackbox-exporter:9115:Blackbox Exporter"
     )
-    
+
     local healthy_count=0
     local total_count=${#services[@]}
-    
+
     echo ""
     printf "%-20s %-10s %-15s %-30s\n" "SERVICE" "PORT" "STATUS" "DESCRIPTION"
     echo "------------------------------------------------------------------------"
-    
+
     for service_info in "${services[@]}"; do
         IFS=':' read -r service port description <<< "$service_info"
-        
+
         if curl -s -f "http://localhost:$port" >/dev/null 2>&1 || \
            curl -s -f "http://localhost:$port/health" >/dev/null 2>&1 || \
            curl -s -f "http://localhost:$port/metrics" >/dev/null 2>&1; then
@@ -70,10 +70,10 @@ check_monitoring_services() {
             printf "%-20s %-10s %-15s %-30s\n" "$service" "$port" "❌ DOWN" "$description"
         fi
     done
-    
+
     echo "------------------------------------------------------------------------"
     echo "Работающих сервисов мониторинга: $healthy_count/$total_count"
-    
+
     if [ $healthy_count -eq $total_count ]; then
         success "Все компоненты мониторинга работают!"
         return 0
@@ -86,16 +86,16 @@ check_monitoring_services() {
 # Проверка метрик
 check_metrics() {
     header "Проверка сбора метрик..."
-    
+
     echo ""
     echo "=== ОСНОВНЫЕ МЕТРИКИ ==="
-    
+
     # Проверка доступности Prometheus
     if ! curl -s http://localhost:9091/api/v1/status/config >/dev/null; then
         error "Prometheus недоступен"
         return 1
     fi
-    
+
     # Системные метрики
     log "Системные метрики (Node Exporter)..."
     local node_metrics=$(curl -s "http://localhost:9091/api/v1/query?query=up{job=\"node-exporter\"}" | jq -r '.data.result | length')
@@ -104,13 +104,13 @@ check_metrics() {
     else
         error "Node Exporter метрики недоступны"
     fi
-    
+
     # GPU метрики
     log "GPU метрики (NVIDIA Exporter)..."
     local gpu_metrics=$(curl -s http://localhost:9445/metrics | grep -c "nvidia_gpu" || echo "0")
     if [ "$gpu_metrics" -gt 0 ]; then
         success "GPU метрики: $gpu_metrics показателей"
-        
+
         # Показать текущую загрузку GPU
         local gpu_usage=$(curl -s http://localhost:9445/metrics | grep "nvidia_gpu_duty_cycle" | awk '{print $2}' | head -1)
         if [ -n "$gpu_usage" ]; then
@@ -119,7 +119,7 @@ check_metrics() {
     else
         warning "GPU метрики недоступны"
     fi
-    
+
     # Контейнерные метрики
     log "Контейнерные метрики (cAdvisor)..."
     local container_metrics=$(curl -s "http://localhost:9091/api/v1/query?query=container_last_seen" | jq -r '.data.result | length')
@@ -128,7 +128,7 @@ check_metrics() {
     else
         warning "Контейнерные метрики недоступны"
     fi
-    
+
     # База данных метрики
     log "PostgreSQL метрики..."
     local db_metrics=$(curl -s "http://localhost:9091/api/v1/query?query=pg_up" | jq -r '.data.result | length')
@@ -142,21 +142,21 @@ check_metrics() {
 # Проверка дашбордов Grafana
 check_grafana_dashboards() {
     header "Проверка дашбордов Grafana..."
-    
+
     # Проверка доступности Grafana API
     if ! curl -s http://localhost:3000/api/health >/dev/null; then
         error "Grafana недоступна"
         return 1
     fi
-    
+
     success "Grafana доступна на http://localhost:3000"
-    
+
     # Проверка источников данных
     log "Проверка источников данных..."
     echo "  ├─ Prometheus: http://localhost:9091"
     echo "  ├─ Alertmanager: http://localhost:9093"
     echo "  └─ Elasticsearch: http://localhost:9200"
-    
+
     # Информация о дашбордах
     log "Предустановленные дашборды:"
     echo "  ├─ ERNI-KI System Overview"
@@ -168,26 +168,26 @@ check_grafana_dashboards() {
 # Проверка алертов
 check_alerts() {
     header "Проверка системы алертов..."
-    
+
     # Проверка Alertmanager
     if ! curl -s http://localhost:9093/api/v1/status >/dev/null; then
         error "Alertmanager недоступен"
         return 1
     fi
-    
+
     success "Alertmanager работает на http://localhost:9093"
-    
+
     # Активные алерты
     log "Проверка активных алертов..."
     local active_alerts=$(curl -s http://localhost:9093/api/v1/alerts | jq -r '.data[] | select(.state == "active") | .labels.alertname' | wc -l)
-    
+
     if [ "$active_alerts" -eq 0 ]; then
         success "Активных алертов нет"
     else
         warning "Активных алертов: $active_alerts"
         curl -s http://localhost:9093/api/v1/alerts | jq -r '.data[] | select(.state == "active") | "  ├─ \(.labels.alertname): \(.labels.severity)"'
     fi
-    
+
     # Webhook receiver
     log "Проверка webhook receiver..."
     if curl -s http://localhost:9095/health >/dev/null; then
@@ -200,26 +200,26 @@ check_alerts() {
 # Проверка производительности
 check_performance() {
     header "Проверка производительности системы..."
-    
+
     echo ""
     echo "=== ТЕКУЩИЕ ПОКАЗАТЕЛИ ==="
-    
+
     # CPU
     local cpu_usage=$(curl -s "http://localhost:9091/api/v1/query?query=100-(avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m]))*100)" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "N/A")
     echo "CPU Usage: ${cpu_usage}%"
-    
+
     # Memory
     local mem_usage=$(curl -s "http://localhost:9091/api/v1/query?query=(1-(node_memory_MemAvailable_bytes/node_memory_MemTotal_bytes))*100" | jq -r '.data.result[0].value[1]' 2>/dev/null || echo "N/A")
     echo "Memory Usage: ${mem_usage}%"
-    
+
     # Disk
     local disk_usage=$(df -h / | tail -1 | awk '{print $5}')
     echo "Disk Usage: $disk_usage"
-    
+
     # Контейнеры
     local containers=$(docker ps | wc -l)
     echo "Running Containers: $((containers-1))"
-    
+
     # GPU (если доступно)
     local gpu_temp=$(curl -s http://localhost:9445/metrics | grep "nvidia_gpu_temperature_celsius" | awk '{print $2}' | head -1 2>/dev/null || echo "N/A")
     if [ "$gpu_temp" != "N/A" ]; then
@@ -235,27 +235,27 @@ main() {
     echo "Дата: $(date '+%Y-%m-%d %H:%M:%S')"
     echo "Хост: $(hostname)"
     echo ""
-    
+
     local all_good=true
-    
+
     # Выполнение проверок
     if ! check_monitoring_services; then
         all_good=false
     fi
     echo ""
-    
+
     check_metrics
     echo ""
-    
+
     check_grafana_dashboards
     echo ""
-    
+
     check_alerts
     echo ""
-    
+
     check_performance
     echo ""
-    
+
     echo "=================================================="
     if [ "$all_good" = true ]; then
         success "🎉 СИСТЕМА МОНИТОРИНГА ПОЛНОСТЬЮ ФУНКЦИОНАЛЬНА!"

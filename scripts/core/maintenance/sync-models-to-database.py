@@ -15,7 +15,7 @@ import uuid
 def get_database_connection():
     """Получить подключение к базе данных PostgreSQL"""
     try:
-        database_url = os.environ.get('DATABASE_URL', 
+        database_url = os.environ.get('DATABASE_URL',
             'postgresql://openwebui_user:OW_secure_pass_2025!@db:5432/openwebui')
         conn = psycopg2.connect(database_url)
         return conn
@@ -81,18 +81,18 @@ def sync_models_to_database(models):
     conn = get_database_connection()
     if not conn:
         return False
-    
+
     try:
         cursor = conn.cursor()
-        
+
         # Получить существующие модели
         cursor.execute('SELECT id, base_model_id FROM model')
         existing_models = {row[1]: row[0] for row in cursor.fetchall()}
-        
+
         synced_count = 0
         for model in models:
             model_id = model['base_model_id']
-            
+
             if model_id not in existing_models:
                 # Добавить новую модель
                 new_uuid = str(uuid.uuid4())
@@ -101,7 +101,7 @@ def sync_models_to_database(models):
                     'size': model['size'],
                     'details': model['details']
                 }
-                
+
                 cursor.execute("""
                     INSERT INTO model (id, user_id, base_model_id, name, params, created_at, updated_at)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -123,10 +123,10 @@ def sync_models_to_database(models):
                     'size': model['size'],
                     'details': model['details']
                 }
-                
+
                 cursor.execute("""
-                    UPDATE model 
-                    SET params = %s, updated_at = %s 
+                    UPDATE model
+                    SET params = %s, updated_at = %s
                     WHERE base_model_id = %s
                 """, (
                     json.dumps(params),
@@ -134,14 +134,14 @@ def sync_models_to_database(models):
                     model_id
                 ))
                 print(f"🔄 Обновлена модель: {model['name']} ({model['provider']})")
-        
+
         conn.commit()
         cursor.close()
         conn.close()
-        
+
         print(f"\n📊 Синхронизация завершена: {synced_count} новых моделей добавлено")
         return True
-        
+
     except Exception as e:
         print(f"❌ Ошибка синхронизации с БД: {e}")
         if conn:
@@ -153,24 +153,24 @@ def main():
     """Главная функция"""
     print("🔄 ERNI-KI Model Synchronization")
     print("=" * 40)
-    
+
     # Получить модели из всех провайдеров
     print("📡 Получение моделей из Ollama...")
     ollama_models = get_ollama_models()
     print(f"   Найдено: {len(ollama_models)} моделей")
-    
+
     print("📡 Получение моделей из LiteLLM...")
     litellm_models = get_litellm_models()
     print(f"   Найдено: {len(litellm_models)} моделей")
-    
+
     # Объединить все модели
     all_models = ollama_models + litellm_models
     print(f"\n📋 Всего моделей для синхронизации: {len(all_models)}")
-    
+
     if not all_models:
         print("⚠️ Модели не найдены. Проверьте подключение к провайдерам.")
         return 1
-    
+
     # Синхронизировать с базой данных
     print("\n💾 Синхронизация с базой данных...")
     if sync_models_to_database(all_models):

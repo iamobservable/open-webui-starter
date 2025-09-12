@@ -134,14 +134,14 @@ update_nginx_config() {
 
     # Обновление путей к сертификатам
     log "Обновление путей к сертификатам..."
-    
+
     # Замена ssl_certificate на fullchain версию
     sed -i 's|ssl_certificate /etc/nginx/ssl/nginx\.crt;|ssl_certificate /etc/nginx/ssl/nginx-fullchain.crt;|g' "$NGINX_DEFAULT_CONF"
-    
+
     # Добавление OCSP stapling если отсутствует
     if ! grep -q "ssl_stapling on" "$NGINX_DEFAULT_CONF"; then
         log "Добавление OCSP stapling конфигурации..."
-        
+
         # Найти строку с ssl_session_tickets и добавить после неё OCSP настройки
         sed -i '/ssl_session_tickets off;/a\\n  # OCSP Stapling для быстрой проверки сертификатов\n  ssl_stapling on;\n  ssl_stapling_verify on;\n  ssl_trusted_certificate /etc/nginx/ssl/nginx-ca.crt;\n  resolver 1.1.1.1 1.0.0.1 valid=300s;\n  resolver_timeout 5s;' "$NGINX_DEFAULT_CONF"
     fi
@@ -171,7 +171,7 @@ reload_nginx() {
     else
         warning "Ошибка перезагрузки nginx, перезапуск контейнера..."
         docker-compose restart nginx
-        
+
         # Проверка статуса после перезапуска
         sleep 5
         if docker-compose ps nginx | grep -q "healthy"; then
@@ -187,7 +187,7 @@ test_https_access() {
     log "Тестирование HTTPS доступа..."
 
     local domain="ki.erni-gruppe.ch"
-    
+
     # Тест локального доступа
     if curl -k -I "https://localhost/" --connect-timeout 5 >/dev/null 2>&1; then
         success "Локальный HTTPS доступ работает"
@@ -215,10 +215,10 @@ check_ssl_rating() {
     log "Проверка SSL конфигурации..."
 
     local domain="ki.erni-gruppe.ch"
-    
+
     # Проверка поддерживаемых протоколов
     log "Проверка поддерживаемых SSL протоколов..."
-    
+
     if echo | openssl s_client -connect "$domain:443" -tls1_2 >/dev/null 2>&1; then
         success "TLS 1.2 поддерживается"
     else
@@ -242,21 +242,21 @@ check_ssl_rating() {
 # Генерация отчета
 generate_report() {
     log "Генерация отчета обновления nginx..."
-    
+
     local report_file="$PROJECT_ROOT/logs/nginx-letsencrypt-update-$(date +%Y%m%d-%H%M%S).txt"
-    
+
     {
         echo "ERNI-KI Nginx Let's Encrypt Update Report"
         echo "Generated: $(date)"
         echo "=========================================="
         echo ""
-        
+
         echo "Configuration Files:"
         echo "- Nginx config: $NGINX_DEFAULT_CONF"
         echo "- SSL directory: $SSL_DIR"
         echo "- Backup: $BACKUP_DIR"
         echo ""
-        
+
         echo "Certificate Information:"
         if [ -f "$SSL_DIR/nginx.crt" ]; then
             openssl x509 -in "$SSL_DIR/nginx.crt" -noout -subject -issuer -dates 2>/dev/null || echo "Error reading certificate"
@@ -264,23 +264,23 @@ generate_report() {
             echo "Certificate not found"
         fi
         echo ""
-        
+
         echo "Nginx Configuration Check:"
         docker-compose exec -T nginx nginx -t 2>&1 || echo "Configuration test failed"
         echo ""
-        
+
         echo "Container Status:"
         docker-compose ps nginx || echo "Container status check failed"
         echo ""
-        
+
         echo "Next Steps:"
         echo "1. Test HTTPS access: https://ki.erni-gruppe.ch/"
         echo "2. Check SSL rating: https://www.ssllabs.com/ssltest/"
         echo "3. Monitor certificate expiry"
         echo ""
-        
+
     } > "$report_file"
-    
+
     success "Отчет сохранен: $report_file"
     cat "$report_file"
 }
@@ -297,13 +297,13 @@ main() {
     create_backup
     check_letsencrypt_certificates
     update_nginx_config
-    
+
     if test_nginx_config; then
         reload_nginx
         test_https_access
         check_ssl_rating
         generate_report
-        
+
         echo ""
         success "🎉 Nginx успешно настроен для Let's Encrypt!"
         echo ""

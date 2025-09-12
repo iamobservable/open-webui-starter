@@ -47,28 +47,28 @@ error() {
 # Создание резервной копии состояния
 create_state_backup() {
     log "Создание резервной копии состояния системы"
-    
+
     local backup_timestamp=$(date +%Y%m%d_%H%M%S)
     local backup_path="$BACKUP_DIR/state_backup_$backup_timestamp"
-    
+
     mkdir -p "$backup_path"
-    
+
     # Сохранение состояния контейнеров
     docker-compose ps --format json > "$backup_path/containers_state.json" 2>/dev/null || true
-    
+
     # Сохранение конфигураций
     cp -r "$PROJECT_ROOT/env" "$backup_path/" 2>/dev/null || true
     cp -r "$PROJECT_ROOT/conf" "$backup_path/" 2>/dev/null || true
-    
+
     # Сохранение информации о томах
     docker volume ls --format json > "$backup_path/volumes_info.json" 2>/dev/null || true
-    
+
     # Сохранение сетевой информации
     docker network ls --format json > "$backup_path/networks_info.json" 2>/dev/null || true
-    
+
     # Сохранение статистики использования ресурсов
     docker stats --no-stream --format json > "$backup_path/resource_usage.json" 2>/dev/null || true
-    
+
     success "Резервная копия состояния создана: $backup_path"
     echo "$backup_path" > "$BACKUP_DIR/latest_backup_path.txt"
 }
@@ -76,14 +76,14 @@ create_state_backup() {
 # Проверка готовности к перезапуску
 check_restart_readiness() {
     log "Проверка готовности к перезапуску"
-    
+
     # Проверка дискового пространства
     local disk_usage=$(df "$PROJECT_ROOT" | awk 'NR==2 {print $5}' | sed 's/%//')
     if [[ $disk_usage -gt 90 ]]; then
         error "Недостаточно места на диске: ${disk_usage}%"
         return 1
     fi
-    
+
     # Проверка активных пользователей OpenWebUI
     local active_sessions=$(docker-compose exec -T openwebui ps aux | grep -c "python" 2>/dev/null || echo "0")
     if [[ $active_sessions -gt 5 ]]; then
@@ -95,17 +95,17 @@ check_restart_readiness() {
             return 1
         fi
     fi
-    
+
     # Проверка критических процессов
     local critical_processes=("postgres" "redis-server" "nginx")
     for process in "${critical_processes[@]}"; do
-        if docker-compose exec -T db pgrep "$process" &>/dev/null || 
-           docker-compose exec -T redis pgrep "$process" &>/dev/null || 
+        if docker-compose exec -T db pgrep "$process" &>/dev/null ||
+           docker-compose exec -T redis pgrep "$process" &>/dev/null ||
            docker-compose exec -T nginx pgrep "$process" &>/dev/null; then
             log "Критический процесс $process активен"
         fi
     done
-    
+
     success "Система готова к перезапуску"
     return 0
 }
@@ -114,9 +114,9 @@ check_restart_readiness() {
 graceful_stop_service() {
     local service_name="$1"
     local timeout="${2:-$SHUTDOWN_TIMEOUT}"
-    
+
     log "Graceful остановка сервиса: $service_name"
-    
+
     # Специальная обработка для разных сервисов
     case $service_name in
         "openwebui")
@@ -146,14 +146,14 @@ graceful_stop_service() {
             docker-compose exec nginx nginx -s quit 2>/dev/null || true
             ;;
     esac
-    
+
     # Отправка SIGTERM
     log "Отправка SIGTERM сервису $service_name"
     docker-compose stop "$service_name" --timeout="$timeout" || {
         warning "Graceful остановка не удалась, принудительная остановка"
         docker-compose kill "$service_name"
     }
-    
+
     # Проверка остановки
     local attempts=0
     while [[ $attempts -lt 10 ]]; do
@@ -164,7 +164,7 @@ graceful_stop_service() {
         sleep 2
         ((attempts++))
     done
-    
+
     warning "Сервис $service_name не остановился в ожидаемое время"
     return 1
 }
@@ -173,9 +173,9 @@ graceful_stop_service() {
 graceful_start_service() {
     local service_name="$1"
     local timeout="${2:-$STARTUP_TIMEOUT}"
-    
+
     log "Graceful запуск сервиса: $service_name"
-    
+
     # Предварительные проверки
     case $service_name in
         "ollama")
@@ -199,18 +199,18 @@ graceful_start_service() {
             fi
             ;;
     esac
-    
+
     # Запуск сервиса
     if docker-compose up -d "$service_name"; then
         log "Сервис $service_name запущен, ожидание готовности"
-        
+
         # Ожидание готовности с таймаутом
         local start_time=$(date +%s)
         local end_time=$((start_time + timeout))
-        
+
         while [[ $(date +%s) -lt $end_time ]]; do
             local status=$(docker-compose ps "$service_name" --format "{{.Status}}" 2>/dev/null || echo "")
-            
+
             if echo "$status" | grep -q "healthy"; then
                 success "Сервис $service_name готов и здоров"
                 return 0
@@ -222,7 +222,7 @@ graceful_start_service() {
                 sleep 5
             fi
         done
-        
+
         error "Сервис $service_name не стал готов в течение $timeout секунд"
         return 1
     else
@@ -234,9 +234,9 @@ graceful_start_service() {
 # Проверка зависимостей
 check_dependencies() {
     local service_name="$1"
-    
+
     log "Проверка зависимостей для $service_name"
-    
+
     local dependencies=()
     case $service_name in
         "openwebui")
@@ -255,7 +255,7 @@ check_dependencies() {
             dependencies=("db" "redis")
             ;;
     esac
-    
+
     for dep in "${dependencies[@]}"; do
         local dep_status=$(docker-compose ps "$dep" --format "{{.Status}}" 2>/dev/null || echo "not_found")
         if ! echo "$dep_status" | grep -q "Up"; then
@@ -263,7 +263,7 @@ check_dependencies() {
             return 1
         fi
     done
-    
+
     success "Все зависимости для $service_name готовы"
     return 0
 }
@@ -272,9 +272,9 @@ check_dependencies() {
 graceful_restart_service() {
     local service_name="$1"
     local check_deps="${2:-true}"
-    
+
     log "Graceful перезапуск сервиса: $service_name"
-    
+
     # Проверка зависимостей
     if [[ "$check_deps" == "true" ]]; then
         if ! check_dependencies "$service_name"; then
@@ -282,22 +282,22 @@ graceful_restart_service() {
             return 1
         fi
     fi
-    
+
     # Остановка
     if ! graceful_stop_service "$service_name"; then
         error "Не удалось остановить сервис $service_name"
         return 1
     fi
-    
+
     # Небольшая пауза
     sleep 5
-    
+
     # Запуск
     if ! graceful_start_service "$service_name"; then
         error "Не удалось запустить сервис $service_name"
         return 1
     fi
-    
+
     success "Сервис $service_name успешно перезапущен"
     return 0
 }
@@ -305,22 +305,22 @@ graceful_restart_service() {
 # Graceful перезапуск всей системы
 graceful_restart_all() {
     log "Graceful перезапуск всей системы ERNI-KI"
-    
+
     # Проверка готовности
     if ! check_restart_readiness; then
         error "Система не готова к перезапуску"
         return 1
     fi
-    
+
     # Создание резервной копии
     create_state_backup
-    
+
     # Определение порядка остановки (обратный порядок зависимостей)
     local stop_order=("openwebui" "nginx" "auth" "searxng" "ollama" "docling" "edgetts" "tika" "mcposerver" "cloudflared" "backrest" "redis" "db" "watchtower")
-    
+
     # Определение порядка запуска
     local start_order=("watchtower" "db" "redis" "auth" "ollama" "searxng" "docling" "edgetts" "tika" "mcposerver" "nginx" "openwebui" "cloudflared" "backrest")
-    
+
     # Остановка сервисов
     log "Остановка сервисов в правильном порядке"
     for service in "${stop_order[@]}"; do
@@ -330,29 +330,29 @@ graceful_restart_all() {
             log "Сервис $service уже остановлен"
         fi
     done
-    
+
     # Пауза для полной остановки
     log "Ожидание полной остановки всех сервисов"
     sleep 10
-    
+
     # Очистка ресурсов
     log "Очистка неиспользуемых ресурсов Docker"
     docker system prune -f --volumes || true
-    
+
     # Запуск сервисов
     log "Запуск сервисов в правильном порядке"
     for service in "${start_order[@]}"; do
         log "Запуск сервиса: $service"
         graceful_start_service "$service" 60
-        
+
         # Пауза между запусками для стабилизации
         sleep 10
     done
-    
+
     # Финальная проверка
     log "Финальная проверка всех сервисов"
     sleep 30
-    
+
     local unhealthy_services=()
     for service in "${start_order[@]}"; do
         local status=$(docker-compose ps "$service" --format "{{.Status}}" 2>/dev/null || echo "not_found")
@@ -360,7 +360,7 @@ graceful_restart_all() {
             unhealthy_services+=("$service")
         fi
     done
-    
+
     if [[ ${#unhealthy_services[@]} -eq 0 ]]; then
         success "Все сервисы успешно перезапущены и работают"
         return 0
@@ -373,35 +373,35 @@ graceful_restart_all() {
 # Откат к предыдущему состоянию
 rollback_to_backup() {
     log "Откат к предыдущему состоянию"
-    
+
     if [[ ! -f "$BACKUP_DIR/latest_backup_path.txt" ]]; then
         error "Резервная копия не найдена"
         return 1
     fi
-    
+
     local backup_path=$(cat "$BACKUP_DIR/latest_backup_path.txt")
     if [[ ! -d "$backup_path" ]]; then
         error "Путь к резервной копии не существует: $backup_path"
         return 1
     fi
-    
+
     log "Восстановление из резервной копии: $backup_path"
-    
+
     # Остановка всех сервисов
     docker-compose down --timeout=30 || true
-    
+
     # Восстановление конфигураций
     if [[ -d "$backup_path/env" ]]; then
         cp -r "$backup_path/env"/* "$PROJECT_ROOT/env/" 2>/dev/null || true
     fi
-    
+
     if [[ -d "$backup_path/conf" ]]; then
         cp -r "$backup_path/conf"/* "$PROJECT_ROOT/conf/" 2>/dev/null || true
     fi
-    
+
     # Запуск сервисов
     docker-compose up -d
-    
+
     success "Откат завершен"
 }
 
@@ -413,13 +413,13 @@ main() {
     echo "║               Безопасный перезапуск сервисов                ║"
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
-    
+
     # Создание директории для резервных копий
     mkdir -p "$BACKUP_DIR"
-    
+
     # Переход в рабочую директорию
     cd "$PROJECT_ROOT"
-    
+
     # Выполнение graceful перезапуска всей системы
     graceful_restart_all
 }

@@ -44,10 +44,10 @@ check_url() {
     local name="$1"
     local url="$2"
     local expected_codes="${3:-200,302,307}"
-    
+
     local status_code
     status_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout $TIMEOUT "$url" 2>/dev/null || echo "000")
-    
+
     if [[ ",$expected_codes," == *",$status_code,"* ]]; then
         success "$(printf "%-25s %-30s %s" "$name" "$url" "$status_code")"
         return 0
@@ -62,20 +62,20 @@ check_ai_services() {
     header "AI СЕРВИСЫ"
     printf "%-25s %-30s %s\n" "SERVICE" "URL" "STATUS"
     echo "------------------------------------------------------------------------"
-    
+
     local failed=0
-    
+
     check_url "OpenWebUI (Local)" "http://localhost:8080" "200" || ((failed++))
     check_url "OpenWebUI (HTTPS)" "https://diz.zone" "200" || ((failed++))
     check_url "LiteLLM" "http://localhost:4000" "200,404" || ((failed++))
-    
+
     echo ""
     if [ $failed -eq 0 ]; then
         success "Все AI-сервисы доступны"
     else
         warning "$failed AI-сервисов недоступны"
     fi
-    
+
     return $failed
 }
 
@@ -84,22 +84,22 @@ check_monitoring() {
     header "МОНИТОРИНГ И АНАЛИТИКА"
     printf "%-25s %-30s %s\n" "SERVICE" "URL" "STATUS"
     echo "------------------------------------------------------------------------"
-    
+
     local failed=0
-    
+
     check_url "Grafana" "http://localhost:3000" "200,302" || ((failed++))
     check_url "Prometheus" "http://localhost:9091" "200,302" || ((failed++))
     check_url "Alertmanager" "http://localhost:9093" "200" || ((failed++))
     check_url "Kibana" "http://localhost:5601" "200,302" || ((failed++))
     check_url "Elasticsearch" "http://localhost:9200" "200" || ((failed++))
-    
+
     echo ""
     if [ $failed -eq 0 ]; then
         success "Все сервисы мониторинга доступны"
     else
         warning "$failed сервисов мониторинга недоступны"
     fi
-    
+
     return $failed
 }
 
@@ -108,21 +108,21 @@ check_admin() {
     header "АДМИНИСТРИРОВАНИЕ"
     printf "%-25s %-30s %s\n" "SERVICE" "URL" "STATUS"
     echo "------------------------------------------------------------------------"
-    
+
     local failed=0
-    
+
     check_url "Backrest" "http://localhost:9898" "200" || ((failed++))
     check_url "Auth Server" "http://localhost:9090" "200,404" || ((failed++))
     check_url "cAdvisor" "http://localhost:8081" "200,307" || ((failed++))
     check_url "Tika" "http://localhost:9998" "200" || ((failed++))
-    
+
     echo ""
     if [ $failed -eq 0 ]; then
         success "Все административные сервисы доступны"
     else
         warning "$failed административных сервисов недоступны"
     fi
-    
+
     return $failed
 }
 
@@ -131,23 +131,23 @@ check_exporters() {
     header "EXPORTERS И МЕТРИКИ"
     printf "%-25s %-30s %s\n" "SERVICE" "URL" "STATUS"
     echo "------------------------------------------------------------------------"
-    
+
     local failed=0
-    
+
     check_url "Node Exporter" "http://localhost:9101/metrics" "200" || ((failed++))
     check_url "PostgreSQL Exporter" "http://localhost:9187/metrics" "200" || ((failed++))
     check_url "Redis Exporter" "http://localhost:9121/metrics" "200" || ((failed++))
     check_url "NVIDIA Exporter" "http://localhost:9445/metrics" "200" || ((failed++))
     check_url "Blackbox Exporter" "http://localhost:9115/metrics" "200" || ((failed++))
     check_url "Webhook Receiver" "http://localhost:9095/health" "200" || ((failed++))
-    
+
     echo ""
     if [ $failed -eq 0 ]; then
         success "Все exporters доступны"
     else
         warning "$failed exporters недоступны"
     fi
-    
+
     return $failed
 }
 
@@ -177,9 +177,9 @@ check_credentials() {
 # Сводка результатов
 show_summary() {
     local total_failed=$1
-    
+
     header "СВОДКА РЕЗУЛЬТАТОВ"
-    
+
     if [ $total_failed -eq 0 ]; then
         success "🎉 ВСЕ ВЕБ-ИНТЕРФЕЙСЫ ДОСТУПНЫ!"
         echo ""
@@ -252,38 +252,38 @@ main() {
     echo "Хост: $(hostname)"
     echo "Таймаут: ${TIMEOUT}s"
     echo ""
-    
+
     local total_failed=0
-    
+
     # Проверка AI-сервисов
     check_ai_services || total_failed=$((total_failed + $?))
     echo ""
-    
+
     # Проверка мониторинга
     check_monitoring || total_failed=$((total_failed + $?))
     echo ""
-    
+
     # Проверка администрирования
     check_admin || total_failed=$((total_failed + $?))
     echo ""
-    
+
     # Проверка exporters (если не только основные)
     if [ "$MAIN_ONLY" = false ]; then
         check_exporters || total_failed=$((total_failed + $?))
         echo ""
     fi
-    
+
     # Показать учетные данные (если verbose)
     if [ "$VERBOSE" = true ]; then
         check_credentials
         echo ""
     fi
-    
+
     # Сводка
     show_summary $total_failed
     echo ""
     echo "=================================================="
-    
+
     # Возврат кода ошибки если есть проблемы
     exit $total_failed
 }

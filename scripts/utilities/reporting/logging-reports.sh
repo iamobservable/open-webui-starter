@@ -44,11 +44,11 @@ get_service_health() {
 
 get_log_volume_stats() {
     echo "=== СТАТИСТИКА ОБЪЕМА ЛОГОВ ==="
-    
+
     # Размеры директорий логов
     echo "Размеры логов:"
     du -sh logs/ .config-backup/logs/ 2>/dev/null || echo "Директории логов не найдены"
-    
+
     # Количество логов по сервисам за последний час
     echo ""
     echo "Активность логгирования (последний час):"
@@ -60,7 +60,7 @@ get_log_volume_stats() {
 
 get_error_summary() {
     echo "=== СВОДКА ОШИБОК ==="
-    
+
     # Ошибки в критически важных сервисах
     echo "Ошибки в критически важных сервисах (последние 24 часа):"
     for service in ollama nginx openwebui db; do
@@ -75,7 +75,7 @@ get_error_summary() {
 
 get_performance_metrics() {
     echo "=== МЕТРИКИ ПРОИЗВОДИТЕЛЬНОСТИ ==="
-    
+
     # Использование ресурсов контейнерами логгирования
     echo "Использование ресурсов:"
     docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" | grep -E "(fluent|loki|grafana|prometheus)" || echo "Статистика недоступна"
@@ -88,9 +88,9 @@ get_performance_metrics() {
 generate_daily_report() {
     local report_date=$(date +%Y-%m-%d)
     local report_file="$REPORTS_DIR/daily-logging-report-$report_date.txt"
-    
+
     echo "Генерация ежедневного отчета: $report_file"
-    
+
     cat > "$report_file" << EOF
 # ЕЖЕДНЕВНЫЙ ОТЧЕТ О СИСТЕМЕ ЛОГГИРОВАНИЯ ERNI-KI
 # Дата: $(date '+%Y-%m-%d %H:%M:%S')
@@ -114,16 +114,16 @@ EOF
 
     # Добавляем рекомендации на основе метрик
     add_recommendations "$report_file"
-    
+
     echo "✅ Ежедневный отчет создан: $report_file"
 }
 
 generate_weekly_report() {
     local report_date=$(date +%Y-W%U)
     local report_file="$REPORTS_DIR/weekly-logging-report-$report_date.txt"
-    
+
     echo "Генерация еженедельного отчета: $report_file"
-    
+
     cat > "$report_file" << EOF
 # ЕЖЕНЕДЕЛЬНЫЙ ОТЧЕТ О СИСТЕМЕ ЛОГГИРОВАНИЯ ERNI-KI
 # Неделя: $(date '+%Y-W%U (%Y-%m-%d)')
@@ -144,27 +144,27 @@ $(analyze_weekly_trends)
 EOF
 
     add_weekly_recommendations "$report_file"
-    
+
     echo "✅ Еженедельный отчет создан: $report_file"
 }
 
 add_recommendations() {
     local report_file="$1"
-    
+
     # Анализируем метрики и добавляем рекомендации
     local fluent_errors=$(curl -s "$FLUENT_BIT_URL/api/v1/metrics" 2>/dev/null | jq -r '.output.["loki.0"].errors // 0')
     local log_count=$(docker logs erni-ki-ollama-1 --since=1h 2>/dev/null | wc -l)
-    
+
     echo "" >> "$report_file"
-    
+
     if [ "$fluent_errors" -gt 0 ]; then
         echo "⚠️  ВНИМАНИЕ: Обнаружены ошибки доставки в Fluent Bit ($fluent_errors). Проверьте подключение к Loki." >> "$report_file"
     fi
-    
+
     if [ "$log_count" -gt 1000 ]; then
         echo "📊 ИНФОРМАЦИЯ: Высокая активность логгирования Ollama ($log_count записей/час). Рассмотрите оптимизацию уровня логгирования." >> "$report_file"
     fi
-    
+
     echo "✅ СТАТУС: Система логгирования функционирует в штатном режиме." >> "$report_file"
 }
 
@@ -177,7 +177,7 @@ analyze_weekly_trends() {
 
 add_weekly_recommendations() {
     local report_file="$1"
-    
+
     cat >> "$report_file" << EOF
 
 1. **Производительность**: Мониторинг показывает стабильную работу системы логгирования
@@ -203,7 +203,7 @@ main() {
     echo "🚀 Запуск генерации отчетов о системе логгирования ERNI-KI"
     echo "Время: $(date)"
     echo ""
-    
+
     case "${1:-daily}" in
         "daily")
             generate_daily_report
@@ -220,7 +220,7 @@ main() {
             exit 1
             ;;
     esac
-    
+
     echo ""
     echo "📁 Отчеты сохранены в: $REPORTS_DIR"
     echo "🎉 Генерация отчетов завершена успешно!"
