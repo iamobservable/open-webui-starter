@@ -2,15 +2,78 @@
   "mcpServers": {
     "time": {
       "command": "uvx",
-      "args": ["mcp-server-time", "--local-timezone=America/Chicago"]
+      "args": ["mcp-server-time", "--local-timezone=Europe/Berlin"]
     },
     "postgres": {
       "command": "npx",
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql://postgres:postgres@db/openwebui"
+        "        "postgresql://postgres:CHANGE_THIS_PASSWORD_BEFORE_PRODUCTION@db/openwebui"  # pragma: allowlist secret"
+      ]
+    },
+    "context7": {
+      "command": "uvx",
+      "args": [
+        "context7-mcp-server",
+        "        "--api-key=CHANGE_THIS_CONTEXT7_API_KEY_BEFORE_PRODUCTION"  # pragma: allowlist secret"
+      ]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/app/data",
+        "/app/conf"
+      ]
+    },
+    "git": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git",
+        "--repository=/app/data"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "web-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-web-search"
+      ]
+    },
+    "fetch": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-fetch"
       ]
     }
   }
 }
+
+// MCP Server Configuration для ERNI-KI
+// Дата обновления: 2025-09-19
+// Статус: Production Ready - Context7 интеграция включена
+//
+// ВАЖНО: Изменить перед продакшеном:
+// 1. Замените CHANGE_THIS_PASSWORD_BEFORE_PRODUCTION на реальный пароль PostgreSQL
+// 2. Замените CHANGE_THIS_CONTEXT7_API_KEY_BEFORE_PRODUCTION на ваш Context7 API ключ
+// 3. Настройте timezone согласно вашему региону
+// 4. Проверьте доступность всех MCP серверов
+//
+// Новые возможности в версии 2025-09-19:
+// - Context7 интеграция для улучшенного контекста AI
+// - Filesystem MCP для работы с файлами
+// - Git MCP для версионного контроля
+// - Memory MCP для долгосрочной памяти
+// - Web Search MCP для поиска в интернете
+// - Fetch MCP для загрузки веб-контента

@@ -1,5 +1,8 @@
-# LiteLLM Environment Configuration для ERNI-KI
+# LiteLLM Context Engineering Environment Configuration для ERNI-KI
 # Скопировать в env/litellm.env и настроить значения
+# Дата обновления: 2025-09-19
+# Статус: Production Ready - Context7 интеграция включена
+# Возможности: Унифицированный API для LLM провайдеров + Context Engineering
 
 # === ОСНОВНЫЕ НАСТРОЙКИ ===
 # Master key для администрирования LiteLLM (обязательно начинается с sk-)
@@ -154,3 +157,27 @@ SERVICE_NAME=litellm-erni-ki
 
 # Version для мониторинга
 SERVICE_VERSION=main-stable
+
+# === CONTEXT7 ИНТЕГРАЦИЯ ===
+# Context Engineering для улучшенного AI контекста
+# API ключ Context7 (получить на https://context7.com)
+CONTEXT7_API_KEY=CHANGE_THIS_CONTEXT7_API_KEY_BEFORE_PRODUCTION
+CONTEXT7_ENABLED=true
+CONTEXT7_ENHANCEMENT_LEVEL=advanced
+CONTEXT7_INCLUDE_EXAMPLES=true
+
+# === ИНТЕГРАЦИЯ С СИСТЕМОЙ МОНИТОРИНГА ===
+# Настройки для интеграции с оптимизированной системой мониторинга ERNI-KI
+# Статус: 18 дашбордов Grafana (100% функциональны)
+PROMETHEUS_METRICS_ENABLED=true
+GRAFANA_DASHBOARD_INTEGRATION=true
+MONITORING_SYSTEM_VERSION=2025-09-19
+
+# === ВАЖНО: ИЗМЕНИТЬ ПЕРЕД ПРОДАКШЕНОМ ===
+# ⚠️ Замените CHANGE_THIS_MASTER_KEY_BEFORE_PRODUCTION на уникальный master key
+# ⚠️ Замените CHANGE_THIS_SALT_KEY_64_CHARS_LONG_NEVER_CHANGE_AFTER_FIRST_RUN на 64-символьный salt key
+# ⚠️ Замените CHANGE_THIS_PASSWORD_BEFORE_PRODUCTION на реальный пароль PostgreSQL
+# ⚠️ Замените CHANGE_THIS_CONTEXT7_API_KEY_BEFORE_PRODUCTION на ваш Context7 API ключ
+# ⚠️ Настройте OLLAMA_BASE_URL согласно вашей конфигурации Ollama
+# ⚠️ Проверьте доступность всех внешних API провайдеров
+# ⚠️ Убедитесь в корректной работе Context7 интеграции

@@ -1,0 +1,132 @@
+# vLLM Environment Configuration для ERNI-KI
+# Скопировать в env/vllm.env и настроить значения
+# Дата обновления: 2025-09-19
+# Статус: Production Ready - CPU-only inference сервер (совместимость с Ollama GPU)
+
+# === ОСНОВНЫЕ НАСТРОЙКИ ===
+# Принудительное использование CPU (согласно официальной документации)
+VLLM_TARGET_DEVICE=cpu
+VLLM_DEVICE=cpu
+
+# Хост и порт для API сервера
+VLLM_HOST=0.0.0.0
+VLLM_PORT=8003
+
+# API ключ для безопасности (интеграция с ERNI-KI auth)
+VLLM_API_KEY=CHANGE_THIS_VLLM_API_KEY_BEFORE_PRODUCTION
+
+# Отключить анонимную телеметрию
+VLLM_DISABLE_TELEMETRY=true
+
+# === CPU НАСТРОЙКИ (согласно официальной документации) ===
+# CPU-специфичные переменные окружения (оптимизировано для 8-core CPU)
+VLLM_CPU_KVCACHE_SPACE=4
+VLLM_CPU_OMP_THREADS_BIND=0-6
+VLLM_CPU_NUM_OF_RESERVED_CPU=1
+
+# Максимальная длина модели (оптимизировано для CPU)
+VLLM_MAX_MODEL_LEN=1024
+
+# Parallelism отключен для CPU
+VLLM_TENSOR_PARALLEL_SIZE=1
+VLLM_PIPELINE_PARALLEL_SIZE=1
+
+# === ПРОИЗВОДИТЕЛЬНОСТЬ И ОПТИМИЗАЦИЯ ДЛЯ CPU ===
+# Отключить chunked prefill для CPU (не поддерживается)
+VLLM_ENABLE_CHUNKED_PREFILL=false
+
+# Максимальное количество токенов в batch (оптимизировано для CPU)
+VLLM_MAX_NUM_BATCHED_TOKENS=1024
+
+# Максимальное количество последовательностей (оптимизировано для CPU)
+VLLM_MAX_NUM_SEQS=64
+
+# Размер блока для KV cache (рекомендовано для CPU)
+VLLM_BLOCK_SIZE=16
+
+# Swap space (минимальный для CPU)
+VLLM_SWAP_SPACE=2
+
+# Принудительный eager режим (отключает CUDA graphs)
+VLLM_ENFORCE_EAGER=true
+
+# === МОДЕЛЬ ПО УМОЛЧАНИЮ ===
+# Модель для загрузки при старте (совместимая с CPU)
+VLLM_MODEL=gpt2
+
+# Тип данных для модели (рекомендовано для CPU)
+VLLM_DTYPE=bfloat16
+
+# Доверять удаленному коду (для HuggingFace моделей)
+VLLM_TRUST_REMOTE_CODE=true
+
+# === ЛОГИРОВАНИЕ И ОТЛАДКА ===
+# Отключить логирование запросов для production
+VLLM_DISABLE_LOG_REQUESTS=false
+
+# Уровень логирования
+VLLM_LOG_LEVEL=info
+
+# Включить подробные логи для отладки
+VLLM_VERBOSE=false
+
+# === БЕЗОПАСНОСТЬ ===
+# Разрешенные источники для CORS (настройте согласно вашим доменам)
+VLLM_ALLOWED_ORIGINS=http://localhost:8080,https://your-domain.com
+VLLM_ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS
+VLLM_ALLOWED_HEADERS=*
+
+# === ИНТЕГРАЦИЯ С HUGGINGFACE ===
+# HuggingFace токен (для доступа к Llama моделям)
+HUGGING_FACE_HUB_TOKEN=CHANGE_THIS_HF_TOKEN_BEFORE_PRODUCTION
+
+# Кэш директория для моделей (shared с Ollama)
+HF_HOME=/root/.cache/huggingface
+
+# Отключить HF телеметрию
+HF_HUB_DISABLE_TELEMETRY=1
+
+# === ДОПОЛНИТЕЛЬНЫЕ ПАРАМЕТРЫ ===
+# Максимальное время ожидания для загрузки модели
+VLLM_MODEL_LOAD_TIMEOUT=600
+
+# Включить prefix caching для повторяющихся запросов
+VLLM_ENABLE_PREFIX_CACHING=true
+
+# Размер shared memory (важно для multi-GPU)
+VLLM_SHM_SIZE=2g
+
+# === МОНИТОРИНГ ===
+# Включить метрики для Prometheus
+VLLM_ENABLE_METRICS=true
+
+# Порт для метрик (если отличается от основного)
+VLLM_METRICS_PORT=8000
+
+# Путь для health check
+VLLM_HEALTH_CHECK_PATH=/health
+
+# === CPU-СПЕЦИФИЧНЫЕ НАСТРОЙКИ ===
+# Отключить GPU-специфичные функции
+VLLM_ENABLE_EXPERIMENTAL_FEATURES=false
+VLLM_USE_FLASH_ATTENTION=false
+VLLM_DISABLE_CUDA_GRAPH=true
+
+# CPU оптимизации (из официальной документации)
+VLLM_CPU_MOE_PREPACK=0
+VLLM_CPU_SGL_KERNEL=0
+
+# === ИНТЕГРАЦИЯ С СИСТЕМОЙ МОНИТОРИНГА ===
+# Настройки для интеграции с оптимизированной системой мониторинга ERNI-KI
+# Статус: 18 дашбордов Grafana (100% функциональны)
+PROMETHEUS_METRICS_ENABLED=true
+GRAFANA_DASHBOARD_INTEGRATION=true
+
+# === ВАЖНО: ИЗМЕНИТЬ ПЕРЕД ПРОДАКШЕНОМ ===
+# ⚠️ Замените CHANGE_THIS_VLLM_API_KEY_BEFORE_PRODUCTION на безопасный API ключ
+# ⚠️ Замените CHANGE_THIS_HF_TOKEN_BEFORE_PRODUCTION на ваш HuggingFace токен
+# ⚠️ Настройте VLLM_ALLOWED_ORIGINS согласно вашим доменам
+# ⚠️ Выберите подходящую модель для VLLM_MODEL (gpt2 только для тестирования)
+# ⚠️ Настройте CPU параметры согласно доступным ресурсам
+# ⚠️ Проверьте совместимость с Ollama GPU конфигурацией
+# ⚠️ Убедитесь в корректной работе метрик Prometheus

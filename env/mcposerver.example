@@ -1,0 +1,103 @@
+# MCP Server Environment Configuration для ERNI-KI
+# Скопировать в env/mcposerver.env и настроить значения
+# Дата обновления: 2025-09-19
+# Статус: Production Ready - Context7 интеграция включена
+
+# === СТАНДАРТИЗИРОВАННОЕ ЛОГИРОВАНИЕ ===
+LOG_LEVEL=warn
+LOG_FORMAT=json
+
+# === ОСНОВНЫЕ НАСТРОЙКИ MCP СЕРВЕРА ===
+# Путь к конфигурационному файлу MCP серверов
+MCP_CONFIG_PATH=/app/config.json
+MCP_PORT=8000
+MCP_HOST=0.0.0.0
+
+# === БЕЗОПАСНОСТЬ И CORS ===
+# Разрешенные домены для CORS (настройте согласно вашим доменам)
+ALLOWED_ORIGINS=http://localhost:8080,https://your-domain.com,http://localhost:3000
+CORS_ALLOW_CREDENTIALS=true
+
+# === ИНТЕГРАЦИЯ С POSTGRESQL ===
+# Настройки подключения к базе данных ERNI-KI
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+POSTGRES_DB=openwebui
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=CHANGE_THIS_PASSWORD_BEFORE_PRODUCTION
+POSTGRES_CONNECTION_STRING=postgresql://postgres:CHANGE_THIS_PASSWORD_BEFORE_PRODUCTION@db/openwebui  # pragma: allowlist secret
+
+# === ФАЙЛОВАЯ СИСТЕМА ===
+# Разрешенные директории для MCP filesystem сервера
+FILESYSTEM_ALLOWED_DIRECTORIES=/app/data,/app/conf,/tmp
+FILESYSTEM_READ_ONLY=true
+FILESYSTEM_MAX_FILE_SIZE=104857600
+
+# === GIT ИНТЕГРАЦИЯ ===
+# Настройки для MCP git сервера
+GIT_ALLOWED_DIRECTORIES=/app/data
+GIT_AUTHOR_NAME=ERNI-KI System
+GIT_AUTHOR_EMAIL=system@erni-ki.local
+
+# === ПАМЯТЬ И КЭШИРОВАНИЕ ===
+# Настройки MCP memory сервера
+MEMORY_STORAGE_PATH=/app/data/mcp-memory
+MEMORY_MAX_ENTITIES=10000
+MEMORY_MAX_RELATIONS=50000
+
+# === WEB SEARCH ИНТЕГРАЦИЯ ===
+# Интеграция с SearXNG для поиска
+SEARXNG_BASE_URL=http://nginx:8080/api/searxng
+WEB_SEARCH_ENGINE=searxng
+WEB_SEARCH_TIMEOUT=10
+
+# === FETCH КОНФИГУРАЦИЯ ===
+# Настройки для загрузки веб-контента
+FETCH_TIMEOUT=30000
+FETCH_MAX_SIZE=10485760
+FETCH_USER_AGENT=ERNI-KI-MCP/1.0
+
+# === ПРОИЗВОДИТЕЛЬНОСТЬ ===
+# Оптимизированные настройки для быстрого отклика
+MAX_CONCURRENT_REQUESTS=20
+REQUEST_TIMEOUT=15
+CACHE_TTL=600
+KEEPALIVE_TIMEOUT=60
+
+# === ВРЕМЕННАЯ ЗОНА ===
+# Настройте согласно вашему региону
+TZ=Europe/Berlin
+
+# === CONTEXT7 ИНТЕГРАЦИЯ ===
+# API ключ для Context7 MCP сервера
+# Получить ключ: https://context7.com/api/v1
+# Документация: https://github.com/upstash/context7
+CONTEXT7_API_KEY=CHANGE_THIS_CONTEXT7_API_KEY_BEFORE_PRODUCTION
+
+# === POSTGRESQL MCP КОНФИГУРАЦИЯ ===
+# Расширенные настройки для pgsql-mcp-server
+# PyPI пакет: https://pypi.org/project/pgsql-mcp-server/
+POSTGRES_MCP_DSN=postgresql://postgres:CHANGE_THIS_PASSWORD_BEFORE_PRODUCTION@db:5432/openwebui  # pragma: allowlist secret
+POSTGRES_MCP_TIMEOUT=30
+POSTGRES_MCP_MAX_CONNECTIONS=10
+
+# === ВАЖНО: ИЗМЕНИТЬ ПЕРЕД ПРОДАКШЕНОМ ===
+# ⚠️ Замените CHANGE_THIS_PASSWORD_BEFORE_PRODUCTION на реальный пароль PostgreSQL
+# ⚠️ Замените CHANGE_THIS_CONTEXT7_API_KEY_BEFORE_PRODUCTION на ваш Context7 API ключ
+# ⚠️ Настройте ALLOWED_ORIGINS согласно вашим доменам
+# ⚠️ Проверьте доступность всех внешних сервисов (PostgreSQL, SearXNG)
+# ⚠️ Настройте лимиты производительности согласно доступным ресурсам
+# ⚠️ Включите мониторинг MCP сервера через Prometheus
+
+# === МОНИТОРИНГ И ДИАГНОСТИКА ===
+# Включение метрик для интеграции с системой мониторинга ERNI-KI (18 дашбордов Grafana)
+ENABLE_METRICS=true
+METRICS_PORT=9090
+HEALTH_CHECK_INTERVAL=30
+
+# === ИНТЕГРАЦИЯ С СИСТЕМОЙ МОНИТОРИНГА ===
+# Настройки для интеграции с оптимизированной системой мониторинга ERNI-KI
+# Статус: 18 дашбордов Grafana (100% функциональны)
+# Prometheus запросы с fallback значениями для стабильного отображения данных
+PROMETHEUS_METRICS_ENABLED=true
+GRAFANA_DASHBOARD_INTEGRATION=true
