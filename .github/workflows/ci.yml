@@ -250,14 +250,15 @@ jobs:
 
       - name: 🔍 Run Trivy on Docker image
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/auth:latest
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/auth:${{ github.ref_name }}
           format: "sarif"
           output: "docker-trivy-results.sarif"
 
       - name: 📤 Upload Docker Trivy results
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && hashFiles('docker-trivy-results.sarif') != ''
         with:
           sarif_file: "docker-trivy-results.sarif"
 

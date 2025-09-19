@@ -3,7 +3,24 @@
 
 # Модели управляются через Database Models в LiteLLM Admin UI
 # Все модели мигрированы из конфигурации в базу данных для полного управления через веб-интерфейс
-model_list: []
+#
+# === vLLM INTEGRATION CONFIGURATION ===
+# Для добавления vLLM моделей через Admin UI используйте следующие параметры:
+#
+# vLLM Model Configuration (добавить через LiteLLM Admin UI):
+# - model_name: "vllm/llama-3.1-8b-instruct"
+# - litellm_params:
+#     model: "meta-llama/Llama-3.1-8B-Instruct"
+#     api_base: "http://vllm:8000/v1"
+#     api_key: "erni-ki-vllm-secure-key-2024"
+#     custom_llm_provider: "openai"
+#     max_tokens: 4096
+#     temperature: 0.7
+#
+# Fallback Configuration (настроить через Admin UI):
+# - Primary: vllm/llama-3.1-8b-instruct (высокая производительность)
+# - Fallback: ollama/llama3.1:8b (совместимость)
+#
 
 router_settings:
   num_retries: 3
@@ -30,12 +47,72 @@ general_settings:
   # === HEALTH CHECK BYPASS ===
   # Отключить аутентификацию для health check эндпоинтов
   disable_auth_on_health_check: true
+  # Отключить логирование health check запросов для уменьшения шума в логах
+  disable_health_check_logs: true
+
+# === OPENAI PASSTHROUGH CONFIGURATION ===
+# Настройка passthrough для OpenAI Assistant API
+openai_route_config:
+  # Включить OpenAI passthrough
+  enable_openai_passthrough: true
+  # OpenAI API настройки
+  openai_api_key: os.environ/OPENAI_API_KEY
+  openai_api_base: os.environ/OPENAI_API_BASE
+  # Разрешенные эндпоинты для passthrough
+  allowed_routes:
+    - "/v1/assistants"
+    - "/v1/assistants/*"
+    - "/v1/threads"
+    - "/v1/threads/*"
+    - "/v1/threads/*/messages"
+    - "/v1/threads/*/messages/*"
+    - "/v1/threads/*/runs"
+    - "/v1/threads/*/runs/*"
+  # Настройки безопасности для passthrough
+  require_auth: true
+  budget_alerts: false
+  fallbacks: false
 
 litellm_settings:
   drop_params: true
   set_verbose: false
   num_retries: 3
   request_timeout: 300
+  max_parallel_requests: 20  # Ограничение одновременных запросов для снижения пиков памяти
+  # === PROMETHEUS METRICS ===
+  callbacks: ["prometheus"]  # Включить экспорт Prometheus метрик
+  service_callback: ["prometheus_system"]  # Мониторинг системных сервисов (Redis, PostgreSQL)
+  # Конфигурация Prometheus метрик для ERNI-KI мониторинга
+  prometheus_metrics_config:
+    # Основные метрики производительности
+    - group: "performance"
+      metrics:
+        - "litellm_request_total_latency_metric"
+        - "litellm_llm_api_latency_metric"
+        - "litellm_proxy_total_requests_metric"
+        - "litellm_proxy_failed_requests_metric"
+      include_labels:
+        - "model"
+        - "api_provider"
+        - "requested_model"
+        - "status_code"
+    # Системные метрики для мониторинга здоровья
+    - group: "system_health"
+      metrics:
+        - "litellm_deployment_success_responses"
+        - "litellm_deployment_failure_responses"
+      include_labels:
+        - "api_provider"
+        - "requested_model"
+  # === CACHE CONFIGURATION ===
+  cache: true  # Включить кэширование
+  # === LOG FILTERING ===
+  # Отключить логирование health check запросов для уменьшения шума
+  disable_health_check_logs: true
+  # Фильтровать запросы без API ключей в логах
+  log_only_errors: false
+  # Минимальный уровень логирования для уменьшения шума
+  log_level: "INFO"
   # === OLLAMA THINKING TOKENS COMPATIBILITY ===
   # Настройки для правильной обработки thinking tokens
   ignore_unknown_fields: true
@@ -48,6 +125,15 @@ litellm_settings:
   ollama_thinking_mode: "stream"
   # Разрешить неизвестные поля в chunk responses
   allow_unknown_chunk_fields: true
+  # === vLLM INTEGRATION SETTINGS ===
+  # Настройки для интеграции с vLLM сервером
+  vllm_compatibility_mode: true
+  # Поддержка vLLM специфичных параметров
+  vllm_enable_prefix_caching: true
+  # Timeout для vLLM запросов (увеличен для больших моделей)
+  vllm_request_timeout: 600
+  # Поддержка streaming для vLLM
+  vllm_enable_streaming: true
   # === MCP INTEGRATION SETTINGS ===
   # MCP Aliases для упрощения доступа к серверам
   mcp_aliases:
@@ -69,16 +155,48 @@ litellm_settings:
     rpm_limit: 100 # Лимит запросов в минуту
   # === PERFORMANCE OPTIMIZATION ===
   # Настройки кэширования для production
+  # Redis параметры настроены через переменные окружения (env/litellm.env)
+  # для совместимости с LiteLLM v1.77.2
   cache_params:
     type: "redis" # Использовать Redis для кэширования
     ttl: 3600 # TTL кэша в секундах (1 час)
     namespace: "erni-ki-litellm" # Namespace для изоляции кэша
+    # Redis подключение настроено через REDIS_URL в env/litellm.env
   # Настройки connection pooling
   connection_pool:
     max_connections: 100 # Максимум подключений к БД
     max_overflow: 20 # Дополнительные подключения при пиковой нагрузке
     pool_timeout: 30 # Таймаут получения подключения
     pool_recycle: 3600 # Время жизни подключения (1 час)
+
+# === OPENAI ASSISTANT API CONFIGURATION ===
+# Настройки для интеграции с OpenAI Assistant API
+assistant_settings:
+  custom_llm_provider: openai
+  litellm_params:
+    api_key: os.environ/OPENAI_API_KEY
+    api_base: os.environ/OPENAI_API_BASE
+  # Настройки для конкретного Assistant
+  default_assistant_id: "asst_C8dUl6EKuR41O9sddVVuhTGn"
+  # Включить passthrough для Assistant API эндпоинтов
+  enable_assistant_passthrough: true
+  # Поддержка всех Assistant API операций
+  supported_operations:
+    - "create_assistant"
+    - "get_assistant"
+    - "update_assistant"
+    - "delete_assistant"
+    - "create_thread"
+    - "get_thread"
+    - "update_thread"
+    - "delete_thread"
+    - "create_message"
+    - "get_message"
+    - "list_messages"
+    - "create_run"
+    - "get_run"
+    - "list_runs"
+    - "cancel_run"
 
 # === MCP SERVERS CONFIGURATION ===
 # Интеграция с внешними MCP серверами (примеры из документации)

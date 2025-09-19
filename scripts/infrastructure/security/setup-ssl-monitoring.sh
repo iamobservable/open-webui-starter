@@ -32,7 +32,7 @@ error() {
 
 # Конфигурация
 PROJECT_DIR="$(pwd)"
-MONITOR_SCRIPT="$PROJECT_DIR/scripts/ssl/monitor-certificates.sh"
+MONITOR_SCRIPT="$PROJECT_DIR/scripts/infrastructure/security/monitor-certificates.sh"
 SERVICE_NAME="erni-ki-ssl-monitor"
 TIMER_NAME="erni-ki-ssl-monitor"
 
@@ -194,7 +194,7 @@ create_manual_script() {
 # Ручная проверка SSL сертификатов ERNI-KI
 
 cd "$(dirname "$0")/../.."
-./scripts/ssl/monitor-certificates.sh check
+./scripts/infrastructure/security/monitor-certificates.sh check
 EOF
 
     chmod +x "$manual_script"
@@ -262,10 +262,10 @@ show_usage_instructions() {
     echo ""
 
     log "Команды для управления мониторингом:"
-    echo "• Ручная проверка: ./scripts/ssl/monitor-certificates.sh check"
-    echo "• Принудительное обновление: ./scripts/ssl/monitor-certificates.sh renew"
-    echo "• Генерация отчета: ./scripts/ssl/monitor-certificates.sh report"
-    echo "• Тест HTTPS: ./scripts/ssl/monitor-certificates.sh test"
+    echo "• Ручная проверка: ./scripts/infrastructure/security/monitor-certificates.sh check"
+    echo "• Принудительное обновление: ./scripts/infrastructure/security/monitor-certificates.sh renew"
+    echo "• Генерация отчета: ./scripts/infrastructure/security/monitor-certificates.sh report"
+    echo "• Тест HTTPS: ./scripts/infrastructure/security/monitor-certificates.sh test"
     echo ""
 
     if command -v systemctl >/dev/null 2>&1; then

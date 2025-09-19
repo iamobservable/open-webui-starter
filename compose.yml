@@ -132,18 +132,20 @@ services:
         condition: service_healthy
     env_file: env/redis.env
     command: >
-      redis-stack-server
+      redis-server
       --requirepass ErniKiRedisSecurePassword2024
       --save ""
       --appendonly yes
       --maxmemory-policy allkeys-lru
+      --protected-mode yes
+      --bind 0.0.0.0
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a 'ErniKiRedisSecurePassword2024' ping | grep PONG"]
       interval: 30s
       timeout: 3s
       retries: 5
       start_period: 20s
-    image: redis/redis-stack:latest
+    image: redis:7-alpine
     logging: *important-logging
     restart: unless-stopped
     volumes:
@@ -157,7 +159,7 @@ services:
   # LiteLLM Context Engineering Gateway (оптимизированная сетевая конфигурация)
   litellm:
     # Используем последнюю версию LiteLLM с поддержкой thinking tokens
-    image: ghcr.io/berriai/litellm:v1.76.1-stable
+    image: ghcr.io/berriai/litellm:v1.77.2.rc.1
     container_name: erni-ki-litellm
 
     # Зависимости - запускаем после критически важных сервисов
@@ -213,10 +215,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 8G # Лимит памяти (критическое увеличение с 6G до 8G)
+          memory: 12G # Лимит памяти (увеличено для предотвращения OOM; было 8G)
           cpus: "1.0" # Лимит CPU
         reservations:
-          memory: 4G # Минимальная память (увеличена с 1.5G до 4G для стабильности)
+          memory: 6G # Минимальная память (увеличена с 4G до 6G для буфера)
           cpus: "0.5" # Минимальный CPU
 
     # Используем стандартную Docker bridge сеть
@@ -502,63 +504,9 @@ services:
       - "com.centurylinklabs.watchtower.monitor-only=true"
       - "com.centurylinklabs.watchtower.scope=critical-ai-gpu"
 
-  # vLLM высокопроизводительный inference сервер с GPU ускорением
-  vllm:
-    depends_on:
-      watchtower:
-        condition: service_healthy
-      ollama:
-        condition: service_healthy
-    # CPU-only режим (согласно официальной документации vLLM)
-    environment:
-      - VLLM_TARGET_DEVICE=cpu
-      - VLLM_DEVICE=cpu
-      - VLLM_CPU_KVCACHE_SPACE=4
-      - VLLM_CPU_OMP_THREADS_BIND=0-6
-      - VLLM_CPU_NUM_OF_RESERVED_CPU=1
-      - VLLM_LOGGING_LEVEL=DEBUG
-      - CUDA_VISIBLE_DEVICES=""
-    env_file: env/vllm.env
-
-    # CPU Memory Limits для vLLM
-    deploy:
-      resources:
-        limits:
-          memory: 6G # Лимит памяти для vLLM (CPU-only)
-        reservations:
-          memory: 2G # Минимальная память для CPU режима
-
-    healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:8000/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s # Увеличено время для загрузки модели
-
-    image: vllm/vllm-openai:v0.6.3.post1
-    logging: *critical-logging
-    ports:
-      - "8003:8000" # Избежать конфликта с MCP Server на 8000, Redis на 8001
-    restart: unless-stopped
-
-    volumes:
-      - ./data/vllm-models:/root/.cache/huggingface
-      - /dev/shm:/dev/shm # Shared memory для tensor operations
-
-    # Command с оптимизированными параметрами для ERNI-KI
-    command:
-      [
-        "python",
-        "-c",
-        "import os; os.environ['VLLM_TARGET_DEVICE']='cpu'; os.environ['CUDA_VISIBLE_DEVICES']=''; from vllm import LLM, SamplingParams; import time; llm = LLM(model='gpt2', device='cpu', dtype='bfloat16', max_model_len=1024, enforce_eager=True, max_num_batched_tokens=1024, max_num_seqs=64, block_size=16); print('vLLM CPU model loaded successfully'); while True: time.sleep(60)",
-      ]
-
-    # Используем стандартную Docker bridge сеть
-    labels:
-      # КРИТИЧЕСКИ ВАЖНО: Запретить автообновление vLLM с GPU
-      - "com.centurylinklabs.watchtower.enable=false"
-      - "com.centurylinklabs.watchtower.monitor-only=true"
-      - "com.centurylinklabs.watchtower.scope=critical-ai-gpu"
+  # vLLM высокопроизводительный inference сервер - УДАЛЕН
+  # Причина: Дублирует функциональность Ollama, не используется в системе
+  # Ollama уже предоставляет GPU-ускоренный inference с лучшей интеграцией
 
   # Nginx реверс-прокси (оптимизированная сетевая конфигурация)
   nginx:
@@ -584,6 +532,7 @@ services:
       - ./conf/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
       - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./conf/nginx/ssl:/etc/nginx/ssl
+      - ./conf/nginx/includes:/etc/nginx/includes
     # Используем стандартную Docker bridge сеть
     labels:
       # КРИТИЧЕСКИ ВАЖНО: Запретить автообновление Nginx (критический прокси-сервер)
@@ -882,30 +831,6 @@ services:
       - "com.centurylinklabs.watchtower.scope=monitoring-stack"
     # Используем стандартную Docker bridge сеть
 
-  # Redis Exporter - мониторинг Redis
-  redis-exporter:
-    depends_on:
-      watchtower:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    image: oliver006/redis_exporter:latest
-    container_name: erni-ki-redis-exporter
-    environment:
-      - REDIS_ADDR=redis://:ErniKiRedisSecurePassword2024@redis:6379
-      - REDIS_EXPORTER_INCL_SYSTEM_METRICS=true
-    ports:
-      - "9121:9121"
-    restart: unless-stopped
-    logging: *monitoring-logging
-    healthcheck:
-      disable: true # Минимальный контейнер без утилит для проверки
-    labels:
-      # Разрешить автообновление для Redis Exporter
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "com.centurylinklabs.watchtower.scope=monitoring-stack"
-    # Используем стандартную Docker bridge сеть
-
   # NVIDIA GPU Exporter - мониторинг GPU
   nvidia-exporter:
     depends_on:
@@ -921,7 +846,7 @@ services:
     restart: unless-stopped
     logging: *monitoring-logging
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -f nvidia_gpu_prometheus_exporter > /dev/null || exit 1"]
+      test: ["CMD-SHELL", "timeout 5 sh -c '</dev/tcp/localhost/9445' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -984,7 +909,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://127.0.0.1:9778/metrics || exit 1",
+          "wget --no-verbose --tries=1 --spider http://localhost:9778/metrics || exit 1",
         ]
       interval: 30s
       timeout: 10s
@@ -1010,7 +935,12 @@ services:
       - "9113:9113"
     restart: unless-stopped
     logging: *monitoring-logging
-    # Health check убран - контейнер минимальный без curl/wget
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 5 sh -c '</dev/tcp/localhost/9113' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     # Метрики доступны на http://localhost:9113/metrics
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
@@ -1063,6 +993,9 @@ services:
         condition: service_healthy
       loki:
         condition: service_healthy
+      # Дополнительная задержка для стабилизации Loki
+      prometheus:
+        condition: service_healthy
     environment:
       # Уровень логирования
       - FLB_LOG_LEVEL=info
@@ -1073,10 +1006,13 @@ services:
       # Health check endpoint
       - FLB_HEALTH_CHECK=On
       # Elasticsearch authentication (временно здесь для отладки)
-    # Health check отключен из-за минимального образа Fluent Bit
-    # Сервис мониторится через Prometheus метрики на порту 2020
+    # Health check для мониторинга состояния Fluent Bit → Loki интеграции
     healthcheck:
-      disable: true
+      test: ["CMD-SHELL", "curl -f http://localhost:2020/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s # Задержка запуска для ожидания готовности Loki
     image: fluent/fluent-bit:latest
     container_name: erni-ki-fluent-bit
     logging: *monitoring-logging

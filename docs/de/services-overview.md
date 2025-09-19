@@ -12,7 +12,7 @@
 | ----------------- | ------------------- | ----------------- | ----------------------------- | -------------------- | ----------------- | --------------------------------------------------------------- |
 | **🧠 ollama**     | ✅ Up 24h (healthy) | `11434:11434`     | ❌ Keine                      | `env/ollama.env`     | ENV               | **🔥 KRITISCH** • GPU: NVIDIA runtime • Auto-Update deaktiviert |
 | **🤖 openwebui**  | ✅ Up 5h (healthy)  | `8080` (internal) | `conf/openwebui/*.json`       | `env/openwebui.env`  | JSON              | **🔥 KRITISCH** • GPU: NVIDIA runtime • MCP Integration         |
-| **🌐 litellm**    | ✅ Up 2h (healthy)  | `4000:4000`       | `conf/litellm/config.yaml`    | `env/litellm.env`    | YAML              | Context Engineering Gateway • Memory: 6GB Limit                 |
+| **🌐 litellm**    | ✅ Up 2h (healthy)  | `4000:4000`       | `conf/litellm/config.yaml`    | `env/litellm.env`    | YAML              | Context Engineering Gateway • Memory: 12GB Limit                |
 | **🔍 searxng**    | ✅ Up 2h (healthy)  | `8080` (internal) | `conf/searxng/*.yml`          | `env/searxng.env`    | YAML/TOML/INI     | RAG Suche • Redis Caching                                       |
 | **🔌 mcposerver** | ✅ Up 24h (healthy) | `8000:8000`       | `conf/mcposerver/config.json` | `env/mcposerver.env` | JSON              | Model Context Protocol                                          |
 
@@ -52,16 +52,16 @@
 
 ## 🔍 Exporters (Metrics Collection)
 
-| Service                  | Status              | Ports       | Konfiguration                  | Umgebungsvariablen          | Konfigurationstyp | Anmerkungen                                     |
-| ------------------------ | ------------------- | ----------- | ------------------------------ | --------------------------- | ----------------- | ----------------------------------------------- |
-| **🖥️ node-exporter**     | ✅ Up 24h (healthy) | `9101:9100` | ❌ Keine                       | `env/node-exporter.env`     | ENV               | System-Metriken                                 |
-| **🐳 cadvisor**          | ✅ Up 24h (healthy) | `8081:8080` | ❌ Keine                       | `env/cadvisor.env`          | ENV               | Docker Container                                |
-| **🎯 blackbox-exporter** | ✅ Up 23h (healthy) | `9115:9115` | ❌ Keine                       | `env/blackbox-exporter.env` | ENV               | Verfügbarkeitsprüfung                           |
-| **🔥 nvidia-exporter**   | ✅ Up 24h (healthy) | `9445:9445` | ❌ Keine                       | `env/nvidia-exporter.env`   | ENV               | **🎮 GPU Metriken** • NVIDIA runtime            |
-| **🧠 ollama-exporter**   | ✅ Up 24h (healthy) | `9778:9778` | ❌ Keine                       | ❌ Keine                    | ENV               | AI-Modell Metriken                              |
-| **🗄️ postgres-exporter** | ✅ Up 24h (healthy) | `9187:9187` | `conf/postgres-exporter/*.yml` | `env/postgres-exporter.env` | YAML              | PostgreSQL Metriken                             |
-| **⚡ redis-exporter**    | ✅ Up 24h           | `9121:9121` | ❌ Keine                       | ❌ Keine                    | ENV               | **⚠️ Healthcheck deaktiviert** • Redis Metriken |
-| **🚪 nginx-exporter**    | ✅ Up 24h           | `9113:9113` | ❌ Keine                       | ❌ Keine                    | ENV               | Nginx Metriken                                  |
+| Service                              | Status              | Ports       | Konfiguration                  | Umgebungsvariablen          | Konfigurationstyp | Anmerkungen                                     |
+| ------------------------------------ | ------------------- | ----------- | ------------------------------ | --------------------------- | ----------------- | ----------------------------------------------- |
+| **🖥️ node-exporter**                 | ✅ Up 24h (healthy) | `9101:9100` | ❌ Keine                       | `env/node-exporter.env`     | ENV               | System-Metriken                                 |
+| **🐳 cadvisor**                      | ✅ Up 24h (healthy) | `8081:8080` | ❌ Keine                       | `env/cadvisor.env`          | ENV               | Docker Container                                |
+| **🎯 blackbox-exporter**             | ✅ Up 23h (healthy) | `9115:9115` | ❌ Keine                       | `env/blackbox-exporter.env` | ENV               | Verfügbarkeitsprüfung                           |
+| **🔥 nvidia-exporter**               | ✅ Up 24h (healthy) | `9445:9445` | ❌ Keine                       | `env/nvidia-exporter.env`   | ENV               | **🎮 GPU Metriken** • NVIDIA runtime            |
+| **🧠 ollama-exporter**               | ✅ Up 24h (healthy) | `9778:9778` | ❌ Keine                       | ❌ Keine                    | ENV               | AI-Modell Metriken                              |
+| **🗄️ postgres-exporter**             | ✅ Up 24h (healthy) | `9187:9187` | `conf/postgres-exporter/*.yml` | `env/postgres-exporter.env` | YAML              | PostgreSQL Metriken                             |
+| **⚡ Redis Monitoring über Grafana** | ✅ Up 24h           | `9121:9121` | ❌ Keine                       | ❌ Keine                    | ENV               | **⚠️ Healthcheck deaktiviert** • Redis Metriken |
+| **🚪 nginx-exporter**                | ✅ Up 24h           | `9113:9113` | ❌ Keine                       | ❌ Keine                    | ENV               | Nginx Metriken                                  |
 
 ## 🛠️ Infrastructure Layer (Backup & Management)
 
@@ -74,15 +74,15 @@
 
 ## 📋 Zusammenfassende Statistiken
 
-| Kategorie                      | Anzahl | Status                                                     |
-| ------------------------------ | ------ | ---------------------------------------------------------- |
-| **Gesamt Services**            | **29** | ✅ 100% laufen                                             |
-| **Healthy Services**           | **25** | ✅ 86% mit Healthcheck                                     |
-| **Services ohne Healthcheck**  | **4**  | ⚠️ cloudflared, fluent-bit, redis-exporter, nginx-exporter |
-| **GPU-abhängige Services**     | **3**  | 🎮 ollama, openwebui, nvidia-exporter                      |
-| **Kritisch wichtige Services** | **3**  | 🔥 ollama, openwebui, db, nginx                            |
-| **Mit Konfigurationsdateien**  | **12** | 📁 41% haben conf/                                         |
-| **Nur Umgebungsvariablen**     | **17** | 🔧 59% verwenden nur env/                                  |
+| Kategorie                      | Anzahl | Status                                                                    |
+| ------------------------------ | ------ | ------------------------------------------------------------------------- |
+| **Gesamt Services**            | **29** | ✅ 100% laufen                                                            |
+| **Healthy Services**           | **25** | ✅ 86% mit Healthcheck                                                    |
+| **Services ohne Healthcheck**  | **4**  | ⚠️ cloudflared, fluent-bit, Redis Monitoring über Grafana, nginx-exporter |
+| **GPU-abhängige Services**     | **3**  | 🎮 ollama, openwebui, nvidia-exporter                                     |
+| **Kritisch wichtige Services** | **3**  | 🔥 ollama, openwebui, db, nginx                                           |
+| **Mit Konfigurationsdateien**  | **12** | 📁 41% haben conf/                                                        |
+| **Nur Umgebungsvariablen**     | **17** | 🔧 59% verwenden nur env/                                                 |
 
 ## 🔧 Konfigurationstypen
 

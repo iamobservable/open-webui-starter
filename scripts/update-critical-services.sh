@@ -110,7 +110,7 @@ update_ollama() {
 
         # Запустить зависимые сервисы
         log "Запуск зависимых сервисов"
-        docker-compose up -d openwebui litellm vllm ollama-exporter
+        docker-compose up -d openwebui litellm ollama-exporter
 
         # Проверить их здоровье
         for service in openwebui litellm; do
