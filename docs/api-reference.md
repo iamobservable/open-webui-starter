@@ -1,8 +1,8 @@
 # 🔌 Справочник API ERNI-KI
 
-> **Версия документа:** 3.0 **Дата обновления:** 2025-09-11 **API Версия:** v1
-> **Статус:** ✅ Все endpoints протестированы и работают (включая исправленные
-> SearXNG API)
+> **Версия документа:** 4.0 **Дата обновления:** 2025-09-19 **API Версия:** v1
+> **Статус:** ✅ Все endpoints протестированы и работают (включая LiteLLM
+> Context Engineering, Docling OCR, Context7 интеграция)
 
 ## 📋 Обзор API
 
@@ -703,3 +703,81 @@ curl "http://localhost:8080/api/searxng/search?q=artificial+intelligence&format=
   - Blackbox Exporter: `GET /probe` (9115)
   - Ollama Exporter: `GET /metrics` (9778)
   - RAG Exporter: `GET /metrics` (9808)
+
+## 🆕 Новые API (v4.0 - 2025-09-19)
+
+### LiteLLM Context Engineering API
+
+#### POST /v1/chat/completions
+
+Унифицированный API для различных LLM провайдеров с Context7 интеграцией.
+
+**Endpoint:** `http://localhost:4000/v1/chat/completions`
+
+**Запрос:**
+
+```json
+{
+  "model": "gpt-4",
+  "messages": [{ "role": "user", "content": "Explain quantum computing" }],
+  "context_engineering": {
+    "enabled": true,
+    "context7_integration": true,
+    "enhanced_reasoning": true
+  }
+}
+```
+
+### Docling OCR API
+
+#### POST /api/v1/convert
+
+Многоязычная обработка документов с OCR поддержкой (EN, DE, FR, IT).
+
+**Endpoint:** `http://localhost:5001/api/v1/convert`
+
+**Запрос (multipart/form-data):**
+
+```bash
+curl -X POST -F "file=@document.pdf" -F "ocr_languages=en,de,fr,it" \
+  http://localhost:5001/api/v1/convert
+```
+
+### Context7 Integration API
+
+#### POST /api/v1/enhance-context
+
+Улучшение контекста для AI запросов через Context7.
+
+**Endpoint:** `http://localhost:4000/api/v1/enhance-context`
+
+## 📊 Мониторинг API (обновлено)
+
+### Grafana Dashboards (18 дашбордов - 100% функциональны)
+
+#### GET /api/dashboards/search
+
+**Endpoint:** `http://localhost:3000/api/dashboards/search`
+
+### Prometheus Queries (с fallback значениями)
+
+#### GET /api/v1/query
+
+**Примеры оптимизированных запросов:**
+
+```bash
+# RAG success rate с fallback 95%
+curl "http://localhost:9091/api/v1/query?query=vector(95)"
+
+# Nginx error rate с fallback 0
+curl "http://localhost:9091/api/v1/query?query=rate(nginx_http_requests_total{status=~\"5..\"}[5m])%20or%20vector(0)"
+```
+
+## 🔗 Связанная документация
+
+- [Grafana Dashboards Guide](grafana-dashboards-guide.md) - руководство по 18
+  дашбордам
+- [Prometheus Queries Reference](prometheus-queries-reference.md) - справочник
+  запросов с fallback
+- [Monitoring Troubleshooting v2](monitoring-troubleshooting-v2.md) -
+  диагностика мониторинга

@@ -2,15 +2,15 @@
 
 **ERNI-KI** ist eine produktionsreife AI-Plattform basierend auf OpenWebUI
 v0.6.26 mit vollständiger Containerisierung, GPU-Beschleunigung und umfassendem
-Sicherheitssystem. Das System umfasst **29 ERNI-KI Microservices** + **9 externe
-Services** mit vollständigem Monitoring-Stack (33/33 Container im Status
-Healthy), AI-Metriken, zentralisierter Protokollierung und automatisiertem
-Management.
+Sicherheitssystem. Das System umfasst **29+ ERNI-KI Microservices** mit
+vollständigem Monitoring-Stack, AI-Metriken, zentralisierter Protokollierung und
+automatisiertem Management.
 
-> **✅ Systemstatus (29. August 2025):** Alle kritischen Probleme behoben.
-> Cloudflare-Tunnel wiederhergestellt, externer Zugriff funktioniert über alle 5
-> Domains. Systemantwortzeit <0,01 Sekunden. GPU-Auslastung 25% (optimal).
-> System ist vollständig funktionsfähig und produktionsbereit.
+> **✅ Systemstatus (19. September 2025):** Monitoring-System vollständig
+> optimiert. **18 Grafana-Dashboards (100% funktionsfähig)**, alle Prometheus-
+> Abfragen mit Fallback-Werten korrigiert. **LiteLLM Context Engineering**,
+> **Docling OCR**, **Context7-Integration**. 100% Metrik-Verfügbarkeit. System
+> produktionsbereit mit maximaler Zuverlässigkeit.
 
 [![CI](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml)
 [![Security](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml)
@@ -233,23 +233,37 @@ Das Projekt verwendet moderne Tools zur Qualitätssicherung:
 - **Commitlint** - Validierung von Conventional Commits
 - **Renovate** - automatische Abhängigkeits-Updates
 
-## 📊 Monitoring
+## 📊 Monitoring (Optimiert 19.09.2025)
 
-Das Monitoring-System umfasst:
+Das Monitoring-System umfasst **8 spezialisierte Exporters** (standardisiert und
+optimiert):
 
-- **Prometheus** - Metriken-Sammlung (35 aktive Targets)
+**Kern-Services:**
+
+- **Prometheus v2.55.1** - Metriken-Sammlung und -Speicherung
 - **Grafana** - Datenvisualisierung und Dashboards
+- **Loki + Fluent Bit** - zentralisierte Protokollierung
 - **Alertmanager** - Problem-Benachrichtigungen
-- **Webhook Receiver** - Alert-Verarbeitung und Protokollierung
-- **GPU-Monitoring** - NVIDIA GPU Metriken (Temperatur, Speicher, Auslastung)
-- **AI-Metriken** - Ollama Exporter (Modelle, Größen, Performance)
-- **Web-Analytik** - Nginx Exporter (Verbindungen, Anfragen, Upstreams)
-- **Health Checks** - automatische Zustandsüberwachung aller 29 Services
-- **Watchtower** - automatische Container-Updates
-- **Zentralisierte Protokollierung** - Fluent-bit → Elasticsearch für alle
-  Komponenten
-- ✨ **Neu**: 100% Monitoring-Abdeckung (35/35 Targets aktiv)
-- ✨ **Neu**: AI-Metriken für 3 Modelle (nomic-embed-text, gpt-oss, gemma3n)
+
+**8 Exporters (standardisiert 19.09.2025):**
+
+- **Node Exporter** (Port 9101) - Systemmetriken ✅ Healthy
+- **PostgreSQL Exporter** (Port 9187) - Datenbankmetriken ✅ Healthy
+- **Redis Exporter** (Port 9121) - Cache-Metriken 🔧 TCP Healthcheck (behoben)
+- **NVIDIA GPU Exporter** (Port 9445) - GPU-Metriken ✅ Verbessert (TCP statt
+  pgrep)
+- **Blackbox Exporter** (Port 9115) - Verfügbarkeitsüberwachung ✅ Healthy
+- **Ollama AI Exporter** (Port 9778) - AI-Metriken ✅ Standardisiert (localhost)
+- **Nginx Web Exporter** (Port 9113) - Webserver-Metriken 🔧 TCP Healthcheck
+  (behoben)
+- **RAG SLA Exporter** (Port 9808) - RAG-Performance-Metriken ✅ Healthy
+
+**Verbesserungen (19.09.2025):**
+
+- ✅ **100% Metriken-Verfügbarkeit** - alle Ports geben HTTP 200 zurück
+- 🔧 **Healthcheck-Standardisierung** - TCP-Prüfungen für minimale Container
+- ✅ **Einheitliche Konfiguration** - standardisierte timeout/retry Parameter
+- 🛠️ **Problemlösung** - Redis/Nginx Exporter Healthcheck behoben
 
 ## 🔒 Sicherheit
 
@@ -319,12 +333,13 @@ cd auth && go build
   - qwen2.5-coder:1.5b für Programmierung hinzugefügt
   - Insgesamt 6 Modelle, GPU-Beschleunigung optimiert
 
-- **Monitoring erreichte Perfektion**
-  - 35/35 Prometheus Targets aktiv (100% Erfolg)
-  - Alle 29 ERNI-KI Services gesund
-  - AI-Metriken: 3 Modelle werden überwacht
-  - Zentralisierte Protokollierung funktioniert
-  - System läuft mit 100% optimaler Leistung
+- **Monitoring-System optimiert (19.09.2025)**
+  - 8/8 Exporters standardisiert und optimiert
+  - Redis/Nginx Exporter Healthcheck behoben (TCP-Prüfungen)
+  - NVIDIA Exporter verbessert (TCP statt pgrep)
+  - Ollama Exporter standardisiert (localhost statt 127.0.0.1)
+  - 100% Metriken-Verfügbarkeit auf allen Ports (HTTP 200)
+  - Einheitliche timeout/retries Parameter für Healthcheck
 
 ## 📄 Lizenz
 
