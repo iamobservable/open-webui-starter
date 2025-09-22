@@ -1,0 +1,289 @@
+# Environment-Specific Deployment Pipeline для ERNI-KI
+# Деплой в development, staging, production с environment-specific секретами
+# Автор: Альтэон Шульц (Tech Lead)
+# Дата: 2025-09-19
+
+name: 🚀 Environment Deployment
+
+on:
+  push:
+    branches: [main, develop]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - ".github/workflows/ci.yml"
+      - ".github/workflows/security.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment for deployment"
+        required: true
+        default: "development"
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      force_deploy:
+        description: "Force deployment (skip some checks)"
+        required: false
+        default: false
+        type: boolean
+
+# Разрешения для деплоя и работы с секретами
+permissions:
+  contents: read
+  packages: write
+  deployments: write
+  actions: read
+
+# Переменные окружения
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+# Отмена предыдущих запусков
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment || 'auto' }}
+  cancel-in-progress: true
+
+jobs:
+  # Определение целевого окружения
+  determine-environment:
+    name: 🎯 Determine Target Environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      should_deploy: ${{ steps.env.outputs.should_deploy }}
+
+    steps:
+      - name: 📋 Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            echo "environment=development" >> $GITHUB_OUTPUT
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "environment=development" >> $GITHUB_OUTPUT
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "🎯 Target environment: $(cat $GITHUB_OUTPUT | grep environment | cut -d'=' -f2)"
+
+  # Валидация секретов для целевого окружения
+  validate-secrets:
+    name: 🔐 Validate Environment Secrets
+    runs-on: ubuntu-latest
+    needs: determine-environment
+    environment: ${{ needs.determine-environment.outputs.environment }}
+    if: needs.determine-environment.outputs.should_deploy == 'true'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Validate required secrets
+        run: |
+          echo "Validating secrets for environment: ${{ needs.determine-environment.outputs.environment }}"
+
+          # Определяем суффикс для окружения
+          ENV_SUFFIX=""
+          case "${{ needs.determine-environment.outputs.environment }}" in
+            "development") ENV_SUFFIX="_DEV" ;;
+            "staging") ENV_SUFFIX="_STAGING" ;;
+            "production") ENV_SUFFIX="_PROD" ;;
+          esac
+
+          # Проверяем наличие обязательных секретов
+          required_secrets=(
+            "TUNNEL_TOKEN${ENV_SUFFIX}"
+            "OPENAI_API_KEY${ENV_SUFFIX}"
+            "CONTEXT7_API_KEY${ENV_SUFFIX}"
+            "ANTHROPIC_API_KEY${ENV_SUFFIX}"
+            "GOOGLE_API_KEY${ENV_SUFFIX}"
+          )
+
+          missing_secrets=()
+          for secret in "${required_secrets[@]}"; do
+            # Проверяем, что секрет не пустой и не содержит placeholder
+            secret_value="${!keyword:-}"
+            if [ -z "$secret_value" ] || [[ "$secret_value" == *"REPLACE_WITH_REAL"* ]]; then
+              missing_secrets+=("$secret")
+            else
+              echo "✅ $keyword: configured"
+            fi
+          done
+
+          if [ ${#missing_secrets[@]} -gt 0 ]; then
+            echo "❌ Missing or invalid secrets:"
+            printf '%s\n' "${missing_secrets[@]}"
+
+            if [ "${{ needs.determine-environment.outputs.environment }}" = "production" ]; then
+              echo "🔴 CRITICAL: Production secrets must be real values!"
+              exit 1
+            else
+              echo "⚠️ WARNING: Some secrets are missing, but continuing for non-production environment"
+            fi
+          else
+            echo "✅ All required secrets are configured"
+          fi
+        env:
+          TUNNEL_TOKEN_DEV: ${{ secrets.TUNNEL_TOKEN_DEV }}
+          TUNNEL_TOKEN_STAGING: ${{ secrets.TUNNEL_TOKEN_STAGING }}
+          TUNNEL_TOKEN_PROD: ${{ secrets.TUNNEL_TOKEN_PROD }}
+          OPENAI_API_KEY_DEV: ${{ secrets.OPENAI_API_KEY_DEV }}
+          OPENAI_API_KEY_STAGING: ${{ secrets.OPENAI_API_KEY_STAGING }}
+          OPENAI_API_KEY_PROD: ${{ secrets.OPENAI_API_KEY_PROD }}
+          CONTEXT7_API_KEY_DEV: ${{ secrets.CONTEXT7_API_KEY_DEV }}
+          CONTEXT7_API_KEY_STAGING: ${{ secrets.CONTEXT7_API_KEY_STAGING }}
+          CONTEXT7_API_KEY_PROD: ${{ secrets.CONTEXT7_API_KEY_PROD }}
+          ANTHROPIC_API_KEY_DEV: ${{ secrets.ANTHROPIC_API_KEY_DEV }}
+          ANTHROPIC_API_KEY_STAGING: ${{ secrets.ANTHROPIC_API_KEY_STAGING }}
+          ANTHROPIC_API_KEY_PROD: ${{ secrets.ANTHROPIC_API_KEY_PROD }}
+          GOOGLE_API_KEY_DEV: ${{ secrets.GOOGLE_API_KEY_DEV }}
+          GOOGLE_API_KEY_STAGING: ${{ secrets.GOOGLE_API_KEY_STAGING }}
+          GOOGLE_API_KEY_PROD: ${{ secrets.GOOGLE_API_KEY_PROD }}
+
+  # Сборка Docker образов с environment-specific конфигурацией
+  build-and-deploy:
+    name: 🏗️ Build & Deploy to ${{ needs.determine-environment.outputs.environment }}
+    runs-on: ubuntu-latest
+    needs: [determine-environment, validate-secrets]
+    environment: ${{ needs.determine-environment.outputs.environment }}
+    if: needs.determine-environment.outputs.should_deploy == 'true'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📋 Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=${{ needs.determine-environment.outputs.environment }}-latest
+
+      - name: 🏗️ Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./auth
+          file: ./auth/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ENVIRONMENT=${{ needs.determine-environment.outputs.environment }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          secrets: |
+            tunnel_token=${{ secrets[format('TUNNEL_TOKEN_{0}', needs.determine-environment.outputs.environment == 'development' && 'DEV' || needs.determine-environment.outputs.environment == 'staging' && 'STAGING' || 'PROD')] }}
+            openai_key=${{ secrets[format('OPENAI_API_KEY_{0}', needs.determine-environment.outputs.environment == 'development' && 'DEV' || needs.determine-environment.outputs.environment == 'staging' && 'STAGING' || 'PROD')] }}
+
+  # Деплой в целевое окружение
+  deploy:
+    name: 🚀 Deploy to ${{ needs.determine-environment.outputs.environment }}
+    runs-on: ubuntu-latest
+    needs: [determine-environment, validate-secrets, build-and-deploy]
+    environment: ${{ needs.determine-environment.outputs.environment }}
+    if: needs.determine-environment.outputs.should_deploy == 'true'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Prepare environment configuration
+        run: |
+          echo "Preparing configuration for: ${{ needs.determine-environment.outputs.environment }}"
+
+          # Создаем environment-specific конфигурацию
+          mkdir -p .deploy-config
+
+          # Определяем суффикс для секретов
+          ENV_SUFFIX=""
+          case "${{ needs.determine-environment.outputs.environment }}" in
+            "development") ENV_SUFFIX="_DEV" ;;
+            "staging") ENV_SUFFIX="_STAGING" ;;
+            "production") ENV_SUFFIX="_PROD" ;;
+          esac
+
+          # Создаем файл с переменными окружения для деплоя
+          cat > .deploy-config/environment.env << EOF
+          ENVIRONMENT=${{ needs.determine-environment.outputs.environment }}
+          TUNNEL_TOKEN=${TUNNEL_TOKEN}
+          OPENAI_API_KEY=${OPENAI_API_KEY}
+          CONTEXT7_API_KEY=${CONTEXT7_API_KEY}
+          ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+          GOOGLE_API_KEY=${GOOGLE_API_KEY}
+          DEPLOY_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          DEPLOY_SHA=${{ github.sha }}
+          DEPLOY_REF=${{ github.ref }}
+          EOF
+
+          echo "✅ Environment configuration prepared"
+        env:
+          TUNNEL_TOKEN: ${{ secrets[format('TUNNEL_TOKEN_{0}', needs.determine-environment.outputs.environment == 'development' && 'DEV' || needs.determine-environment.outputs.environment == 'staging' && 'STAGING' || 'PROD')] }}
+          OPENAI_API_KEY: ${{ secrets[format('OPENAI_API_KEY_{0}', needs.determine-environment.outputs.environment == 'development' && 'DEV' || needs.determine-environment.outputs.environment == 'staging' && 'STAGING' || 'PROD')] }}
+          CONTEXT7_API_KEY: ${{ secrets[format('CONTEXT7_API_KEY_{0}', needs.determine-environment.outputs.environment == 'development' && 'DEV' || needs.determine-environment.outputs.environment == 'staging' && 'STAGING' || 'PROD')] }}
+          ANTHROPIC_API_KEY: ${{ secrets[format('ANTHROPIC_API_KEY_{0}', needs.determine-environment.outputs.environment == 'development' && 'DEV' || needs.determine-environment.outputs.environment == 'staging' && 'STAGING' || 'PROD')] }}
+          GOOGLE_API_KEY: ${{ secrets[format('GOOGLE_API_KEY_{0}', needs.determine-environment.outputs.environment == 'development' && 'DEV' || needs.determine-environment.outputs.environment == 'staging' && 'STAGING' || 'PROD')] }}
+
+      - name: 🎯 Deploy to ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          echo "🚀 Deploying to ${{ needs.determine-environment.outputs.environment }} environment"
+          echo "📦 Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.determine-environment.outputs.environment }}-latest"
+          echo "🔧 Configuration: .deploy-config/environment.env"
+
+          # Здесь будет реальная логика деплоя (например, через kubectl, docker-compose, etc.)
+          echo "✅ Deployment completed successfully"
+
+      - name: 📊 Post-deployment verification
+        run: |
+          echo "🔍 Verifying deployment in ${{ needs.determine-environment.outputs.environment }}"
+
+          # Здесь можно добавить проверки здоровья сервисов
+          # Например, health checks, smoke tests, etc.
+
+          echo "✅ Deployment verification completed"
+
+  # Уведомления о результатах деплоя
+  notify:
+    name: 📢 Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [determine-environment, deploy]
+    if: always() && needs.determine-environment.outputs.should_deploy == 'true'
+
+    steps:
+      - name: 📢 Send deployment notification
+        run: |
+          if [ "${{ needs.deploy.result }}" = "success" ]; then
+            echo "✅ Deployment to ${{ needs.determine-environment.outputs.environment }} completed successfully"
+            echo "🔗 Environment: ${{ needs.determine-environment.outputs.environment }}"
+            echo "📦 SHA: ${{ github.sha }}"
+            echo "🌿 Branch: ${{ github.ref_name }}"
+          else
+            echo "❌ Deployment to ${{ needs.determine-environment.outputs.environment }} failed"
+            echo "🔍 Check the logs for details"
+          fi

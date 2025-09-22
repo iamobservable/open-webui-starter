@@ -139,6 +139,7 @@ services:
       --maxmemory-policy allkeys-lru
       --protected-mode yes
       --bind 0.0.0.0
+      --maxmemory 512mb
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a 'ErniKiRedisSecurePassword2024' ping | grep PONG"]
       interval: 30s
@@ -165,8 +166,6 @@ services:
     # Зависимости - запускаем после критически важных сервисов
     depends_on:
       db:
-        condition: service_healthy
-      redis:
         condition: service_healthy
       ollama:
         condition: service_healthy
@@ -516,11 +515,11 @@ services:
       openwebui:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost/health || exit 1"]
-      interval: 30s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
+      test: ["CMD-SHELL", "/etc/nginx/healthcheck.sh"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
     image: nginx:latest
     logging: *critical-logging
     ports:
@@ -533,6 +532,7 @@ services:
       - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./conf/nginx/ssl:/etc/nginx/ssl
       - ./conf/nginx/includes:/etc/nginx/includes
+      - ./conf/nginx/healthcheck.sh:/etc/nginx/healthcheck.sh:ro
     # Используем стандартную Docker bridge сеть
     labels:
       # КРИТИЧЕСКИ ВАЖНО: Запретить автообновление Nginx (критический прокси-сервер)

@@ -30,6 +30,11 @@ router_settings:
   enable_fallbacks: true # Включить fallback для production
   cooldown_time: 30 # Время ожидания перед повторной попыткой (секунды)
   allowed_fails: 3 # Количество неудачных попыток перед fallback
+  # Redis настройки для router (централизованное управление состоянием)
+  redis_host: "redis"
+  redis_port: 6379
+  redis_password: "ErniKiRedisSecurePassword2024"
+  redis_db: 1 # Используем ту же DB что и для кэширования
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
@@ -37,11 +42,29 @@ general_settings:
   ui_username: os.environ/UI_USERNAME
   ui_password: os.environ/UI_PASSWORD
   max_budget: 100
+  # === DATABASE STORAGE SETTINGS ===
+  # Включить хранение моделей в БД (для Database Models)
+  store_model_in_db: true
+  # Включить хранение промптов и ответов в логах трат (для детального логирования)
+  store_prompts_in_spend_logs: true
+  # Принудительно сохранять все данные запросов
+  store_audit_logs_in_db: true
+  # Отключить фильтрацию чувствительных данных для отладки
+  redact_user_api_key_info: false
+  # Дополнительные настройки для сохранения промптов
+  disable_spend_logs: false
+  disable_error_logs: false
+  # === DETAILED LOGGING SETTINGS ===
+  # Включить детальное логирование запросов и ответов
+  detailed_debug: true
+  # Логировать все параметры запросов
+  log_raw_request: true
+  # Логировать полные ответы
+  log_raw_response: true
   # === SECURITY SETTINGS ===
   # Обязательная авторизация для всех /v1/* эндпоинтов (отключено для совместимости с OpenWebUI)
   enforce_user_param: false
   # Разрешить только аутентифицированные запросы
-  disable_spend_logs: false
   # Включить аудит логи для безопасности
   enable_audit_logs: true
   # === HEALTH CHECK BYPASS ===
@@ -74,45 +97,30 @@ openai_route_config:
   fallbacks: false
 
 litellm_settings:
-  drop_params: true
-  set_verbose: false
+  drop_params: false  # Не удалять параметры для детального логирования
+  # set_verbose: true   # Deprecated, используем LITELLM_LOG=DEBUG в env
   num_retries: 3
   request_timeout: 300
   max_parallel_requests: 20  # Ограничение одновременных запросов для снижения пиков памяти
+  # === DETAILED LOGGING SETTINGS ===
+  # Включить детальное логирование запросов и ответов
+  log_raw_request: true
+  log_raw_response: true
+  # Сохранять промпты в логах
+  store_prompts_in_logs: true
   # === PROMETHEUS METRICS ===
-  callbacks: ["prometheus"]  # Включить экспорт Prometheus метрик
-  service_callback: ["prometheus_system"]  # Мониторинг системных сервисов (Redis, PostgreSQL)
-  # Конфигурация Prometheus метрик для ERNI-KI мониторинга
-  prometheus_metrics_config:
-    # Основные метрики производительности
-    - group: "performance"
-      metrics:
-        - "litellm_request_total_latency_metric"
-        - "litellm_llm_api_latency_metric"
-        - "litellm_proxy_total_requests_metric"
-        - "litellm_proxy_failed_requests_metric"
-      include_labels:
-        - "model"
-        - "api_provider"
-        - "requested_model"
-        - "status_code"
-    # Системные метрики для мониторинга здоровья
-    - group: "system_health"
-      metrics:
-        - "litellm_deployment_success_responses"
-        - "litellm_deployment_failure_responses"
-      include_labels:
-        - "api_provider"
-        - "requested_model"
+  # Отключено: требует Enterprise лицензию
+  # callbacks: ["prometheus"]  # Включить экспорт Prometheus метрик
+  # service_callback: ["prometheus_system"]  # Мониторинг системных сервисов (Redis, PostgreSQL)
   # === CACHE CONFIGURATION ===
-  cache: true  # Включить кэширование
-  # === LOG FILTERING ===
+  cache: true  # Включить кэширование (Redis для централизованного кэширования)
+  # === DETAILED LOG SETTINGS ===
   # Отключить логирование health check запросов для уменьшения шума
   disable_health_check_logs: true
-  # Фильтровать запросы без API ключей в логах
+  # Логировать все запросы для детальной отладки
   log_only_errors: false
-  # Минимальный уровень логирования для уменьшения шума
-  log_level: "INFO"
+  # Детальный уровень логирования для отладки
+  log_level: "DEBUG"
   # === OLLAMA THINKING TOKENS COMPATIBILITY ===
   # Настройки для правильной обработки thinking tokens
   ignore_unknown_fields: true
@@ -155,13 +163,21 @@ litellm_settings:
     rpm_limit: 100 # Лимит запросов в минуту
   # === PERFORMANCE OPTIMIZATION ===
   # Настройки кэширования для production
-  # Redis параметры настроены через переменные окружения (env/litellm.env)
-  # для совместимости с LiteLLM v1.77.2
+  # Redis кэширование для централизованного управления кэшем
   cache_params:
-    type: "redis" # Использовать Redis для кэширования
+    type: "redis" # Использовать Redis кэширование
+    host: "redis" # Redis хост
+    port: 6379 # Redis порт
+    password: "ErniKiRedisSecurePassword2024" # Redis пароль
+    db: 1 # База данных Redis (изоляция от OpenWebUI DB 0)
     ttl: 3600 # TTL кэша в секундах (1 час)
     namespace: "erni-ki-litellm" # Namespace для изоляции кэша
-    # Redis подключение настроено через REDIS_URL в env/litellm.env
+    # Timeout настройки для стабильности подключения
+    socket_connect_timeout: 10 # Timeout подключения
+    socket_timeout: 10 # Timeout операций
+    connection_pool_timeout: 5 # Timeout пула подключений
+    retry_on_timeout: true # Повторить при timeout
+    health_check_interval: 30 # Интервал проверки здоровья
   # Настройки connection pooling
   connection_pool:
     max_connections: 100 # Максимум подключений к БД
