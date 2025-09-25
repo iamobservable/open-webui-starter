@@ -1,6 +1,6 @@
 # 📊 ERNI-KI Monitoring-Leitfaden
 
-Umfassender Leitfaden für die Überwachung des ERNI-KI Systems mit 8
+Umfassender Leitfaden für die Überwachung des ERNI-KI Systems mit 9
 spezialisierten Exporters, standardisierten Healthchecks und produktionsreifen
 Observability-Stack.
 
@@ -8,12 +8,13 @@ Observability-Stack.
 
 Das ERNI-KI Monitoring-System umfasst:
 
-- **8 spezialisierte Exporters** - optimiert und standardisiert (19.
+- **9 spezialisierte Exporters** - optimiert und standardisiert (25.
   September 2025)
 - **Prometheus v2.55.1** - Metriken-Sammlung und -Speicherung
-- **Grafana** - Visualisierung und Dashboards
+- **Grafana** - 18 Dashboards (100% funktional) - Visualisierung
 - **Loki + Fluent Bit** - zentralisierte Protokollierung
 - **AlertManager** - Benachrichtigungen und Alarmierung
+- **System Health:** 96,4% (26/30 Container gesund)
 
 ## 📈 Exporter-Konfiguration
 

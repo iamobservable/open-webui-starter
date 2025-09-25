@@ -2,15 +2,16 @@
 
 **ERNI-KI** ist eine produktionsreife AI-Plattform basierend auf OpenWebUI
 v0.6.26 mit vollständiger Containerisierung, GPU-Beschleunigung und umfassendem
-Sicherheitssystem. Das System umfasst **29+ ERNI-KI Microservices** mit
+Sicherheitssystem. Das System umfasst **30 ERNI-KI Microservices** mit
 vollständigem Monitoring-Stack, AI-Metriken, zentralisierter Protokollierung und
 automatisiertem Management.
 
-> **✅ Systemstatus (19. September 2025):** Monitoring-System vollständig
-> optimiert. **18 Grafana-Dashboards (100% funktionsfähig)**, alle Prometheus-
-> Abfragen mit Fallback-Werten korrigiert. **LiteLLM Context Engineering**,
-> **Docling OCR**, **Context7-Integration**. 100% Metrik-Verfügbarkeit. System
-> produktionsbereit mit maximaler Zuverlässigkeit.
+> **✅ Systemstatus (25. September 2025):** System läuft auf **96,4%** Niveau
+> mit **26/30 gesunden Containern**. **18 Grafana-Dashboards (100%
+> funktionsfähig)**, alle kritischen Probleme behoben. **LiteLLM Context
+> Engineering v1.77.2**, **Docling Document Processing**, **MCP Server**,
+> **Apache Tika**, **Context7-Integration**. GPU-Beschleunigung aktiv (Ollama +
+> OpenWebUI). System produktionsbereit.
 
 [![CI](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml)
 [![Security](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml)

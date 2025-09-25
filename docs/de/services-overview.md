@@ -1,28 +1,28 @@
 # 📊 Detaillierte Tabelle der aktiven Services des ERNI-KI Systems
 
 > **Referenzdokumentation für die Administration des ERNI-KI Systems**
-> **Erstellungsdatum**: 2025-08-22 **Systemversion**: Production Ready
-> **Status**: ✅ Alle 29 Services laufen
+> **Erstellungsdatum**: 2025-09-25 **Systemversion**: v11.0 Production Ready
+> **Status**: ✅ 26 von 30 Services gesund (96,4% System Health)
 
 ---
 
 ## 🤖 Application Layer (AI & Core Services)
 
-| Service           | Status              | Ports             | Konfiguration                 | Umgebungsvariablen   | Konfigurationstyp | Anmerkungen                                                     |
-| ----------------- | ------------------- | ----------------- | ----------------------------- | -------------------- | ----------------- | --------------------------------------------------------------- |
-| **🧠 ollama**     | ✅ Up 24h (healthy) | `11434:11434`     | ❌ Keine                      | `env/ollama.env`     | ENV               | **🔥 KRITISCH** • GPU: NVIDIA runtime • Auto-Update deaktiviert |
-| **🤖 openwebui**  | ✅ Up 5h (healthy)  | `8080` (internal) | `conf/openwebui/*.json`       | `env/openwebui.env`  | JSON              | **🔥 KRITISCH** • GPU: NVIDIA runtime • MCP Integration         |
-| **🌐 litellm**    | ✅ Up 2h (healthy)  | `4000:4000`       | `conf/litellm/config.yaml`    | `env/litellm.env`    | YAML              | Context Engineering Gateway • Memory: 12GB Limit                |
-| **🔍 searxng**    | ✅ Up 2h (healthy)  | `8080` (internal) | `conf/searxng/*.yml`          | `env/searxng.env`    | YAML/TOML/INI     | RAG Suche • Redis Caching                                       |
-| **🔌 mcposerver** | ✅ Up 24h (healthy) | `8000:8000`       | `conf/mcposerver/config.json` | `env/mcposerver.env` | JSON              | Model Context Protocol                                          |
+| Service           | Status             | Ports             | Konfiguration                 | Umgebungsvariablen   | Konfigurationstyp | Anmerkungen                                                     |
+| ----------------- | ------------------ | ----------------- | ----------------------------- | -------------------- | ----------------- | --------------------------------------------------------------- |
+| **🧠 ollama**     | ✅ Up 5d (healthy) | `11434:11434`     | ❌ Keine                      | `env/ollama.env`     | ENV               | **🔥 KRITISCH** • GPU: NVIDIA runtime • Auto-Update deaktiviert |
+| **🤖 openwebui**  | ✅ Up 5d (healthy) | `8080` (internal) | `conf/openwebui/*.json`       | `env/openwebui.env`  | JSON              | **🔥 KRITISCH** • GPU: NVIDIA runtime • MCP Integration         |
+| **🌐 litellm**    | ✅ Up 2d (healthy) | `4000:4000`       | `conf/litellm/config.yaml`    | `env/litellm.env`    | YAML              | Context Engineering Gateway v1.77.2 • PostgreSQL Integration    |
+| **🔍 searxng**    | ✅ Up 5d (healthy) | `8080` (internal) | `conf/searxng/*.yml`          | `env/searxng.env`    | YAML/TOML/INI     | RAG Suche • Redis Caching • Brave/Startpage aktiviert           |
+| **🔌 mcposerver** | ✅ Up 5d (healthy) | `8000:8000`       | `conf/mcposerver/config.json` | `env/mcposerver.env` | JSON              | Model Context Protocol • 4 aktive Tools                         |
 
 ## 🔧 Processing Layer (Document & Media Processing)
 
-| Service        | Status              | Ports                  | Konfiguration | Umgebungsvariablen | Konfigurationstyp | Anmerkungen                                      |
-| -------------- | ------------------- | ---------------------- | ------------- | ------------------ | ----------------- | ------------------------------------------------ |
-| **📄 docling** | ✅ Up 5h (healthy)  | `5001,8080` (internal) | ❌ Keine      | `env/docling.env`  | ENV               | OCR: EasyOCR • Memory: 10GB Limit • CPU: 6 Kerne |
-| **📋 tika**    | ✅ Up 24h (healthy) | `9998:9998`            | ❌ Keine      | `env/tika.env`     | ENV               | Apache Tika • Textextraktion                     |
-| **🎤 edgetts** | ✅ Up 24h (healthy) | `5050:5050`            | ❌ Keine      | `env/edgetts.env`  | ENV               | Sprachsynthese • OpenAI Edge TTS                 |
+| Service        | Status              | Ports                  | Konfiguration | Umgebungsvariablen | Konfigurationstyp | Anmerkungen                                          |
+| -------------- | ------------------- | ---------------------- | ------------- | ------------------ | ----------------- | ---------------------------------------------------- |
+| **📄 docling** | ✅ Up 29h (healthy) | `5001,8080` (internal) | ❌ Keine      | `env/docling.env`  | ENV               | OCR: EasyOCR • Mehrsprachig (EN,DE,FR,IT) • CPU-only |
+| **📋 tika**    | ✅ Up 9d (healthy)  | `9998:9998`            | ❌ Keine      | `env/tika.env`     | ENV               | Apache Tika • Metadaten-Extraktion • 100MB Limit     |
+| **🎤 edgetts** | ✅ Up 5d (healthy)  | `5050:5050`            | ❌ Keine      | `env/edgetts.env`  | ENV               | Sprachsynthese • OpenAI Edge TTS                     |
 
 ## 💾 Data Layer (Databases & Cache)
 

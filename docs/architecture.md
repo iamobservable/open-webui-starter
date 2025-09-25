@@ -1,9 +1,10 @@
 # 🏗️ Архитектура системы ERNI-KI
 
-> **Версия документа:** 10.0 **Дата обновления:** 2025-09-19 **Статус:**
-> Production Ready (Система мониторинга полностью оптимизирована: 18 дашбордов
-> Grafana (100% функциональны), все Prometheus запросы исправлены с fallback
-> значениями, LiteLLM Context Engineering, Docling OCR, Context7 интеграция)
+> **Версия документа:** 11.0 **Дата обновления:** 2025-09-25 **Статус:**
+> Production Ready (Система работает на уровне 96.4% с 26/30 здоровыми
+> контейнерами. 18 дашбордов Grafana (100% функциональны), все критические
+> проблемы устранены. LiteLLM v1.77.2, Docling, MCP Server, Apache Tika,
+> Context7 интеграция)
 
 ## 📋 Обзор архитектуры
 
@@ -147,33 +148,29 @@ conf/nginx/
 - **`/api/mcp/`** ✅ - Model Context Protocol
 - **WebSocket endpoints** ✅ - Real-time коммуникация
 
-## 🏛️ Диаграмма высокого уровня
+## 🏛️ Диаграмма архитектуры системы (v11.0)
 
 ```mermaid
 graph TB
-    subgraph "🌐 External Layer"
-        USER[👤 User Browser]
-        CF[☁️ Cloudflare Zero Trust<br/>✅ 5 доменов активны<br/>🔧 DNS исправлены 29.08.2025]
+    %% External Access Layer
+    subgraph "🌐 External Access"
+        CF[Cloudflare Tunnels]
+        NGINX[Nginx Reverse Proxy<br/>:80, :443, :8080]
     end
 
-    subgraph "🚪 Gateway Layer"
-        NGINX[🚪 Nginx Reverse Proxy<br/>🛡️ Security Headers<br/>📦 Gzip Compression<br/>⚡ WebSocket Support<br/>🔧 Порты: 80,443,8080<br/>✅ Healthy]
-        AUTH[🔐 Auth Service JWT<br/>🔧 Порт: 9092<br/>✅ 2 часа работы]
-        TUNNEL[🔗 Cloudflared Tunnel<br/>✅ 4 соединения активны<br/>🔧 Исправлены имена контейнеров]
+    %% AI & ML Services
+    subgraph "🤖 AI & ML Services"
+        WEBUI[OpenWebUI v0.6.26<br/>:8080 GPU]
+        OLLAMA[Ollama<br/>:11434 GPU]
+        LITELLM[LiteLLM v1.77.2<br/>:4000 Context Engineering]
+        MCP[MCP Server<br/>:8000 Protocol]
     end
 
-    subgraph "🤖 Application Layer"
-        OWUI[🤖 OpenWebUI v0.6.26<br/>🎮 CUDA Support<br/>🔧 Порт: 8080<br/>✅ 9 минут работы]
-        OLLAMA[🧠 Ollama 0.11.8<br/>🎮 GPU Quadro P2200 (25%)<br/>📚 9 моделей загружено<br/>🔧 Порт: 11434<br/>✅ 1 час работы]
-        SEARXNG[🔍 SearXNG Search<br/>🔧 RAG Integration<br/>🔧 Порт: 8080<br/>✅ 5 часов работы]
-        MCP[🔌 MCP Server<br/>🔧 Порт: 8000<br/>✅ 2 часа работы]
-    end
-
-    subgraph "🔧 Processing Layer"
-        DOCLING[📄 Docling CPU<br/>🔧 Порт: 5001<br/>🌍 Multilingual OCR<br/>✅ 2 дня работы]
-        TIKA[📋 Apache Tika<br/>🔧 Порт: 9998<br/>✅ 3 дня работы]
-        EDGETTS[🎤 EdgeTTS<br/>🔧 Порт: 5050<br/>✅ 3 дня работы]
-        LITELLM[🌐 LiteLLM main-stable<br/>🔧 Context Engineering<br/>🧠 Context7 интеграция<br/>🔧 Порт: 4000<br/>✅ 1 час работы]
+    %% Document Processing
+    subgraph "📄 Document Processing"
+        DOCLING[Docling<br/>:5001 OCR CPU]
+        TIKA[Apache Tika<br/>:9998 Metadata]
+        SEARXNG[SearXNG<br/>:8080 Search]
     end
 
     subgraph "💾 Data Layer"

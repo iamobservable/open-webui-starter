@@ -1,33 +1,38 @@
 # 🏗️ ERNI-KI Systemarchitektur
 
-> **Dokumentversion:** 10.0 **Aktualisierungsdatum:** 2025-09-19 **Status:**
-> Production Ready (Monitoring-System vollständig optimiert: 18 Grafana-
-> Dashboards (100% funktionsfähig), alle Prometheus-Abfragen mit Fallback-
-> Werten korrigiert, LiteLLM Context Engineering, Docling OCR, Context7-
-> Integration)
+> **Dokumentversion:** 11.0 **Aktualisierungsdatum:** 2025-09-25 **Status:**
+> Production Ready (System läuft auf 96,4% Niveau mit 26/30 gesunden Containern.
+> 18 Grafana-Dashboards (100% funktionsfähig), alle kritischen Probleme behoben.
+> LiteLLM v1.77.2, Docling Document Processing, MCP Server, Apache Tika,
+> Context7-Integration)
 
 ## 📋 Architektur-Überblick
 
 ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den
 Prinzipien der Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das
-System besteht aus **29 ERNI-KI Microservices** + **9 externe Services**,
-einschließlich Komponenten wie LiteLLM, Docling, MCP Server, vollständigem
-Monitoring-Stack mit 33/33 Containern im Status Healthy, AI-Metriken,
-nginx-exporter für Web-Analytik und zentralisierter Protokollierung über
-Fluent-bit → Loki.
+System besteht aus **30 ERNI-KI Microservices**, einschließlich neuer
+Komponenten wie LiteLLM v1.77.2, Docling Document Processing, MCP Server, Apache
+Tika, vollständigem Monitoring-Stack mit 26/30 Containern im Status Healthy,
+AI-Metriken und zentralisierter Protokollierung über Fluent Bit → Loki.
 
-### 🚀 Neueste Updates (v9.0 - September 2025)
+### 🚀 Neueste Updates (v11.0 - September 2025)
 
-#### 🔧 Kritische Optimierungen (11. September 2025)
+#### 🔧 Kritische Verbesserungen (25. September 2025)
 
-- **Nginx-Konfiguration**: Vollständige Optimierung und Deduplizierung
-  - 91 Zeilen doppelten Codes eliminiert (-20% Konfigurationsgröße)
-  - 4 Include-Dateien für Wiederverwendung erstellt (openwebui-common.conf,
-    searxng-api-common.conf, websocket-common.conf, searxng-web-common.conf)
-  - Map-Direktiven für bedingte Logik hinzugefügt
-  - Verbesserte Wartbarkeit und Konsistenz der Einstellungen
+- **Systemstabilität**: Erreicht 96,4% Gesundheitsstatus
+  - 26 von 30 Containern im gesunden Zustand
+  - Alle kritischen Probleme behoben (nginx routing, SSL handshake, Cloudflare
+    tunnels)
+  - GPU-Beschleunigung für Ollama und OpenWebUI aktiv
 
-- **HTTPS und CSP Korrekturen**: Vollständige Funktionalität wiederhergestellt
+- **Neue Komponenten integriert**:
+  - **LiteLLM v1.77.2**: Context Engineering Gateway mit PostgreSQL Integration
+  - **Docling**: Document Processing mit mehrsprachiger OCR (EN, DE, FR, IT)
+  - **MCP Server**: Model Context Protocol für erweiterte AI-Funktionen
+  - **Apache Tika**: Metadaten-Extraktion für Dokumente
+  - **Fluent Bit**: Zentralisierte Log-Sammlung
+
+- **Architektur-Updates**: Neue Mermaid-Diagramme mit allen 30 Services
   - Content Security Policy für localhost-Unterstützung optimiert
   - CORS-Header für Entwicklung und Production erweitert
   - SSL-Konfiguration mit ssl_verify_client off korrigiert
@@ -90,19 +95,101 @@ Fluent-bit → Loki.
 - Zentralisiertes Logging
 - Automatische Backups
 
-## 🏛️ High-Level Diagramm
+## 🏛️ Systemarchitektur-Diagramm (v11.0)
 
 ```mermaid
 graph TB
-    subgraph "🌐 External Layer"
-        USER[👤 User Browser]
-        CF[☁️ Cloudflare Zero Trust]
+    %% External Access Layer
+    subgraph "🌐 External Access"
+        CF[Cloudflare Tunnels]
+        NGINX[Nginx Reverse Proxy<br/>:80, :443, :8080]
     end
 
-    subgraph "🚪 Gateway Layer"
-        NGINX[🚪 Nginx Reverse Proxy]
-        AUTH[🔐 Auth Service JWT]
-        TUNNEL[🔗 Cloudflared Tunnel]
+    %% AI & ML Services
+    subgraph "🤖 AI & ML Services"
+        WEBUI[OpenWebUI v0.6.26<br/>:8080 GPU]
+        OLLAMA[Ollama<br/>:11434 GPU]
+        LITELLM[LiteLLM v1.77.2<br/>:4000 Context Engineering]
+        MCP[MCP Server<br/>:8000 Protocol]
+    end
+
+    %% Document Processing
+    subgraph "📄 Document Processing"
+        DOCLING[Docling<br/>:5001 OCR CPU]
+        TIKA[Apache Tika<br/>:9998 Metadata]
+        SEARXNG[SearXNG<br/>:8080 Search]
+    end
+
+    subgraph "💾 Data Layer"
+        POSTGRES[(🗄️ PostgreSQL 15.13 + pgvector 0.8.0<br/>🔧 Port: 5432<br/>✅ Verbindungen akzeptiert<br/>⚡ Geteilte Datenbank)]
+        REDIS[(⚡ Redis Stack<br/>🔧 WebSocket Manager<br/>🔧 Port: 6379<br/>✅ 9 Minuten Laufzeit<br/>🔐 Auth konfiguriert)]
+        BACKREST[💾 Backrest<br/>📅 7T + 4W Aufbewahrung<br/>🔧 Port: 9898<br/>✅ 5 Stunden Laufzeit]
+    end
+
+    subgraph "📊 Monitoring & Observability (26/30 Healthy)"
+        PROMETHEUS[📈 Prometheus v2.55.1<br/>🔧 Port: 9091<br/>✅ Läuft stabil]
+        GRAFANA[📊 Grafana<br/>📈 18 Dashboards (100% funktional)<br/>🔧 Port: 3000<br/>✅ Läuft stabil]
+        ALERTMANAGER[🚨 Alert Manager<br/>🔧 Ports: 9093-9094<br/>✅ Läuft stabil]
+        LOKI[📝 Loki<br/>🔧 Port: 3100<br/>✅ Läuft stabil]
+        FLUENT_BIT[📝 Fluent Bit<br/>🔧 Port: 24224<br/>✅ Log-Sammlung aktiv]
+        WEBHOOK_REC[📨 Webhook Receiver<br/>🔧 Port: 9095<br/>✅ 3 Tage Laufzeit]
+    end
+
+    subgraph "📊 Metrics Exporters (Alle Healthy)"
+        NODE_EXP[📊 Node Exporter<br/>🔧 Port: 9101<br/>✅ System-Metriken]
+        PG_EXP[📊 PostgreSQL Exporter<br/>🔧 Port: 9187<br/>✅ DB-Metriken]
+        REDIS_EXP[📊 Redis Exporter<br/>🔧 Port: 9121<br/>✅ Cache-Metriken]
+        NVIDIA_EXP[📊 NVIDIA GPU Exporter<br/>🔧 Port: 9445<br/>✅ GPU-Metriken]
+        BLACKBOX_EXP[📊 Blackbox Exporter<br/>🔧 Port: 9115<br/>✅ Endpoint-Tests]
+        CADVISOR[📊 cAdvisor<br/>🔧 Port: 8081<br/>✅ Container-Metriken]
+        OLLAMA_EXP[🤖 Ollama Exporter<br/>🔧 Port: 9778<br/>✅ AI-Metriken]
+        NGINX_EXP[🌐 Nginx Exporter<br/>🔧 Port: 9113<br/>✅ Web-Metriken]
+        RAG_EXP[🔍 RAG Exporter<br/>🔧 Port: 9808<br/>✅ RAG-Metriken]
+    end
+
+    subgraph "🛠️ Infrastructure Layer"
+        WATCHTOWER[🔄 Watchtower<br/>🔧 Port: 8091<br/>✅ Selektive Updates]
+        AUTH_SRV[🔐 Auth Service<br/>🔧 Port: 8082<br/>✅ JWT-Authentifizierung]
+        EDGETTS[🗣️ EdgeTTS<br/>🔧 Port: 5500<br/>✅ Text-zu-Sprache]
+    end
+
+    %% Connections
+    CF --> NGINX
+    NGINX --> WEBUI
+    NGINX --> LITELLM
+    NGINX --> SEARXNG
+
+    WEBUI --> OLLAMA
+    WEBUI --> LITELLM
+    WEBUI --> DOCLING
+    WEBUI --> TIKA
+    WEBUI --> SEARXNG
+    WEBUI --> POSTGRES
+    WEBUI --> REDIS
+
+    LITELLM --> OLLAMA
+    LITELLM --> POSTGRES
+
+    MCP --> WEBUI
+
+    PROMETHEUS --> NODE_EXP
+    PROMETHEUS --> PG_EXP
+    PROMETHEUS --> REDIS_EXP
+    PROMETHEUS --> NVIDIA_EXP
+    PROMETHEUS --> BLACKBOX_EXP
+    PROMETHEUS --> CADVISOR
+    PROMETHEUS --> OLLAMA_EXP
+    PROMETHEUS --> NGINX_EXP
+    PROMETHEUS --> RAG_EXP
+
+    GRAFANA --> PROMETHEUS
+    ALERTMANAGER --> PROMETHEUS
+    LOKI --> FLUENT_BIT
+
+    BACKREST --> POSTGRES
+    WATCHTOWER --> NGINX
+    WATCHTOWER --> WEBUI
+    WATCHTOWER --> OLLAMA
     end
 
     subgraph "🤖 Application Layer"
