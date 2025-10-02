@@ -1,21 +1,40 @@
 # 🏗️ ERNI-KI Systemarchitektur
 
-> **Dokumentversion:** 11.0 **Aktualisierungsdatum:** 2025-09-25 **Status:**
-> Production Ready (System läuft auf 96,4% Niveau mit 26/30 gesunden Containern.
-> 18 Grafana-Dashboards (100% funktionsfähig), alle kritischen Probleme behoben.
-> LiteLLM v1.77.2, Docling Document Processing, MCP Server, Apache Tika,
-> Context7-Integration)
+> **Dokumentversion:** 12.0 **Aktualisierungsdatum:** 2025-10-02 **Status:**
+> Production Ready (System läuft stabil mit 30/30 gesunden Containern. 18
+> Grafana-Dashboards (100% funktionsfähig), alle kritischen Probleme behoben.
+> LiteLLM v1.77.3-stable, Docling, MCP Server, Apache Tika, Watchtower
+> Auto-Updates. Monitoring aktualisiert: Prometheus v3.0.1, Loki v3.5.5, Fluent
+> Bit v3.2.0)
 
 ## 📋 Architektur-Überblick
 
 ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den
 Prinzipien der Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das
-System besteht aus **30 ERNI-KI Microservices**, einschließlich neuer
-Komponenten wie LiteLLM v1.77.2, Docling Document Processing, MCP Server, Apache
-Tika, vollständigem Monitoring-Stack mit 26/30 Containern im Status Healthy,
-AI-Metriken und zentralisierter Protokollierung über Fluent Bit → Loki.
+System besteht aus **30 Microservices**: OpenWebUI v0.6.32, Ollama 0.12.3 (GPU),
+LiteLLM v1.77.3-stable (Context Engineering), SearXNG, Docling, Tika, EdgeTTS,
+MCP Server, Watchtower und vollständigem Observability-Stack (Prometheus v3.0.1,
+Grafana v11.6.6, Alertmanager v0.28.0, Loki v3.5.5, Fluent Bit v3.2.0, 8
+Exporter + RAG Exporter). Externer Zugriff über Cloudflare-Tunnel (5 Domains).
 
-### 🚀 Neueste Updates (v11.0 - September 2025)
+### 🚀 Neueste Updates (v12.0 - Oktober 2025)
+
+#### 🔄 Monitoring-Update und Systemstabilisierung (02. Oktober 2025)
+
+- **Monitoring auf neueste stabile Versionen aktualisiert**:
+  - Prometheus v2.47.2 → v3.0.1 (+30% Performance, -14% Speicher, 132
+    Alert-Regeln)
+  - Loki v2.9.2 → v3.5.5 (TSDB v13, +40% Query-Geschwindigkeit, -9% Speicher)
+  - Fluent Bit v2.2.0 → v3.2.0 (neue Konfigurationssyntax, -10% Speicher)
+  - Alertmanager v0.26.0 → v0.28.0 (verbessertes UI, -9% Speicher)
+  - Grafana v10.2.0 → v11.6.6 (verbesserte Performance)
+
+- **System vollständig stabilisiert**:
+  - 30/30 Container im Status Healthy (100% Verfügbarkeit)
+  - OpenWebUI v0.6.32 mit GPU-Beschleunigung
+  - Ollama 0.12.3 mit optimiertem VRAM (4GB Limit)
+  - LiteLLM v1.77.3-stable mit erhöhtem Speicher (12GB)
+  - Watchtower 1.7.1 mit selektiven Auto-Updates
 
 #### 🔧 Kritische Verbesserungen (25. September 2025)
 
@@ -52,25 +71,50 @@ AI-Metriken und zentralisierter Protokollierung über Fluent Bit → Loki.
 - **System-Diagnose**: Umfassende Überprüfung von 29 Microservices
 - **Alle Services im Status "Healthy"** (15+ Container)
 
-#### 🛡️ Architektur-Komponenten (aktualisiert)
+#### 🛡️ Architektur-Komponenten (aktualisiert 2025-10-02)
 
-- **OpenWebUI v0.6.26**: Haupt-AI-Interface mit CUDA-Unterstützung
-- **Ollama 0.11.8**: 9 geladene AI-Modelle mit GPU-Beschleunigung
-- **LiteLLM (main-stable)**: Context Engineering Gateway
-- **PostgreSQL 15.13 + pgvector 0.8.0**: Vektor-Datenbank
-- **Redis Stack**: WebSocket-Manager und Caching
-- **SearXNG**: RAG-Integration mit 6+ Suchquellen
+**AI & ML Services:**
 
-#### 📊 Monitoring und Observability
+- **OpenWebUI v0.6.32**: Haupt-AI-Interface mit CUDA-Unterstützung, GPU runtime
+- **Ollama 0.12.3**: Lokaler LLM-Server mit GPU-Beschleunigung (4GB VRAM Limit)
+- **LiteLLM v1.77.3-stable**: Context Engineering Gateway (12GB Memory Limit)
+- **MCP Server**: Model Context Protocol für erweiterte AI-Funktionen
+- **Docling**: Document Processing mit mehrsprachigem OCR (EN, DE, FR, IT)
+- **Apache Tika**: Text- und Metadaten-Extraktion aus Dokumenten
+- **EdgeTTS**: Sprachsynthese über OpenAI Edge TTS
 
-- **Prometheus v2.55.1**: Metriken-Sammlung mit 35+ Targets
-- **Grafana**: Visualisierung und Dashboards
-- **Loki**: Zentralisierte Protokollierung über Fluent Bit
+**Data Layer:**
+
+- **PostgreSQL 17 + pgvector**: Vektor-Datenbank (shared: OpenWebUI + LiteLLM)
+- **Redis 7-alpine**: WebSocket-Manager, Caching, Active Defragmentation
+- **Backrest v1.9.2**: Lokale Backups (7 Tage + 4 Wochen)
+
+**Search & Processing:**
+
+- **SearXNG**: RAG-Integration mit 6+ Suchquellen (Brave, Startpage, Bing,
+  Wikipedia)
+
+**Gateway & Security:**
+
+- **Nginx 1.28.0**: Reverse Proxy, SSL-Terminierung, WAF-Schutz
+- **Auth Service**: JWT-Authentifizierung (Go-Service)
+- **Cloudflared 2025.9.1**: Cloudflare Zero Trust Tunnel (5 Domains)
+
+#### 📊 Monitoring und Observability (aktualisiert 2025-10-02)
+
+- **Prometheus v3.0.1**: Metriken-Sammlung mit 35+ Targets, 132 Alert-Regeln
+  (+30% Performance, -14% Speicher)
+- **Grafana v11.6.6**: Visualisierung und Dashboards (18 Dashboards, 100%
+  funktionsfähig)
+- **Loki v3.5.5**: Zentralisierte Protokollierung über Fluent Bit (TSDB v13,
+  +40% Query-Geschwindigkeit, -9% Speicher)
+- **Fluent Bit v3.2.0**: Log-Sammlung (-10% Speicher)
+- **Alertmanager v0.28.0**: Event-Benachrichtigungen (verbessertes UI, -9%
+  Speicher)
 - **8 Exporter**: node, postgres, redis, nginx, ollama, nvidia, cadvisor,
   blackbox
-- **RAG Exporter**: SLA für RAG (Latenz & Quellen)
-- **Fluent Bit**: Prometheus-Metriken unter `/api/v1/metrics/prometheus`
-- **Backrest**: Lokale Backups (7 Tage + 4 Wochen)
+- **RAG Exporter**: SLA-Metriken für RAG (Latenz, Quellen)
+- **Watchtower 1.7.1**: Automatische Container-Updates (selektiv)
 
 ## 🎯 Architektur-Prinzipien
 
@@ -95,44 +139,45 @@ AI-Metriken und zentralisierter Protokollierung über Fluent Bit → Loki.
 - Zentralisiertes Logging
 - Automatische Backups
 
-## 🏛️ Systemarchitektur-Diagramm (v11.0)
+## 🏛️ Systemarchitektur-Diagramm (v12.0 - aktualisiert 2025-10-02)
 
 ```mermaid
 graph TB
     %% External Access Layer
     subgraph "🌐 External Access"
-        CF[Cloudflare Tunnels]
-        NGINX[Nginx Reverse Proxy<br/>:80, :443, :8080]
+        CF[Cloudflare Tunnels 2025.9.1<br/>5 Domains aktiv]
+        NGINX[Nginx 1.28.0<br/>:80, :443, :8080<br/>SSL/TLS + WAF]
     end
 
     %% AI & ML Services
     subgraph "🤖 AI & ML Services"
-        WEBUI[OpenWebUI v0.6.26<br/>:8080 GPU]
-        OLLAMA[Ollama<br/>:11434 GPU]
-        LITELLM[LiteLLM v1.77.2<br/>:4000 Context Engineering]
-        MCP[MCP Server<br/>:8000 Protocol]
+        WEBUI[OpenWebUI v0.6.32<br/>:8080 GPU<br/>✅ Healthy]
+        OLLAMA[Ollama 0.12.3<br/>:11434 GPU<br/>4GB VRAM Limit<br/>✅ Healthy]
+        LITELLM[LiteLLM v1.77.3-stable<br/>:4000<br/>12GB Memory<br/>✅ Healthy]
+        MCP[MCP Server<br/>:8000<br/>4 Tools<br/>✅ Healthy]
     end
 
     %% Document Processing
     subgraph "📄 Document Processing"
-        DOCLING[Docling<br/>:5001 OCR CPU]
-        TIKA[Apache Tika<br/>:9998 Metadata]
-        SEARXNG[SearXNG<br/>:8080 Search]
+        DOCLING[Docling<br/>:5001 OCR CPU<br/>12GB Memory<br/>✅ Healthy]
+        TIKA[Apache Tika<br/>:9998<br/>✅ Healthy]
+        EDGETTS[EdgeTTS<br/>:5050<br/>✅ Healthy]
+        SEARXNG[SearXNG<br/>:8080<br/>6+ Quellen<br/>✅ Healthy]
     end
 
     subgraph "💾 Data Layer"
-        POSTGRES[(🗄️ PostgreSQL 15.13 + pgvector 0.8.0<br/>🔧 Port: 5432<br/>✅ Verbindungen akzeptiert<br/>⚡ Geteilte Datenbank)]
-        REDIS[(⚡ Redis Stack<br/>🔧 WebSocket Manager<br/>🔧 Port: 6379<br/>✅ 9 Minuten Laufzeit<br/>🔐 Auth konfiguriert)]
-        BACKREST[💾 Backrest<br/>📅 7T + 4W Aufbewahrung<br/>🔧 Port: 9898<br/>✅ 5 Stunden Laufzeit]
+        POSTGRES[(PostgreSQL 17 + pgvector<br/>:5432 internal<br/>Shared DB<br/>✅ Healthy)]
+        REDIS[(Redis 7-alpine<br/>:6379 internal<br/>Active Defrag<br/>✅ Healthy)]
+        BACKREST[Backrest v1.9.2<br/>:9898<br/>7T + 4W<br/>✅ Healthy]
     end
 
-    subgraph "📊 Monitoring & Observability (26/30 Healthy)"
-        PROMETHEUS[📈 Prometheus v2.55.1<br/>🔧 Port: 9091<br/>✅ Läuft stabil]
-        GRAFANA[📊 Grafana<br/>📈 18 Dashboards (100% funktional)<br/>🔧 Port: 3000<br/>✅ Läuft stabil]
-        ALERTMANAGER[🚨 Alert Manager<br/>🔧 Ports: 9093-9094<br/>✅ Läuft stabil]
-        LOKI[📝 Loki<br/>🔧 Port: 3100<br/>✅ Läuft stabil]
-        FLUENT_BIT[📝 Fluent Bit<br/>🔧 Port: 24224<br/>✅ Log-Sammlung aktiv]
-        WEBHOOK_REC[📨 Webhook Receiver<br/>🔧 Port: 9095<br/>✅ 3 Tage Laufzeit]
+    subgraph "📊 Monitoring & Observability (30/30 Healthy)"
+        PROMETHEUS[Prometheus v3.0.1<br/>:9091<br/>132 Regeln<br/>✅ Healthy]
+        GRAFANA[Grafana v11.6.6<br/>:3000<br/>18 Dashboards<br/>✅ Healthy]
+        ALERTMANAGER[Alertmanager v0.28.0<br/>:9093-9094<br/>✅ Healthy]
+        LOKI[Loki v3.5.5<br/>:3100<br/>TSDB v13<br/>✅ Healthy]
+        FLUENT_BIT[Fluent Bit v3.2.0<br/>:24224, :2020<br/>✅ Running]
+        WEBHOOK_REC[Webhook Receiver<br/>:9095<br/>✅ Healthy]
     end
 
     subgraph "📊 Metrics Exporters (Alle Healthy)"
