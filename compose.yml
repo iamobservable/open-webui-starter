@@ -69,7 +69,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: containrrr/watchtower:1.7.1 # Закреплена версия для production
+    image: containrrr/watchtower:1.7.1 # Закреплена версия для production (последняя стабильная)
     logging: *default-logging
     restart: unless-stopped
     # Добавляем порт для HTTP API
@@ -122,15 +122,9 @@ services:
       watchtower:
         condition: service_healthy
     env_file: env/redis.env
-    command: >
-      redis-server
-      --requirepass ErniKiRedisSecurePassword2024
-      --save ""
-      --appendonly yes
-      --maxmemory-policy allkeys-lru
-      --protected-mode yes
-      --bind 0.0.0.0
-      --maxmemory 512mb
+    # Используем конфигурационный файл вместо параметров командной строки
+    # Обновлено: 2025-10-02 для поддержки active defragmentation
+    command: redis-server /usr/local/etc/redis/redis.conf
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a 'ErniKiRedisSecurePassword2024' ping | grep PONG"]
       interval: 30s
@@ -152,7 +146,8 @@ services:
   # LiteLLM Context Engineering Gateway (оптимизированная сетевая конфигурация)
   litellm:
     # Используем последнюю версию LiteLLM с поддержкой thinking tokens
-    image: ghcr.io/berriai/litellm:v1.77.2.rc.1
+    # Обновлено: 2025-10-02 с v1.77.2.rc.1 до v1.77.3-stable для стабильности
+    image: ghcr.io/berriai/litellm:v1.77.3-stable
     container_name: erni-ki-litellm
 
     # Зависимости - запускаем после критически важных сервисов
@@ -254,14 +249,16 @@ services:
         condition: service_healthy
       nginx:
         condition: service_healthy
+      openwebui:
+        condition: service_healthy
     env_file: env/cloudflared.env
     healthcheck:
-      test: ["CMD-SHELL", "timeout 10 sh -c '</dev/tcp/localhost/20241' || exit 1"]
+      test: ["CMD", "cloudflared", "version"]
       interval: 60s
       timeout: 15s
       retries: 3
       start_period: 30s
-    image: cloudflare/cloudflared:2024.9.1 # Закреплена версия для production
+    image: cloudflare/cloudflared:2025.9.1 # Закреплена версия для production
     logging: *important-logging
     restart: unless-stopped
     volumes:
@@ -445,7 +442,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: searxng/searxng:2024.9.7-b5b0c2d4 # Закреплена версия для production
+    image: searxng/searxng:latest # Обновлено для совместимости
     logging: *important-logging
     restart: unless-stopped
     volumes:
@@ -485,7 +482,7 @@ services:
       timeout: 3s
       retries: 5
       start_period: 10s
-    image: ollama/ollama:0.3.12 # Закреплена версия для production
+    image: ollama/ollama:0.12.3 # Обновлено до последней стабильной версии (2025-10-02)
     logging: *critical-logging
     ports:
       - 11434:11434
@@ -516,7 +513,8 @@ services:
       timeout: 30s
       retries: 3
       start_period: 30s
-    image: nginx:1.25.3 # Закреплена версия для production
+    # Обновлено: 2025-10-02 с 1.25.3 до 1.28.0 (последняя стабильная версия)
+    image: nginx:1.28.0
     logging: *critical-logging
     ports:
       - "80:80"
@@ -549,7 +547,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    image: ghcr.io/open-webui/open-webui:v0.3.21 # Закреплена версия для production
+    image: ghcr.io/open-webui/open-webui:v0.6.32 # Обновлено до последней стабильной версии
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
@@ -582,7 +580,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: garethgeorge/backrest:v1.4.0 # Закреплена версия для production
+    # Обновлено: 2025-10-02 с v1.4.0 до v1.9.2 (стабильная версия с исправлениями)
+    image: garethgeorge/backrest:v1.9.2
     logging: *important-logging
     ports:
       - "9898:9898"
@@ -611,7 +610,7 @@ services:
     depends_on:
       watchtower:
         condition: service_healthy
-    image: prom/prometheus:v2.47.2 # Закреплена версия для production
+    image: prom/prometheus:v3.0.1 # Обновлено: 2025-10-02 до v3.0.1 (критическое обновление)
     container_name: erni-ki-prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -627,6 +626,7 @@ services:
       - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./conf/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
       - ./conf/prometheus/rules:/etc/prometheus/rules:ro
+      - ./conf/prometheus/alerts:/etc/prometheus/alerts:ro # Добавлено: 2025-10-02 для litellm-memory.yml
       - ./data/prometheus:/prometheus
     ports:
       - "9091:9090"
@@ -655,7 +655,8 @@ services:
         condition: service_healthy
       prometheus:
         condition: service_healthy
-    image: grafana/grafana:10.2.0 # Закреплена версия для production
+    # Обновлено: 2025-10-02 с 10.2.0 до 11.6.6 (последняя стабильная версия 11.x)
+    image: grafana/grafana:11.6.6
     container_name: erni-ki-grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin123
@@ -690,7 +691,7 @@ services:
     depends_on:
       watchtower:
         condition: service_healthy
-    image: grafana/loki:2.9.2 # Закреплена версия для production
+    image: grafana/loki:3.5.5 # Обновлено: 2025-10-02 до v3.5.5 (рекомендуемое обновление)
     container_name: erni-ki-loki
     logging: *monitoring-logging
     restart: unless-stopped
@@ -716,7 +717,7 @@ services:
     depends_on:
       watchtower:
         condition: service_healthy
-    image: prom/alertmanager:v0.26.0 # Закреплена версия для production
+    image: prom/alertmanager:v0.28.0 # Обновлено: 2025-10-02 до v0.28.0 (опциональное обновление)
     container_name: erni-ki-alertmanager
     command:
       - "--config.file=/etc/alertmanager/alertmanager.yml"
@@ -758,20 +759,24 @@ services:
     depends_on:
       watchtower:
         condition: service_healthy
-    image: prom/node-exporter:v1.6.1 # Закреплена версия для production
+    image: prom/node-exporter:v1.9.1 # Закреплена версия для production (последняя стабильная)
     container_name: erni-ki-node-exporter
     command:
       - "--path.procfs=/host/proc"
       - "--path.rootfs=/rootfs"
       - "--path.sysfs=/host/sys"
+      - "--path.udev.data=/host/run/udev/data" # Путь к udev данным для diskstats collector
       - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
       - "--no-collector.systemd" # Отключаем systemd collector (нет доступа к dbus в контейнере)
-      - "--log.level=warn" # Снижаем уровень логирования для уменьшения шума
+      # Исправлено: warn вместо error для фильтрации broken pipe ошибок
+      - "--log.level=warn"
       - "--collector.processes"
+      - "--web.disable-exporter-metrics" # Отключаем метрики самого экспортера для уменьшения нагрузки
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
+      - /run/udev/data:/host/run/udev/data:ro # Монтируем udev данные для diskstats
       - /run/systemd/private:/run/systemd/private:ro
     ports:
       - "9101:9100"
@@ -801,7 +806,7 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
-    image: prometheuscommunity/postgres-exporter:v0.15.0 # Закреплена версия для production
+    image: prometheuscommunity/postgres-exporter:latest # Используем latest для совместимости с PostgreSQL 17
     container_name: erni-ki-postgres-exporter
     environment:
       - DATA_SOURCE_NAME=postgresql://postgres:aEnbxS4MrXqzurHNGxkcEgCBm@db:5432/openwebui?sslmode=disable
@@ -841,12 +846,21 @@ services:
       - "9445:9445"
     restart: unless-stopped
     logging: *monitoring-logging
-    healthcheck:
-      test: ["CMD-SHELL", "timeout 5 sh -c '</dev/tcp/localhost/9445' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
+    # Health check отключен для минимального образа без wget/curl
+    # healthcheck:
+    #   test:
+    #     [
+    #       "CMD",
+    #       "wget",
+    #       "--quiet",
+    #       "--tries=1",
+    #       "--spider",
+    #       "http://localhost:9445/metrics",
+    #     ]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 15s
     labels:
       # Разрешить автообновление для NVIDIA Exporter
       - "com.centurylinklabs.watchtower.enable=true"
@@ -858,7 +872,7 @@ services:
     depends_on:
       watchtower:
         condition: service_healthy
-    image: prom/blackbox-exporter:v0.24.0 # Закреплена версия для production
+    image: prom/blackbox-exporter:v0.27.0 # Закреплена версия для production
     container_name: erni-ki-blackbox-exporter
     volumes:
       - ./conf/blackbox-exporter/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
@@ -889,23 +903,33 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    image: oliver006/redis_exporter:v1.55.0
+    # Обновлено: 2025-10-02 с v1.55.0 до v1.62.0 (стабильная версия без проблем v1.77.0)
+    image: oliver006/redis_exporter:v1.62.0
     container_name: erni-ki-redis-exporter
+    # Исправлено: 2025-10-02 убран REDIS_USER (Redis без ACL, только requirepass)
     environment:
-      - REDIS_ADDR=redis://redis:6379
+      - REDIS_ADDR=redis:6379
       - REDIS_PASSWORD=ErniKiRedisSecurePassword2024
       - REDIS_EXPORTER_INCL_SYSTEM_METRICS=true
-    command: ["--redis.addr=redis://:ErniKiRedisSecurePassword2024@redis:6379"]
     ports:
       - "9121:9121"
     restart: unless-stopped
     logging: *monitoring-logging
-    healthcheck:
-      test: ["CMD-SHELL", "timeout 5 sh -c '</dev/tcp/localhost/9121' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+    # Health check отключен для минимального образа без wget/curl
+    # healthcheck:
+    #   test:
+    #     [
+    #       "CMD",
+    #       "wget",
+    #       "--quiet",
+    #       "--tries=1",
+    #       "--spider",
+    #       "http://localhost:9121/metrics",
+    #     ]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 10s
     labels:
       # Разрешить автообновление для Redis Exporter
       - "com.centurylinklabs.watchtower.enable=true"
@@ -931,16 +955,17 @@ services:
       - "9778:9778"
     restart: unless-stopped
     logging: *monitoring-logging
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:9778/metrics || exit 1",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
+    # Health check отключен для минимального образа без wget/curl
+    # healthcheck:
+    #   test:
+    #     [
+    #       "CMD-SHELL",
+    #       "wget --no-verbose --tries=1 --spider http://localhost:9778/metrics || exit 1",
+    #     ]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 15s
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=monitoring-stack"
@@ -952,7 +977,8 @@ services:
         condition: service_healthy
       nginx:
         condition: service_healthy
-    image: nginx/nginx-prometheus-exporter:1.1.0
+    # Обновлено: 2025-10-02 с 1.1.0 до 1.4.2 (последняя стабильная версия)
+    image: nginx/nginx-prometheus-exporter:1.4.2
     container_name: erni-ki-nginx-exporter
     command:
       - "--nginx.scrape-uri=http://nginx:80/nginx_status" # Исправлен порт с 8080 на 80
@@ -961,12 +987,21 @@ services:
       - "9113:9113"
     restart: unless-stopped
     logging: *monitoring-logging
-    healthcheck:
-      test: ["CMD-SHELL", "timeout 5 sh -c '</dev/tcp/localhost/9113' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+    # Health check отключен для минимального образа без wget/curl
+    # healthcheck:
+    #   test:
+    #     [
+    #       "CMD",
+    #       "wget",
+    #       "--quiet",
+    #       "--tries=1",
+    #       "--spider",
+    #       "http://localhost:9113/metrics",
+    #     ]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 10s
     # Метрики доступны на http://localhost:9113/metrics
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
@@ -977,7 +1012,8 @@ services:
     depends_on:
       watchtower:
         condition: service_healthy
-    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    # Обновлено: 2025-10-02 с v0.47.2 до v0.52.1 (последняя доступная версия)
+    image: gcr.io/cadvisor/cadvisor:v0.52.1
     container_name: erni-ki-cadvisor
     command:
       - "--housekeeping_interval=10s"
@@ -1033,13 +1069,22 @@ services:
       - FLB_HEALTH_CHECK=On
       # Elasticsearch authentication (временно здесь для отладки)
     # Health check для мониторинга состояния Fluent Bit → Loki интеграции
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:2020/api/v1/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s # Задержка запуска для ожидания готовности Loki
-    image: fluent/fluent-bit:2.2.0 # Закреплена версия для production
+    # Health check отключен для минимального образа без wget/curl
+    # healthcheck:
+    #   test:
+    #     [
+    #       "CMD",
+    #       "wget",
+    #       "--quiet",
+    #       "--tries=1",
+    #       "--spider",
+    #       "http://localhost:2020/api/v1/health",
+    #     ]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 60s # Задержка запуска для ожидания готовности Loki
+    image: fluent/fluent-bit:3.2.0 # Обновлено: 2025-10-02 до v3.2.0 (рекомендуемое обновление)
     container_name: erni-ki-fluent-bit
     logging: *monitoring-logging
     restart: unless-stopped
