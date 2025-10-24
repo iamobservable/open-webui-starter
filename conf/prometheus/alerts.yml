@@ -1,0 +1,220 @@
+# ERNI-KI Prometheus Alert Rules
+# Дата создания: 2025-10-24
+# Проактивный мониторинг критических метрик системы
+
+groups:
+  - name: erni-ki-critical-alerts
+    interval: 30s
+    rules:
+      # === DISK SPACE ALERTS ===
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.15
+        for: 5m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Критически мало места на диске"
+          description: "Доступно менее 15% дискового пространства ({{ $value | humanizePercentage }})"
+          action: "Немедленно очистить Docker кэш и старые данные"
+
+      - alert: DiskSpaceWarning
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.25
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Мало места на диске"
+          description: "Доступно менее 25% дискового пространства ({{ $value | humanizePercentage }})"
+          action: "Запланировать очистку Docker кэша"
+
+      # === MEMORY ALERTS ===
+      - alert: MemoryCritical
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Критически мало памяти"
+          description: "Доступно менее 5% памяти ({{ $value | humanizePercentage }})"
+          action: "Проверить memory leaks, перезапустить проблемные контейнеры"
+
+      - alert: MemoryWarning
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.15
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Мало доступной памяти"
+          description: "Доступно менее 15% памяти ({{ $value | humanizePercentage }})"
+          action: "Мониторить использование памяти контейнерами"
+
+      # === CONTAINER HEALTH ALERTS ===
+      - alert: ContainerDown
+        expr: up{job=~".*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: "{{ $labels.job }}"
+        annotations:
+          summary: "Контейнер {{ $labels.job }} недоступен"
+          description: "Сервис {{ $labels.job }} не отвечает более 2 минут"
+          action: "Проверить логи: docker compose logs {{ $labels.job }}"
+
+      - alert: ContainerRestarting
+        expr: rate(container_last_seen[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: "{{ $labels.name }}"
+        annotations:
+          summary: "Контейнер {{ $labels.name }} перезапускается"
+          description: "Контейнер {{ $labels.name }} перезапускался в последние 5 минут"
+          action: "Проверить причину перезапусков в логах"
+
+      # === CPU ALERTS ===
+      - alert: HighCPUUsage
+        expr: (100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 90
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Высокая загрузка CPU"
+          description: "CPU загружен более чем на 90% в течение 10 минут ({{ $value }}%)"
+          action: "Проверить top процессы: docker stats"
+
+      # === POSTGRESQL ALERTS ===
+      - alert: PostgreSQLTooManyConnections
+        expr: pg_stat_database_numbackends{datname="openwebui"} > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: postgresql
+        annotations:
+          summary: "Слишком много подключений к PostgreSQL"
+          description: "{{ $value }} активных подключений к БД openwebui"
+          action: "Проверить connection pooling в OpenWebUI"
+
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: postgresql
+        annotations:
+          summary: "PostgreSQL недоступен"
+          description: "PostgreSQL не отвечает более 1 минуты"
+          action: "Немедленно проверить статус: docker compose ps db"
+
+      # === REDIS ALERTS ===
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: redis
+        annotations:
+          summary: "Redis недоступен"
+          description: "Redis не отвечает более 1 минуты"
+          action: "Проверить статус: docker compose ps redis"
+
+      - alert: RedisLowHitRatio
+        expr: (redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total)) < 0.80
+        for: 15m
+        labels:
+          severity: warning
+          component: redis
+        annotations:
+          summary: "Низкий hit ratio в Redis"
+          description: "Hit ratio {{ $value | humanizePercentage }} (норма >90%)"
+          action: "Проверить TTL ключей и паттерны кэширования"
+
+      # === OLLAMA GPU ALERTS ===
+      - alert: OllamaGPUMemoryHigh
+        expr: (nvidia_gpu_memory_used_bytes / nvidia_gpu_memory_total_bytes) > 0.90
+        for: 5m
+        labels:
+          severity: warning
+          component: ollama
+        annotations:
+          summary: "Высокое использование GPU памяти"
+          description: "VRAM использовано более 90% ({{ $value | humanizePercentage }})"
+          action: "Проверить загруженные модели: docker compose exec ollama ollama list"
+
+      # === NGINX ALERTS ===
+      - alert: NginxHighErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: nginx
+        annotations:
+          summary: "Высокий процент 5xx ошибок в Nginx"
+          description: "{{ $value }} ошибок 5xx в секунду"
+          action: "Проверить upstream сервисы и логи Nginx"
+
+      # === PROMETHEUS SELF-MONITORING ===
+      - alert: PrometheusTSDBCompactionsFailing
+        expr: rate(prometheus_tsdb_compactions_failed_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: prometheus
+        annotations:
+          summary: "Ошибки компакции TSDB в Prometheus"
+          description: "TSDB компакция завершается с ошибками"
+          action: "Проверить место на диске и логи Prometheus"
+
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 3m
+        labels:
+          severity: warning
+          component: prometheus
+        annotations:
+          summary: "Prometheus target {{ $labels.job }} недоступен"
+          description: "Target {{ $labels.job }} не отвечает более 3 минут"
+          action: "Проверить статус сервиса: docker compose ps {{ $labels.job }}"
+
+  - name: erni-ki-performance-alerts
+    interval: 1m
+    rules:
+      # === OPENWEBUI PERFORMANCE ===
+      - alert: OpenWebUISlowResponse
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="openwebui"}[5m])) > 5
+        for: 10m
+        labels:
+          severity: warning
+          component: openwebui
+        annotations:
+          summary: "Медленные ответы OpenWebUI"
+          description: "95-й перцентиль времени ответа > 5 секунд"
+          action: "Проверить производительность PostgreSQL и Ollama"
+
+      # === SEARXNG PERFORMANCE ===
+      - alert: SearXNGSlowSearch
+        expr: histogram_quantile(0.95, rate(searxng_search_duration_seconds_bucket[5m])) > 3
+        for: 10m
+        labels:
+          severity: warning
+          component: searxng
+        annotations:
+          summary: "Медленный поиск в SearXNG"
+          description: "95-й перцентиль времени поиска > 3 секунд"
+          action: "Проверить доступность поисковых движков и Redis кэш"
+
+      # === DOCKER STORAGE ===
+      - alert: DockerStoragePoolAlmostFull
+        expr: (docker_data_space_used / docker_data_space_total) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          component: docker
+        annotations:
+          summary: "Docker storage pool почти заполнен"
+          description: "Использовано {{ $value | humanizePercentage }} storage pool"
+          action: "Выполнить docker system prune"

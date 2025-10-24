@@ -30,6 +30,20 @@ router_settings:
   enable_fallbacks: true # Включить fallback для production
   cooldown_time: 30 # Время ожидания перед повторной попыткой (секунды)
   allowed_fails: 3 # Количество неудачных попыток перед fallback
+  # === CONTEXT WINDOW FALLBACK CONFIGURATION ===
+  # Автоматическое переключение на модели с большим контекстом при превышении лимита
+  context_window_fallbacks:
+    # Для моделей с контекстом 8K переключаться на доступные модели
+    - model_group: "swiss-ai/apertus-70b-instruct"
+      fallback_models:
+        - "ollama/gpt-oss:20b"  # 8K context, но более эффективная модель
+        - "ollama/gemma3:12b"  # 8K context
+        - "ollama/llama3.2:latest"  # 128K context (3.2B параметров)
+    - model_group: "apertus-70b-instruct"
+      fallback_models:
+        - "ollama/gpt-oss:20b"
+        - "ollama/gemma3:12b"
+        - "ollama/llama3.2:latest"
   # Redis настройки для router временно отключены из-за несовместимости
   # redis_host: "redis"
   # redis_port: 6379
@@ -74,7 +88,7 @@ general_settings:
   disable_health_check_logs: true
 
 # === OPENAI PASSTHROUGH CONFIGURATION ===
-# Настройка passthrough для OpenAI Assistant API
+# Настройка passthrough для OpenAI Assistant API (обновлено 2025-10-07)
 openai_route_config:
   # Включить OpenAI passthrough
   enable_openai_passthrough: true
@@ -102,6 +116,15 @@ litellm_settings:
   num_retries: 3
   request_timeout: 300
   max_parallel_requests: 20  # Ограничение одновременных запросов для снижения пиков памяти
+  # === CONTEXT WINDOW MANAGEMENT ===
+  # Автоматическое усечение контекста при превышении лимита модели
+  enable_context_window_fallback: true
+  # Стратегия усечения: "truncate" (обрезать старые сообщения) или "summarize" (суммаризация)
+  context_window_fallback_strategy: "truncate"
+  # Резервировать 10% контекста для ответа модели
+  context_window_safety_margin: 0.1
+  # Максимальный размер контекста по умолчанию (32K для большинства моделей)
+  max_context_window: 32768
   # === DETAILED LOGGING SETTINGS ===
   # Включить детальное логирование запросов и ответов
   log_raw_request: true
@@ -183,7 +206,7 @@ litellm_settings:
     pool_recycle: 3600 # Время жизни подключения (1 час)
 
 # === OPENAI ASSISTANT API CONFIGURATION ===
-# Настройки для интеграции с OpenAI Assistant API
+# Настройки для интеграции с OpenAI Assistant API (обновлено 2025-10-07)
 assistant_settings:
   custom_llm_provider: openai
   litellm_params:

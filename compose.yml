@@ -625,6 +625,7 @@ services:
     volumes:
       - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./conf/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - ./conf/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro # ДОБАВЛЕНО 2025-10-24: Системные алерты
       - ./conf/prometheus/rules:/etc/prometheus/rules:ro
       - ./conf/prometheus/alerts:/etc/prometheus/alerts:ro # Добавлено: 2025-10-02 для litellm-memory.yml
       - ./data/prometheus:/prometheus
@@ -768,8 +769,9 @@ services:
       - "--path.udev.data=/host/run/udev/data" # Путь к udev данным для diskstats collector
       - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
       - "--no-collector.systemd" # Отключаем systemd collector (нет доступа к dbus в контейнере)
-      # Исправлено: warn вместо error для фильтрации broken pipe ошибок
-      - "--log.level=warn"
+      # ИСПРАВЛЕНО 2025-10-24: error вместо warn для подавления broken pipe ошибок
+      # Broken pipe ошибки - это нормальное поведение когда клиент закрывает соединение
+      - "--log.level=error"
       - "--collector.processes"
       - "--web.disable-exporter-metrics" # Отключаем метрики самого экспортера для уменьшения нагрузки
     volumes:
