@@ -98,6 +98,12 @@ services:
       watchtower:
         condition: service_healthy
     env_file: env/db.env
+    # Добавлено: 2025-10-30 - Docker Secrets для безопасного хранения пароля
+    secrets:
+      - postgres_password
+    environment:
+      # Переопределяем POSTGRES_PASSWORD из env файла на использование секрета
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 30s
@@ -1218,3 +1224,29 @@ volumes:
       - "com.erni-ki.volume.type=database"
       - "com.erni-ki.volume.optimization=high-performance"
       - "com.erni-ki.volume.phase=3"
+
+# ============================================================================
+# DOCKER SECRETS - Безопасное хранение паролей и API ключей
+# ============================================================================
+# Добавлено: 2025-10-30 (Фаза 1: Критические исправления безопасности)
+# Все чувствительные данные перемещены из env файлов в Docker Secrets
+secrets:
+  # PostgreSQL пароль (используется: db, openwebui, mcposerver)
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+
+  # LiteLLM database пароль
+  litellm_db_password:
+    file: ./secrets/litellm_db_password.txt
+
+  # LiteLLM API ключ (используется: openwebui, litellm)
+  litellm_api_key:
+    file: ./secrets/litellm_api_key.txt
+
+  # Context7 API ключ (используется: mcposerver)
+  context7_api_key:
+    file: ./secrets/context7_api_key.txt
+
+  # VLLM API ключ
+  vllm_api_key:
+    file: ./secrets/vllm_api_key.txt

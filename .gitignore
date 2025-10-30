@@ -6,9 +6,16 @@
 # ===================================================================
 # ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ И СЕКРЕТЫ
 # ===================================================================
-.env*
+.env
+.env.local
+.env.*.local
 env/*.env
-secrets/
+!env/*.example
+!env/*.template
+env/*.backup-*
+secrets/*.txt
+!secrets/*.example
+!secrets/README.md
 *.key
 *.pem
 *.p12
@@ -41,7 +48,7 @@ yarn-error.log*
 .venv/
 venv/
 .env/
-env/
+# env/ - УДАЛЕНО: конфликтует с директорией env/ проекта
 __pycache__/
 *.py[cod]
 *$py.class
