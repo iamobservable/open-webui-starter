@@ -8,10 +8,12 @@ standardized healthchecks, and production-ready observability stack.
 ERNI-KI monitoring system includes:
 
 - **8 Specialized Exporters** - optimized and standardized (September 19, 2025)
-- **Prometheus v2.55.1** - metrics collection and storage
-- **Grafana** - visualization and dashboards
-- **Loki + Fluent Bit** - centralized logging
-- **AlertManager** - notifications and alerting
+- **Prometheus v3.0.1** - metrics collection and storage (updated October
+  24, 2025)
+- **27 Alert Rules** - proactive monitoring (18 new system alerts + 9 existing)
+- **Grafana v11.6.6** - visualization and dashboards
+- **Loki v3.5.5 + Fluent Bit v3.2.0** - centralized logging
+- **AlertManager v0.28.0** - notifications and alerting
 
 ## 📈 Exporters Configuration
 
@@ -433,6 +435,150 @@ docker port EXPORTER_CONTAINER
 curl -s http://localhost:PORT/
 curl -s http://localhost:PORT/metrics
 ```
+
+## 🚨 Prometheus Alerts Configuration
+
+### Overview
+
+ERNI-KI uses **27 active alert rules** for proactive monitoring (added October
+24, 2025):
+
+- **18 new system alerts** in `conf/prometheus/alerts.yml`
+- **9 existing alerts** in `conf/prometheus/alert_rules.yml` and
+  `logging-alerts.yml`
+
+### Alert Groups
+
+#### 1. Critical Alerts (erni-ki-critical-alerts)
+
+**Disk Space Alerts:**
+
+- `DiskSpaceCritical` - Triggers when disk usage >85% (severity: critical)
+- `DiskSpaceWarning` - Triggers when disk usage >75% (severity: warning)
+
+**Memory Alerts:**
+
+- `MemoryCritical` - Triggers when available memory <5% (severity: critical)
+- `MemoryWarning` - Triggers when available memory <15% (severity: warning)
+
+**CPU Alerts:**
+
+- `HighCPUUsage` - Triggers when CPU usage >80% for 5 minutes (severity:
+  warning)
+
+**Container Alerts:**
+
+- `ContainerDown` - Triggers when container is down (severity: critical)
+- `ContainerRestarting` - Triggers when container restarts >3 times in 5 minutes
+  (severity: warning)
+
+**Database Alerts:**
+
+- `PostgreSQLDown` - Triggers when PostgreSQL is unavailable (severity:
+  critical)
+- `PostgreSQLHighConnections` - Triggers when connections >80 (severity:
+  warning)
+- `RedisDown` - Triggers when Redis is unavailable (severity: critical)
+- `RedisHighMemory` - Triggers when Redis memory >1GB (severity: warning)
+
+**GPU Alerts:**
+
+- `OllamaGPUDown` - Triggers when Ollama GPU is unavailable (severity: critical)
+- `OllamaHighVRAM` - Triggers when VRAM usage >80% (severity: warning)
+
+**Nginx Alerts:**
+
+- `NginxDown` - Triggers when Nginx is unavailable (severity: critical)
+- `NginxHighErrorRate` - Triggers when 5xx errors >10/min (severity: warning)
+
+#### 2. Performance Alerts (erni-ki-performance-alerts)
+
+- `OpenWebUISlowResponse` - Triggers when response time >5s (severity: warning)
+- `SearXNGSlowSearch` - Triggers when search time >3s (severity: warning)
+- `DockerStoragePoolAlmostFull` - Triggers when Docker storage >85% (severity:
+  warning)
+
+### Alert Configuration
+
+**File:** `conf/prometheus/alerts.yml`
+
+```yaml
+groups:
+  - name: erni-ki-critical-alerts
+    interval: 30s
+    rules:
+      - alert: DiskSpaceCritical
+        expr:
+          (node_filesystem_avail_bytes{mountpoint="/"} /
+          node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: 'Critical: Disk space below 15%'
+          description: 'Disk usage is {{ $value }}% on {{ $labels.instance }}'
+```
+
+### Viewing Active Alerts
+
+**Prometheus UI:**
+
+```bash
+# Open in browser
+http://localhost:9091/alerts
+```
+
+**API Query:**
+
+```bash
+# Get all active alerts
+curl -s http://localhost:9091/api/v1/rules | jq '.data.groups[] | select(.name | contains("erni-ki"))'
+
+# Count alerts by severity
+curl -s http://localhost:9091/api/v1/rules | jq '.data.groups[].rules[] | select(.labels.severity) | .labels.severity' | sort | uniq -c
+```
+
+### Alert Testing
+
+**Trigger test alert:**
+
+```bash
+# Test disk space alert (create large file)
+dd if=/dev/zero of=/tmp/test-alert.img bs=1G count=10
+
+# Monitor alert status
+watch -n 5 'curl -s http://localhost:9091/api/v1/alerts | jq ".data.alerts[] | select(.labels.alertname==\"DiskSpaceCritical\")"'
+
+# Cleanup
+rm /tmp/test-alert.img
+```
+
+### Alert Maintenance
+
+**Reload configuration:**
+
+```bash
+# Reload Prometheus configuration
+docker compose exec prometheus kill -HUP 1
+
+# Verify alerts loaded
+curl -s http://localhost:9091/api/v1/rules | jq '.data.groups[] | .name'
+```
+
+**Disable specific alert:**
+
+```yaml
+# In conf/prometheus/alerts.yml, comment out the rule
+# - alert: AlertName
+#   expr: ...
+```
+
+### Related Documentation
+
+- [Prometheus Alerts Guide](prometheus-alerts-guide.md) - Detailed alert
+  documentation
+- [Admin Guide](admin-guide.md) - Alert management procedures
 
 ## 📈 Performance Optimization
 
