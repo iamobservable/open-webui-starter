@@ -50,7 +50,18 @@ export default defineConfig({
       '__tests__/**/*.{test,spec}.{js,ts}',
     ],
 
-    exclude: ['node_modules/**', 'dist/**', 'build/**', 'auth/**', 'data/**', 'logs/**'],
+    // Исключаем E2E тесты (они запускаются через Playwright)
+    exclude: [
+      'node_modules/**',
+      'dist/**',
+      'build/**',
+      'auth/**',
+      'data/**',
+      'logs/**',
+      'tests/e2e/**', // E2E тесты запускаются через Playwright
+      'playwright-report/**',
+      'playwright-artifacts/**',
+    ],
 
     // Настройки репортеров
     reporters: ['verbose', 'json', 'html'],

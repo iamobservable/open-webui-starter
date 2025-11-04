@@ -5,7 +5,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.PW_FORCE_HOST
   ? `https://${process.env.PW_FORCE_HOST}`
-  : process.env.PW_BASE_URL || 'https://localhost';
+  : (process.env.PW_BASE_URL ?? 'https://localhost');
 
 const launchArgs: string[] = [];
 if (process.env.PW_SNI_HOST && process.env.PW_SNI_IP) {

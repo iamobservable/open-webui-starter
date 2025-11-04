@@ -22,10 +22,12 @@ export default [
       '*.min.js',
       '*.min.css',
       'data/**',
+      'cache/**', // Backrest cache с ограниченными правами доступа
       'logs/**',
       '*.log',
       '.tmp/**',
       '.cache/**',
+      '.venv/**', // Python virtual environment
       '**/*.go',
       'package-lock.json',
       'yarn.lock',
@@ -42,6 +44,10 @@ export default [
       '.DS_Store',
       'Thumbs.db',
       '.config-backup/**',
+      'playwright-report/**',
+      'playwright-artifacts/**',
+      'test-results/**',
+      'tests/e2e/**', // E2E тесты используют Playwright, не ESLint
     ],
   },
 
