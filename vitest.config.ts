@@ -12,6 +12,9 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       reportsDirectory: './coverage',
+      // Vitest 4.0: coverage.include определяет какие файлы включать в отчет
+      // Включаем покрытые и непокрытые файлы по этому паттерну
+      include: ['src/**/*.{js,ts}', 'tests/**/*.{js,ts}', '!tests/e2e/**'],
       exclude: [
         'node_modules/**',
         'dist/**',
@@ -25,6 +28,9 @@ export default defineConfig({
         'docs/**',
         '**/*.test.ts',
         '**/*.spec.ts',
+        'tests/e2e/**',
+        'playwright-report/**',
+        'playwright-artifacts/**',
       ],
       thresholds: {
         global: {
@@ -34,7 +40,7 @@ export default defineConfig({
           statements: 90,
         },
       },
-      all: true,
+      // Vitest 4.0: coverage.all удален, используем coverage.include вместо этого
       skipFull: false,
     },
 
@@ -71,13 +77,10 @@ export default defineConfig({
     },
 
     // Настройки для параллельного выполнения
+    // Vitest 4.0: poolOptions удален, все опции теперь top-level
     pool: 'threads',
-    poolOptions: {
-      threads: {
-        singleThread: false,
-        isolate: true,
-      },
-    },
+    isolate: true, // Изоляция между тестами (было в poolOptions.threads.isolate)
+    // singleThread: false эквивалентно maxWorkers > 1 (по умолчанию)
 
     // Настройки для мокирования
     mockReset: true,
