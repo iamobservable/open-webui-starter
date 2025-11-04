@@ -66,8 +66,7 @@ class GPUMonitor {
         if (code === 0) {
           const lines = output.trim().split('\n');
           const metrics = lines.map(line => {
-            const [timestamp, name, gpuUtil, memUtil, memUsed, memTotal, temp, power] =
-              line.split(', ');
+            const [, name, gpuUtil, memUtil, memUsed, memTotal, temp, power] = line.split(', ');
             return {
               timestamp: new Date().toISOString(),
               gpuName: name,
@@ -107,6 +106,7 @@ class GPUMonitor {
     this.monitoring = true;
     this.data = [];
 
+    // eslint-disable-next-line no-undef
     this.interval = setInterval(async () => {
       const metrics = await this.getGPUMetrics();
       if (metrics) {
@@ -114,7 +114,7 @@ class GPUMonitor {
 
         // Вывод текущих метрик
         console.log(
-          `GPU: ${metrics.gpuUtilization}% | Память: ${metrics.memoryUsed}MB/${metrics.memoryTotal}MB (${metrics.memoryUtilization}%) | Температура: ${metrics.temperature}°C`
+          `GPU: ${metrics.gpuUtilization}% | Память: ${metrics.memoryUsed}MB/${metrics.memoryTotal}MB (${metrics.memoryUtilization}%) | Температура: ${metrics.temperature}°C`,
         );
       }
     }, intervalMs);
@@ -132,6 +132,7 @@ class GPUMonitor {
     this.monitoring = false;
 
     if (this.interval) {
+      // eslint-disable-next-line no-undef
       clearInterval(this.interval);
       this.interval = null;
     }
@@ -200,17 +201,17 @@ class GPUMonitor {
     console.log('📊 СВОДКА GPU МЕТРИК');
     console.log('='.repeat(50));
     console.log(
-      `🎮 GPU утилизация: ${summary.gpu.min}% - ${summary.gpu.max}% (среднее: ${summary.gpu.avg}%)`
+      `🎮 GPU утилизация: ${summary.gpu.min}% - ${summary.gpu.max}% (среднее: ${summary.gpu.avg}%)`,
     );
     console.log(
-      `💾 Память: ${summary.memory.min}% - ${summary.memory.max}% (среднее: ${summary.memory.avg}%)`
+      `💾 Память: ${summary.memory.min}% - ${summary.memory.max}% (среднее: ${summary.memory.avg}%)`,
     );
     console.log(`📈 Пиковое использование памяти: ${summary.memory.peakUsedMB} MB`);
     console.log(
-      `🌡️  Температура: ${summary.temperature.min}°C - ${summary.temperature.max}°C (среднее: ${summary.temperature.avg}°C)`
+      `🌡️  Температура: ${summary.temperature.min}°C - ${summary.temperature.max}°C (среднее: ${summary.temperature.avg}°C)`,
     );
     console.log(
-      `⚡ Энергопотребление: ${summary.power.min}W - ${summary.power.max}W (среднее: ${summary.power.avg}W)`
+      `⚡ Энергопотребление: ${summary.power.min}W - ${summary.power.max}W (среднее: ${summary.power.avg}W)`,
     );
     console.log('='.repeat(50));
   }
@@ -227,6 +228,7 @@ class GPUMonitor {
     console.log('🤖 Отправка тестового запроса к Ollama...');
     this.sendTestRequest();
 
+    // eslint-disable-next-line no-undef
     setTimeout(() => {
       this.stopMonitoring();
     }, durationSeconds * 1000);

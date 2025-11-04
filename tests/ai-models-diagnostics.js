@@ -145,7 +145,7 @@ class AIModelsDiagnostics {
 
       // Получение списка доступных моделей
       const models = await this.page.$$eval('option, .dropdown-item, [role="option"]', elements =>
-        elements.map(el => el.textContent?.trim()).filter(Boolean)
+        elements.map(el => el.textContent?.trim()).filter(Boolean),
       );
 
       console.log(`📋 Найдено моделей: ${models.length}`);
@@ -156,7 +156,7 @@ class AIModelsDiagnostics {
 
       // Проверка ожидаемых моделей
       const missingModels = CONFIG.expectedModels.filter(
-        expected => !models.some(available => available.includes(expected.split(':')[0]))
+        expected => !models.some(available => available.includes(expected.split(':')[0])),
       );
 
       if (missingModels.length > 0) {
@@ -245,7 +245,7 @@ class AIModelsDiagnostics {
 
         // Получение ответа
         const responses = await this.page.$$eval('.message, .chat-message, .response', elements =>
-          elements.map(el => el.textContent?.trim()).filter(Boolean)
+          elements.map(el => el.textContent?.trim()).filter(Boolean),
         );
 
         const lastResponse = responses[responses.length - 1];
@@ -322,7 +322,7 @@ class AIModelsDiagnostics {
 
       // Поиск источников
       const sources = await this.page.$$eval('.source, .citation, [href*="http"]', elements =>
-        elements.map(el => el.textContent || el.href).filter(Boolean)
+        elements.map(el => el.textContent || el.href).filter(Boolean),
       );
 
       this.results.ragTests.push({
@@ -397,25 +397,25 @@ class AIModelsDiagnostics {
 
     if (performanceMetrics.averageResponseTime > CONFIG.maxResponseTime) {
       this.results.recommendations.push(
-        'Время отклика превышает ожидаемое. Рекомендуется оптимизация GPU или модели.'
+        'Время отклика превышает ожидаемое. Рекомендуется оптимизация GPU или модели.',
       );
     }
 
     if (performanceMetrics.failedTests > 0) {
       this.results.recommendations.push(
-        'Обнаружены неудачные тесты. Проверьте логи Ollama и OpenWebUI.'
+        'Обнаружены неудачные тесты. Проверьте логи Ollama и OpenWebUI.',
       );
     }
 
     if (errors.some(error => error.type === 'missing_models')) {
       this.results.recommendations.push(
-        'Отсутствуют ожидаемые модели. Загрузите недостающие модели через Ollama.'
+        'Отсутствуют ожидаемые модели. Загрузите недостающие модели через Ollama.',
       );
     }
 
     if (this.results.ragTests.length === 0 || !this.results.ragTests.some(test => test.success)) {
       this.results.recommendations.push(
-        'RAG-интеграция не работает. Проверьте SearXNG и настройки веб-поиска.'
+        'RAG-интеграция не работает. Проверьте SearXNG и настройки веб-поиска.',
       );
     }
   }
@@ -430,7 +430,7 @@ class AIModelsDiagnostics {
     console.log(`🌐 OpenWebUI доступен: ${systemStatus.webUIAccessible ? '✅' : '❌'}`);
     console.log(`🤖 Доступно моделей: ${systemStatus.modelsCount || 0}`);
     console.log(
-      `✅ Успешных тестов: ${performanceMetrics.successfulTests}/${performanceMetrics.totalTests}`
+      `✅ Успешных тестов: ${performanceMetrics.successfulTests}/${performanceMetrics.totalTests}`,
     );
     console.log(`⏱️  Среднее время отклика: ${performanceMetrics.averageResponseTime}ms`);
     console.log(`🔍 RAG тесты: ${performanceMetrics.ragTestsSuccessful} успешных`);
