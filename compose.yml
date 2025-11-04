@@ -115,6 +115,10 @@ services:
     restart: unless-stopped
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
+      # Кастомная конфигурация PostgreSQL с pg_stat_statements (добавлено: 2025-11-04)
+      - ./conf/postgres-enhanced/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    # Используем кастомную конфигурацию
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     # Используем стандартную Docker bridge сеть
     labels:
       # КРИТИЧЕСКИ ВАЖНО: Запретить автообновление базы данных
@@ -369,7 +373,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: travisvn/openai-edge-tts:latest
+    image: travisvn/openai-edge-tts:latest # NOTE: Проект использует только latest/canary теги, нет версионных релизов
     logging: *auxiliary-logging
     ports:
       - 5050:5050
@@ -391,7 +395,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: apache/tika:latest-full
+    image: apache/tika:3.2.3.0-full # Обновлено: 2025-11-04 с latest-full на 3.2.3.0-full (стабильная версия)
     logging: *auxiliary-logging
     ports:
       - 9998:9998
@@ -416,7 +420,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
-    image: ghcr.io/open-webui/mcpo:latest
+    image: ghcr.io/open-webui/mcpo:git-91e8f94 # Обновлено: 2025-11-04 с latest на git-91e8f94 (стабильный коммит)
     logging: *auxiliary-logging
     ports:
       - "8000:8000"
@@ -448,7 +452,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: searxng/searxng:latest # Обновлено для совместимости
+    image: searxng/searxng:latest # Откат: 2025-11-04 с 2025.1.3-a060c0985 на latest (версия 2025.1.3 имеет проблему "unavailable modifier requested")
     logging: *important-logging
     restart: unless-stopped
     volumes:
@@ -553,7 +557,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    image: ghcr.io/open-webui/open-webui:v0.6.32 # Обновлено до последней стабильной версии
+    image: ghcr.io/open-webui/open-webui:v0.6.34 # Обновлено: 2025-11-04 до v0.6.34 (последняя стабильная версия)
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
@@ -814,7 +818,7 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
-    image: prometheuscommunity/postgres-exporter:latest # Используем latest для совместимости с PostgreSQL 17
+    image: prometheuscommunity/postgres-exporter:v0.15.0 # Обновлено: 2025-11-04 с latest на v0.15.0 (v0.16.0 несовместим с текущим конфигом)
     container_name: erni-ki-postgres-exporter
     environment:
       - DATA_SOURCE_NAME=postgresql://postgres:aEnbxS4MrXqzurHNGxkcEgCBm@db:5432/openwebui?sslmode=disable
