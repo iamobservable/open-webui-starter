@@ -256,12 +256,32 @@ print_usage () {
   echo
 }
 
+# Runs docker compose, automatically adding compose.override.yaml if it exists
+run_compose () {
+  # Define the compose files
+  local BASE_FILE="compose.yaml"
+  local OVERRIDE_FILE="compose.override.yaml"
+
+  # Start with the base file, which is required
+  local COMPOSE_ARGS=("-f" "$BASE_FILE")
+
+  # Check if the optional override file exists
+  if [ -f "$OVERRIDE_FILE" ]; then
+      print_verbose_message "--> using $OVERRIDE_FILE"
+      # If it exists, add it to the arguments
+      COMPOSE_ARGS+=("-f" "$OVERRIDE_FILE")
+  fi
+
+  # Run docker compose with all the built arguments
+  docker compose "${COMPOSE_ARGS[@]}" "$@"
+}
+
 project_containers () {
   fail_if_no_project $2
   fail_if_project_directory_does_not_exist "$1/$2"
 
   pushd $1/$2 > /dev/null
-    docker compose -f compose.yaml ps
+    run_compose ps
   popd > /dev/null
 }
 
@@ -343,7 +363,7 @@ project_remove () {
 
   pushd "$1/$2" > /dev/null
     print_message "\nshutting down and removing containers"
-    docker compose down -v
+    run_compose down -v
   popd > /dev/null
 
   print_message "\nremoving files and directory"
@@ -355,7 +375,7 @@ project_start () {
   fail_if_project_directory_does_not_exist "$1/$2"
 
   pushd "$1/$2" > /dev/null
-    docker compose -f compose.yaml up -d
+    run_compose up -d
   popd > /dev/null
 }
 
@@ -364,7 +384,7 @@ project_stop () {
   fail_if_project_directory_does_not_exist "$1/$2"
 
   pushd "$1/$2" > /dev/null
-    docker compose -f compose.yaml down
+    run_compose down
   popd > /dev/null
 }
 
