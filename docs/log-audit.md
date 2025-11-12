@@ -202,6 +202,21 @@
   `docker compose restart prometheus alertmanager` убедиться, что
   `HighDiskUtilization`/`CriticalDiskSpace` теперь отражают критические тома
   (`/`, `/data`).
+- **Fluent Bit → Loki**: обновлён `conf/fluent-bit/fluent-bit.conf` — теперь
+  используется `Host erni-ki-loki` (container_name) для DNS-устойчивости,
+  `storage.type filesystem` для входного потока и `Retry_Limit False` + лимит
+  backlog 1 ГБ, чтобы Fluent Bit буферизовал логи при недоступности Loki вместо
+  спама `getaddrinfo`.
+- **Ротация Alertmanager вебхуков**: добавлен скрипт
+  `scripts/maintenance/webhook-logs-rotate.sh` (архивация по датам, удаление
+  старше 30 дней) и cron-задание `30 2 * * *` в
+  `conf/cron/logging-reports.cron`. Каталог `data/webhook-logs/archive` содержит
+  tar.gz по дням.
+- **Cron-скрипты мониторинга**: созданы `.config-backup/logging-monitor.sh` и
+  `.config-backup/logging-alerts.sh`, которые вызывают
+  `scripts/health-monitor.sh` и запрашивают Alertmanager API соответственно (лог
+  `.config-backup/logs/alerts.log`). `health-monitor.sh` теперь использует
+  `python3`, что устраняет ошибку `python: command not found`.
 
 Отчёт нужно синхронизировать с runbook-ами (`docs/monitoring-guide.md`,
 `docs/prometheus-alerts-guide.md`) и создать отдельный таск на чистку

@@ -12,3 +12,9 @@
 
 # Watchdog фрагментации Redis: каждые 5 минут
 */5 * * * * cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/maintenance/redis-fragmentation-watchdog.sh >> /var/log/erni-ki-redis-watchdog.log 2>&1
+
+# Ротация Alertmanager webhook-логов (архив + очистка)
+30 2 * * * cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/maintenance/webhook-logs-rotate.sh >> /var/log/erni-ki-webhook-rotation.log 2>&1
+
+# Мониторинг очереди Alertmanager (логирование значения)
+*/5 * * * * cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/monitoring/alertmanager-queue-watch.sh >> /var/log/erni-ki-alertmanager-queue.log 2>&1

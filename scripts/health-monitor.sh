@@ -120,7 +120,7 @@ check_compose_services() {
 
   local parsed
   if ! parsed="$(
-    compose ps --format json 2>/dev/null | python - <<'PY'
+    compose ps --format json 2>/dev/null | python3 - <<'PY'
 from __future__ import annotations
 import json
 import sys
@@ -275,7 +275,7 @@ write_report() {
 
   {
     echo "# ERNI-KI Health Report"
-    echo "_$ts_"
+    echo "_${ts}_"
     echo ""
     echo "| Статус | Проверка | Детали |"
     echo "|--------|----------|--------|"
