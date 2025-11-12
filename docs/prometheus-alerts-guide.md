@@ -318,6 +318,16 @@ docker compose restart nginx
 **Threshold:** Disk usage >75%  
 **Duration:** 10 minutes
 
+**Expression:**
+
+```promql
+(1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|vfat",mountpoint!="/boot/efi"} /
+      node_filesystem_size_bytes{fstype!~"tmpfs|vfat",mountpoint!="/boot/efi"})) * 100 > 80
+```
+
+**Notes:** EFI-раздел (`/boot/efi`, `vfat`) исключён, чтобы не получать ложных
+срабатываний из‑за небольшого загрузочного тома.
+
 **Resolution:** Same as DiskSpaceCritical, but less urgent.
 
 ---
@@ -365,26 +375,41 @@ docker stats --no-stream --format "table {{.Container}}\t{{CPUPerc}}"
 
 **Severity:** Warning  
 **Component:** Docker  
-**Threshold:** >3 restarts in 5 minutes  
-**Duration:** Immediate
+**Threshold:** ≥2 restarts per container within 15 minutes  
+**Duration:** 1 minute (debounce)
 
 **Expression:**
 
 ```promql
-rate(container_restart_count[5m]) > 3
+sum by (name) (
+  changes(
+    container_start_time_seconds{
+      job="cadvisor",
+      container_label_com_docker_compose_project="erni-ki",
+      name!~"erni-ki-(cadvisor|node-exporter|alertmanager).*"
+    }[15m]
+  )
+) >= 2
 ```
+
+**Notes:**
+
+- `changes(container_start_time_seconds...)` реагирует только когда контейнер
+  действительно стартует заново, поэтому исчез шум от `container_last_seen`.
+- Исключены инфраструктурные контейнеры (cadvisor, node-exporter, alertmanager)
+  чтобы alert не срабатывал на агенты мониторинга.
 
 **Resolution:**
 
 ```bash
-# Check restart count
+# Проверить фактическое количество рестартов
 docker inspect SERVICE_NAME | jq '.[0].RestartCount'
 
-# View recent logs
-docker compose logs SERVICE_NAME --since 10m
+# Посмотреть последние логи и причины выхода
+docker compose logs SERVICE_NAME --since 15m
 
-# Check healthcheck failures
-docker inspect SERVICE_NAME | jq '.[0].State.Health.Log[-5:]'
+# Проверить healthcheck/exit code
+docker inspect SERVICE_NAME | jq '.[0].State | {Status, ExitCode, Health}'
 ```
 
 ---
@@ -445,7 +470,39 @@ docker compose exec redis redis-cli -a ErniKiRedisSecurePassword2024 FLUSHDB
 
 ---
 
-### 14. OllamaHighVRAM
+### 14. RedisHighFragmentation
+
+**Severity:** Warning  
+**Component:** Cache  
+**Threshold:** `redis_mem_fragmentation_ratio > 5`  
+**Duration:** 10 minutes
+
+**Expression:**
+
+```promql
+redis_mem_fragmentation_ratio > 5
+```
+
+**Resolution:**
+
+```bash
+# Проверить текущую фрагментацию и память
+docker compose exec redis redis-cli INFO memory | grep -E "mem_fragmentation_ratio|used_memory"
+
+# Проверить лог watchdog
+tail -n 50 logs/redis-fragmentation-watchdog.log
+
+# Принудительно выполнить очистку (если watchdog не сработал)
+docker compose exec redis redis-cli MEMORY PURGE
+```
+
+**Notes:** Cron-задача `*/5 * * * * ... redis-fragmentation-watchdog.sh`
+автоматически запускает `MEMORY PURGE`. Alert служит ранним сигналом и указывает
+runbook на раздел _docs/log-audit.md › Выполненные remediation_.
+
+---
+
+### 15. OllamaHighVRAM
 
 **Severity:** Warning  
 **Component:** AI/GPU  
@@ -473,7 +530,7 @@ docker compose exec ollama ollama rm MODEL_NAME
 
 ---
 
-### 15. NginxHighErrorRate
+### 16. NginxHighErrorRate
 
 **Severity:** Warning  
 **Component:** Gateway  
@@ -503,7 +560,7 @@ curl -I http://localhost:8080
 
 ## 📊 Performance Alerts
 
-### 16. OpenWebUISlowResponse
+### 17. OpenWebUISlowResponse
 
 **Severity:** Warning  
 **Component:** Application  
@@ -525,7 +582,7 @@ time curl -X POST http://localhost:11434/api/generate -d '{"model":"llama3.2","p
 
 ---
 
-### 17. SearXNGSlowSearch
+### 18. SearXNGSlowSearch
 
 **Severity:** Warning  
 **Component:** Search  
@@ -547,7 +604,7 @@ docker compose logs searxng --tail 50
 
 ---
 
-### 18. DockerStoragePoolAlmostFull
+### 19. DockerStoragePoolAlmostFull
 
 **Severity:** Warning  
 **Component:** Infrastructure  

@@ -22,6 +22,10 @@
 # - Fallback: ollama/llama3.1:8b (совместимость)
 #
 
+# Модели управляются через Database Models в LiteLLM Admin UI
+# Все модели мигрированы из конфигурации в базу данных для полного управления через веб-интерфейс
+#
+
 router_settings:
   num_retries: 3
   timeout: 600
@@ -57,7 +61,7 @@ general_settings:
   ui_password: os.environ/UI_PASSWORD
   max_budget: 100
   # === DATABASE STORAGE SETTINGS ===
-  # Включить хранение моделей в БД (для Database Models)
+  # Используем Database Models — все модели добавляются через Admin UI/API.
   store_model_in_db: true
   # Включить хранение промптов и ответов в логах трат (для детального логирования)
   store_prompts_in_spend_logs: true
@@ -131,6 +135,9 @@ litellm_settings:
   log_raw_response: true
   # Сохранять промпты в логах
   store_prompts_in_logs: true
+  # Alias map для внешних моделей, чтобы сохранять дружественные имена в OpenWebUI.
+  model_alias_map:
+    apertus-70b-instruct: "swiss-ai/apertus-70b-instruct"
   # === PROMETHEUS METRICS ===
   # Отключено: требует Enterprise лицензию
   # callbacks: ["prometheus"]  # Включить экспорт Prometheus метрик

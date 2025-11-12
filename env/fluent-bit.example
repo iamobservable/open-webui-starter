@@ -17,15 +17,15 @@ FLB_HTTP_LISTEN=0.0.0.0
 # Порт для HTTP сервера
 FLB_HTTP_PORT=2020
 
-# === Elasticsearch выход ===
-# Хост Elasticsearch
-ELASTICSEARCH_HOST=elasticsearch
-# Порт Elasticsearch
-ELASTICSEARCH_PORT=9200
-# Индекс для логов (с датой)
-ELASTICSEARCH_INDEX=erni-ki-logs
-# Тип документа
-ELASTICSEARCH_TYPE=_doc
+# === Loki выход ===
+# Хост Loki (контейнерное имя)
+LOKI_HOST=loki
+# Порт Loki HTTP API
+LOKI_PORT=3100
+# Tenant ID (оставьте пустым, если multi-tenant не используется)
+LOKI_TENANT_ID=
+# Набор лейблов, которые Fluent Bit будет добавлять к каждой записи
+LOKI_LABELS=job=fluent-bit,cluster=erni-ki,environment=production
 
 # === Парсинг логов ===
 # Включить парсинг JSON логов

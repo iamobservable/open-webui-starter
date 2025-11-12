@@ -13,7 +13,7 @@
 
 #### 🔧 **Сохраненные интеграции**
 - ✅ **PostgreSQL**: Подключение к базе данных работает
-- ✅ **Ollama**: 4 модели доступны (gpt-oss:20b, gemma3:12b, llama3.2:latest, nomic-embed-text:latest)
+- ✅ **Ollama**: 4 модели доступны (gpt-oss:20b, gemma3:12b, llama3.2 (128K), nomic-embed-text)
 - ✅ **SearXNG RAG**: Веб-поиск функционален
 - ✅ **LiteLLM**: Интеграция с Context Engineering Gateway
 - ✅ **GPU Acceleration**: NVIDIA runtime активен

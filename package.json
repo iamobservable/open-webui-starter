@@ -55,7 +55,7 @@
     "type-check": "tsc --noEmit",
     "build": "tsc",
     "clean": "rm -rf dist coverage node_modules/.cache",
-    "docker:build": "docker build -t erni-ki-auth:latest ./auth",
+    "docker:build": "docker build -t erni-ki-auth:dev ./auth",
     "docker:run": "docker compose up -d",
     "docker:stop": "docker compose down",
     "docker:logs": "docker compose logs -f",

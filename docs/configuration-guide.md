@@ -42,6 +42,7 @@ WEBUI_URL="https://ki.erni-gruppe.ch"
 WEBUI_SECRET_KEY="your-secret-key-here"  # КРИТИЧНО: Замените на уникальный ключ # pragma: allowlist secret
 ENABLE_SIGNUP=false                       # Отключить регистрацию в продакшене
 DEFAULT_USER_ROLE="user"                  # Роль по умолчанию для новых пользователей
+CORS_ALLOW_ORIGIN="https://diz.zone;https://webui.diz.zone;https://ki.erni-gruppe.ch;https://192.168.62.153;http://192.168.62.153:8080"  # Разделяйте origin знаком ';'
 
 # === GPU УСКОРЕНИЕ ===
 NVIDIA_VISIBLE_DEVICES=all                # Доступ ко всем GPU
@@ -50,7 +51,7 @@ NVIDIA_DRIVER_CAPABILITIES=compute,utility # Необходимые возмож
 # === ИНТЕГРАЦИИ ===
 OLLAMA_BASE_URL="http://ollama:11434"     # Подключение к Ollama
 LITELLM_BASE_URL="http://litellm:4000"    # LiteLLM Gateway
-SEARXNG_QUERY_URL="http://searxng:8080/search?q=<query>&format=json"
+SEARXNG_QUERY_URL="http://nginx:8080/api/searxng/search?q=<query>&format=json"
 
 # === ОБРАБОТКА ДОКУМЕНТОВ ===
 TIKA_BASE_URL="http://tika:9998"          # Apache Tika для метаданных

@@ -9,3 +9,6 @@
 
 # Очистка старых отчетов (старше 90 дней) каждый месяц
 0 8 1 * * find /home/konstantin/Documents/augment-projects/erni-ki/.config-backup/reports -name "*.txt" -mtime +90 -delete >> /var/log/erni-ki-reports.log 2>&1
+
+# Watchdog фрагментации Redis: каждые 5 минут
+*/5 * * * * cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/maintenance/redis-fragmentation-watchdog.sh >> /var/log/erni-ki-redis-watchdog.log 2>&1

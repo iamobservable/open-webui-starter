@@ -3,6 +3,7 @@
 ## 🚀 Быстрая установка Let's Encrypt
 
 ### 1. Получите Cloudflare API токен
+
 1. Войдите в [Cloudflare Dashboard](https://dash.cloudflare.com/)
 2. **My Profile** → **API Tokens** → **Create Token**
 3. **Custom token** с правами:
@@ -11,6 +12,7 @@
    - Зона: `erni-gruppe.ch`
 
 ### 2. Установите сертификат
+
 ```bash
 # Установите API токен
 export CF_Token="your_cloudflare_api_token_here"
@@ -20,6 +22,7 @@ export CF_Token="your_cloudflare_api_token_here"
 ```
 
 ### 3. Проверьте результат
+
 ```bash
 # Тест конфигурации
 ./scripts/ssl/test-nginx-config.sh
@@ -30,13 +33,13 @@ curl -I https://ki.erni-gruppe.ch/
 
 ## 📋 Доступные скрипты
 
-| Скрипт | Описание |
-|--------|----------|
-| `setup-letsencrypt.sh` | Автоматическая установка Let's Encrypt |
-| `monitor-certificates.sh` | Мониторинг и обновление сертификатов |
-| `test-nginx-config.sh` | Тестирование SSL конфигурации |
-| `setup-ssl-monitoring.sh` | Настройка автомониторинга |
-| `check-ssl-now.sh` | Быстрая проверка сертификатов |
+| Скрипт                    | Описание                               |
+| ------------------------- | -------------------------------------- |
+| `setup-letsencrypt.sh`    | Автоматическая установка Let's Encrypt |
+| `monitor-certificates.sh` | Мониторинг и обновление сертификатов   |
+| `test-nginx-config.sh`    | Тестирование SSL конфигурации          |
+| `setup-ssl-monitoring.sh` | Настройка автомониторинга              |
+| `check-ssl-now.sh`        | Быстрая проверка сертификатов          |
 
 ## 🔧 Команды мониторинга
 
@@ -70,6 +73,7 @@ journalctl --user -u erni-ki-ssl-monitor.service
 ## 🆘 Устранение неполадок
 
 ### Проблема: Ошибка Cloudflare API
+
 ```bash
 # Проверьте токен
 curl -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
@@ -77,6 +81,7 @@ curl -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
 ```
 
 ### Проблема: Ошибка nginx
+
 ```bash
 # Проверьте конфигурацию
 docker compose exec nginx nginx -t
@@ -86,6 +91,7 @@ docker compose restart nginx
 ```
 
 ### Проблема: DNS propagation
+
 ```bash
 # Проверьте DNS записи
 dig TXT _acme-challenge.ki.erni-gruppe.ch
@@ -95,8 +101,10 @@ dig TXT _acme-challenge.ki.erni-gruppe.ch
 
 ## 📚 Документация
 
-- **Полное руководство**: [docs/ssl-letsencrypt-setup.md](../docs/ssl-letsencrypt-setup.md)
-- **Итоговый отчет**: [docs/ssl-setup-complete.md](../docs/ssl-setup-complete.md)
+- **Полное руководство**:
+  [docs/ssl-letsencrypt-setup.md](../docs/ssl-letsencrypt-setup.md)
+- **Итоговый отчет**:
+  [docs/ssl-setup-complete.md](../docs/ssl-setup-complete.md)
 - **Конфигурация**: [conf/ssl/monitoring.conf](../conf/ssl/monitoring.conf)
 
 ## ⚡ Экстренное восстановление
@@ -112,6 +120,7 @@ docker compose restart nginx
 ## 🎯 Ожидаемые результаты
 
 После успешной установки:
+
 - ✅ Валидный SSL сертификат от Let's Encrypt
 - ✅ A+ рейтинг на SSL Labs
 - ✅ Автоматическое обновление каждые 60 дней

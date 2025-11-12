@@ -20,22 +20,22 @@
 ### Список неиспользуемых образов (без контейнеров)
 
 ```
-erni-foto-agency-dev-frontend:latest          1.17 GB
-erni-foto-agency-erni-app:latest              582 MB
-erni-foto-agency-dev-backend:latest           559 MB
-erni-foto-agency-frontend:latest              1.14 GB
-erni-foto-agency-backend:latest               559 MB
-alpine:latest                                 8.32 MB
-erni-foto-agency-erni-frontend:latest         3.3 GB
-erni-foto-agency-erni-ag-ui-bridge:latest     167 MB
-erni-foto-copilot:latest                      1.22 GB
-jaegertracing/all-in-one:latest               85.6 MB
-ghcr.io/open-webui/open-webui:latest          4.83 GB (старая версия)
+erni-foto-agency-dev-frontend:2024.05          1.17 GB
+erni-foto-agency-erni-app:2024.05              582 MB
+erni-foto-agency-dev-backend:2024.05           559 MB
+erni-foto-agency-frontend:2024.05              1.14 GB
+erni-foto-agency-backend:2024.05               559 MB
+alpine:2024.05                                 8.32 MB
+erni-foto-agency-erni-frontend:2024.05         3.3 GB
+erni-foto-agency-erni-ag-ui-bridge:2024.05     167 MB
+erni-foto-copilot:2024.05                      1.22 GB
+jaegertracing/all-in-one:2024.05               85.6 MB
+ghcr.io/open-webui/open-webui:2024.05          4.83 GB (старая версия)
 ghcr.io/open-webui/open-webui:v0.6.31         4.83 GB (старая версия)
-erni-foto-agency-app:latest                   2.14 GB
-fluent/fluent-bit:latest                      106 MB
+erni-foto-agency-app:2024.05                   2.14 GB
+fluent/fluent-bit:2024.05                      106 MB
 postgres:15-alpine                            279 MB
-grafana/grafana:latest                        733 MB
+grafana/grafana:2024.05                        733 MB
 ghcr.io/berriai/litellm:v1.77.2.rc.1          2.2 GB (старая версия)
 fluent/fluent-bit:3.2.0                       88.2 MB
 mysql:8.0.39                                  573 MB
@@ -54,32 +54,32 @@ elasticsearch:8.11.3                          1.41 GB
 
 ```bash
 # Удалить старые версии OpenWebUI
-docker rmi ghcr.io/open-webui/open-webui:latest
+docker rmi ghcr.io/open-webui/open-webui:2024.05
 docker rmi ghcr.io/open-webui/open-webui:v0.6.31
 
 # Удалить старые версии LiteLLM
 docker rmi ghcr.io/berriai/litellm:v1.77.2.rc.1
 
 # Удалить неиспользуемые образы ERNI-FOTO проектов
-docker rmi erni-foto-agency-dev-frontend:latest
-docker rmi erni-foto-agency-dev-backend:latest
-docker rmi erni-foto-agency-erni-app:latest
-docker rmi erni-foto-agency-frontend:latest
-docker rmi erni-foto-agency-backend:latest
-docker rmi erni-foto-agency-erni-frontend:latest
-docker rmi erni-foto-agency-erni-ag-ui-bridge:latest
-docker rmi erni-foto-copilot:latest
-docker rmi erni-foto-agency-app:latest
+docker rmi erni-foto-agency-dev-frontend:2024.05
+docker rmi erni-foto-agency-dev-backend:2024.05
+docker rmi erni-foto-agency-erni-app:2024.05
+docker rmi erni-foto-agency-frontend:2024.05
+docker rmi erni-foto-agency-backend:2024.05
+docker rmi erni-foto-agency-erni-frontend:2024.05
+docker rmi erni-foto-agency-erni-ag-ui-bridge:2024.05
+docker rmi erni-foto-copilot:2024.05
+docker rmi erni-foto-agency-app:2024.05
 
 # Удалить неиспользуемые служебные образы
-docker rmi jaegertracing/all-in-one:latest
-docker rmi fluent/fluent-bit:latest
+docker rmi jaegertracing/all-in-one:2024.05
+docker rmi fluent/fluent-bit:2024.05
 docker rmi fluent/fluent-bit:3.2.0
 docker rmi postgres:15-alpine
-docker rmi grafana/grafana:latest
+docker rmi grafana/grafana:2024.05
 docker rmi mysql:8.0.39
 docker rmi elasticsearch:8.11.3
-docker rmi alpine:latest
+docker rmi alpine:2024.05
 ```
 
 **Ожидаемая экономия: ~21.78 GB**

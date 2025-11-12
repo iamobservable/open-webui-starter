@@ -698,7 +698,7 @@ graph LR
 
 ```mermaid
 graph LR
-    A[Prometheus<br/>IPv4 client] -->|scrape<br/>postgres-exporter:9188| B[Socat Proxy<br/>alpine/socat:latest]
+    A[Prometheus<br/>IPv4 client] -->|scrape<br/>postgres-exporter:9188| B[Socat Proxy<br/>alpine/socat@sha256:86b69d2e491f6c32a9ce5ec8e3489c195ba314a0f99ca30debf6007376e795e5]
     B -->|TCP4-LISTEN:9188<br/>fork,reuseaddr| C[Network Namespace<br/>shared with exporter]
     C -->|TCP6 ::1:9187<br/>IPv6 localhost| D[Postgres Exporter<br/>listening on :::9187]
     D -->|metrics| E[(PostgreSQL 17.6<br/>db:5432)]
@@ -722,7 +722,7 @@ postgres-exporter:
 
 # compose.yml - Socat Proxy
 postgres-exporter-proxy:
-  image: alpine/socat:latest
+  image: alpine/socat@sha256:86b69d2e491f6c32a9ce5ec8e3489c195ba314a0f99ca30debf6007376e795e5
   network_mode: 'service:postgres-exporter' # Shared network namespace
   command:
     - 'TCP4-LISTEN:9188,fork,reuseaddr' # Слушаем IPv4 на 9188

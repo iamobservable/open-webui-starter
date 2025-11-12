@@ -66,19 +66,19 @@ curl -s http://localhost:9187/metrics | grep pg_up
 **Konfiguration (BEHOBEN):**
 
 ```yaml
-Redis Monitoring über Grafana:
-  image: oliver006/redis_exporter:latest
+redis-exporter:
+  image: oliver006/redis_exporter:v1.62.0
   ports:
-    - '9121:9121'
-  environment:
-    - REDIS_ADDR=redis://:ErniKiRedisSecurePassword2024@redis:6379
-    - REDIS_EXPORTER_INCL_SYSTEM_METRICS=true
-  healthcheck:
-    test: ['CMD-SHELL', "timeout 5 sh -c '</dev/tcp/localhost/9121' || exit 1"] # BEHOBEN: TCP-Prüfung
-    interval: 30s
-    timeout: 10s
-    retries: 3
-    start_period: 10s
+    - '127.0.0.1:9121:9121'
+  command:
+    - /bin/sh
+    - -c
+    - |
+      export REDIS_ADDR="$(cat /run/secrets/redis_exporter_url)"
+      exec /redis_exporter
+  secrets:
+    - redis_exporter_url
+  healthcheck: {} # Überwachung via Prometheus Scrape
 ```
 
 **Wichtige Metriken:**
@@ -111,7 +111,7 @@ docker exec erni-ki-redis-1 redis-cli -a ErniKiRedisSecurePassword2024 ping
 
 ```yaml
 nvidia-exporter:
-  image: mindprince/nvidia_gpu_prometheus_exporter:latest
+  image: mindprince/nvidia_gpu_prometheus_exporter:0.1
   ports:
     - '9445:9445'
   healthcheck:
@@ -164,18 +164,14 @@ curl -s http://localhost:9115/metrics | grep probe_success
 
 ```yaml
 ollama-exporter:
-  image: ricardbejarano/ollama_exporter:latest
+  build:
+    context: ./monitoring
+    dockerfile: Dockerfile.ollama-exporter
   ports:
-    - '9778:9778'
-  healthcheck:
-    test: [
-        'CMD-SHELL',
-        'wget --no-verbose --tries=1 --spider http://localhost:9778/metrics ||
-        exit 1',
-      ] # STANDARDISIERT: localhost
-    interval: 30s
-    timeout: 10s
-    retries: 3
+    - '127.0.0.1:9778:9778'
+  environment:
+    - OLLAMA_URL=http://ollama:11434
+    - EXPORTER_PORT=9778
 ```
 
 **Wichtige Metriken:**
@@ -201,7 +197,7 @@ curl -s http://localhost:9778/metrics | grep ollama_models_total
 
 ```yaml
 nginx-exporter:
-  image: nginx/nginx-prometheus-exporter:latest
+  image: nginx/nginx-prometheus-exporter:1.1.0
   ports:
     - '9113:9113'
   command:

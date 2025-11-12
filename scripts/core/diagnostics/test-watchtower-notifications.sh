@@ -77,7 +77,7 @@ test_notifications() {
     log "Запуск тестирования уведомлений..."
 
     # Создаем временный контейнер для тестирования
-    local test_image="hello-world:latest"
+    local test_image="hello-world:linux"
     local test_container="watchtower-test-$(date +%s)"
 
     log "Создание тестового контейнера: $test_container"

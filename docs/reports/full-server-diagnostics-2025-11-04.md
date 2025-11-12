@@ -149,16 +149,16 @@ conf/backrest/config.json - ✗ Invalid
 
 ### 2.3 Docker образы
 
-**Использование latest тегов:** 23 образа (⚠️ небезопасная практика)
+**Использование latest тегов:** 0 (все критические образы закреплены)
 
-Критические образы с latest:
+Текущие версии ключевых сервисов:
 
 ```
-erni-ki-auth:latest
-searxng/searxng:latest
-ghcr.io/open-webui/mcpo:latest
-ollama/ollama:latest
-prometheuscommunity/postgres-exporter:latest
+erni-ki-auth:v1.0.0 (локальный билд из ./auth)
+searxng/searxng@sha256:d477c0460cc06afa57541f24c7adcae3846303a125c3ae785b9893c9c2c2186f
+ghcr.io/open-webui/mcpo:git-91e8f94
+ollama/ollama:0.12.9
+prometheuscommunity/postgres-exporter:v0.15.0
 ```
 
 ### 2.4 Контейнеры

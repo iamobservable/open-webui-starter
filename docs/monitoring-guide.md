@@ -24,7 +24,7 @@ ERNI-KI monitoring system includes:
 ```yaml
 # Configuration in compose.yml
 node-exporter:
-  image: prom/node-exporter:latest
+  image: prom/node-exporter:v1.8.2
   ports:
     - '9101:9100'
   healthcheck:
@@ -52,18 +52,23 @@ node-exporter:
 curl -s http://localhost:9101/metrics | grep node_up
 ```
 
-### 🐘 PostgreSQL Exporter (Port 9187)
+### 🐘 PostgreSQL Exporter (Port 9188 via IPv4 proxy)
 
 **Purpose:** Database performance and health metrics
+
+> ℹ️ Доступ к БД осуществляется через Docker secret `postgres_exporter_dsn.txt`
+> (монтируется как `/etc/postgres_exporter_dsn.txt` и читается в entrypoint).
 
 ```yaml
 # Configuration in compose.yml
 postgres-exporter:
-  image: prometheuscommunity/postgres-exporter:latest
+  image: prometheuscommunity/postgres-exporter:v0.15.0
+  entrypoint: ['/entrypoint/postgres-exporter.sh']
+  volumes:
+    - ./scripts/infrastructure/postgres-exporter-entrypoint.sh:/entrypoint/postgres-exporter.sh:ro
+    - ./secrets/postgres_exporter_dsn.txt:/etc/postgres_exporter_dsn.txt:ro
   ports:
-    - '9187:9187'
-  environment:
-    - DATA_SOURCE_NAME=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/openwebui?sslmode=disable
+    - '127.0.0.1:9188:9188'
   healthcheck:
     test:
       [
@@ -83,7 +88,7 @@ postgres-exporter:
 **Health Check:**
 
 ```bash
-curl -s http://localhost:9187/metrics | grep pg_up
+curl -s http://localhost:9188/metrics | grep pg_up
 ```
 
 ### 🔴 Redis Exporter (Port 9121) - 🔧 Fixed 19.09.2025
@@ -92,19 +97,19 @@ curl -s http://localhost:9187/metrics | grep pg_up
 
 ```yaml
 # Configuration in compose.yml (FIXED)
-Redis мониторинг через Grafana:
-  image: oliver006/redis_monitoring_grafana:latest
+redis-exporter:
+  image: oliver006/redis_exporter:v1.62.0
   ports:
-    - '9121:9121'
-  environment:
-    - REDIS_ADDR=redis://:ErniKiRedisSecurePassword2024@redis:6379
-    - REDIS_EXPORTER_INCL_SYSTEM_METRICS=true
-  healthcheck:
-    test: ['CMD-SHELL', "timeout 5 sh -c '</dev/tcp/localhost/9121' || exit 1"] # FIXED: TCP check
-    interval: 30s
-    timeout: 10s
-    retries: 3
-    start_period: 10s
+    - '127.0.0.1:9121:9121'
+  command:
+    - /bin/sh
+    - -c
+    - |
+      export REDIS_ADDR="$(cat /run/secrets/redis_exporter_url)"
+      exec /redis_exporter
+  secrets:
+    - redis_exporter_url
+  healthcheck: {} # monitoring via Prometheus scrape
 ```
 
 **Status:** 🔧 Running | HTTP 200 | TCP healthcheck (fixed from wget) **Issue:**
@@ -137,7 +142,7 @@ docker exec erni-ki-redis-1 redis-cli -a ErniKiRedisSecurePassword2024 ping
 ```yaml
 # Configuration in compose.yml (IMPROVED)
 nvidia-exporter:
-  image: mindprince/nvidia_gpu_prometheus_exporter:latest
+  image: mindprince/nvidia_gpu_prometheus_exporter:0.1
   ports:
     - '9445:9445'
   healthcheck:
@@ -170,7 +175,7 @@ curl -s http://localhost:9445/metrics | grep nvidia_gpu_utilization
 ```yaml
 # Configuration in compose.yml
 blackbox-exporter:
-  image: prom/blackbox-exporter:latest
+  image: prom/blackbox-exporter:v0.25.0
   ports:
     - '9115:9115'
   healthcheck:
@@ -203,18 +208,14 @@ curl -s http://localhost:9115/metrics | grep probe_success
 ```yaml
 # Configuration in compose.yml (STANDARDIZED)
 ollama-exporter:
-  image: ricardbejarano/ollama_exporter:latest
+  build:
+    context: ./monitoring
+    dockerfile: Dockerfile.ollama-exporter
   ports:
-    - '9778:9778'
-  healthcheck:
-    test: [
-        'CMD-SHELL',
-        'wget --no-verbose --tries=1 --spider http://localhost:9778/metrics ||
-        exit 1',
-      ] # STANDARDIZED: localhost
-    interval: 30s
-    timeout: 10s
-    retries: 3
+    - '127.0.0.1:9778:9778'
+  environment:
+    - OLLAMA_URL=http://ollama:11434
+    - EXPORTER_PORT=9778
 ```
 
 **Status:** ✅ Healthy | HTTP 200 | wget healthcheck (standardized from
@@ -240,7 +241,7 @@ curl -s http://localhost:9778/metrics | grep ollama_models_total
 ```yaml
 # Configuration in compose.yml (FIXED)
 nginx-exporter:
-  image: nginx/nginx-prometheus-exporter:latest
+  image: nginx/nginx-prometheus-exporter:1.1.0
   ports:
     - '9113:9113'
   command:
@@ -354,7 +355,7 @@ healthcheck:
 
 ```bash
 # Check all exporters HTTP status
-for port in 9101 9187 9121 9445 9115 9778 9113 9808; do
+for port in 9101 9188 9121 9445 9115 9778 9113 9808; do
   echo "Port $port: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:$port/metrics)"
 done
 
@@ -453,8 +454,10 @@ ERNI-KI uses **27 active alert rules** for proactive monitoring (added October
 
 **Disk Space Alerts:**
 
-- `DiskSpaceCritical` - Triggers when disk usage >85% (severity: critical)
-- `DiskSpaceWarning` - Triggers when disk usage >75% (severity: warning)
+- `DiskSpaceCritical` - Triggers when disk usage >85% (severity: critical,
+  ignores `tmpfs`/`vfat` and `/boot/efi`)
+- `DiskSpaceWarning` - Triggers when disk usage >75% (severity: warning, ignores
+  `tmpfs`/`vfat` and `/boot/efi`)
 
 **Memory Alerts:**
 
@@ -469,8 +472,9 @@ ERNI-KI uses **27 active alert rules** for proactive monitoring (added October
 **Container Alerts:**
 
 - `ContainerDown` - Triggers when container is down (severity: critical)
-- `ContainerRestarting` - Triggers when container restarts >3 times in 5 minutes
-  (severity: warning)
+- `ContainerRestarting` - Triggers when a non-infrastructure container restarts
+  2+ times в пределах 15 минут (рассчитывается по
+  `container_start_time_seconds`, severity: warning)
 
 **Database Alerts:**
 
@@ -552,6 +556,24 @@ watch -n 5 'curl -s http://localhost:9091/api/v1/alerts | jq ".data.alerts[] | s
 
 # Cleanup
 rm /tmp/test-alert.img
+```
+
+### Monitoring Alertmanager Queue & Disk Alerts
+
+- **Alertmanager queue:** Grafana dashboard `Observability / Alertmanager` →
+  панель _Queue Depth_ (метрика `alertmanager_cluster_messages_queued`). После
+  изменения правила `ContainerRestarting` значение должно оставаться <500.
+- **Disk utilization sanity:** панель _Disk Usage by Mount_ использует
+  обновлённые выражения (исключая `fstype="vfat"` и `mountpoint="/boot/efi"`). В
+  alert списке `HighDiskUtilization` теперь появляется только для `/` и `/data`.
+- Для ручной проверки выполните:
+
+```bash
+curl -s http://localhost:9091/api/v1/query \
+  --data-urlencode 'query=alertmanager_cluster_messages_queued'
+
+curl -s http://localhost:9091/api/v1/query \
+  --data-urlencode 'query=(1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|vfat",mountpoint!="/boot/efi"} / node_filesystem_size_bytes{fstype!~"tmpfs|vfat",mountpoint!="/boot/efi"})) * 100'
 ```
 
 ### Alert Maintenance

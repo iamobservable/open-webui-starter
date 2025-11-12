@@ -65,15 +65,24 @@ groups:
           action: "Проверить логи: docker compose logs {{ $labels.job }}"
 
       - alert: ContainerRestarting
-        expr: rate(container_last_seen[5m]) > 0
-        for: 5m
+        expr: |
+          sum by (name) (
+            changes(
+              container_start_time_seconds{
+                job="cadvisor",
+                container_label_com_docker_compose_project="erni-ki",
+                name!~"erni-ki-(cadvisor|node-exporter|alertmanager).*"
+              }[15m]
+            )
+          ) >= 2
+        for: 1m
         labels:
           severity: warning
           component: "{{ $labels.name }}"
         annotations:
-          summary: "Контейнер {{ $labels.name }} перезапускается"
-          description: "Контейнер {{ $labels.name }} перезапускался в последние 5 минут"
-          action: "Проверить причину перезапусков в логах"
+          summary: "Контейнер {{ $labels.name }} перезапускается слишком часто"
+          description: "Контейнер {{ $labels.name }} перезапустился {{ printf \"%.0f\" $value }} раз(а) за последние 15 минут"
+          action: "Проверить docker logs {{ $labels.name }} и причины перезапусков"
 
       # === CPU ALERTS ===
       - alert: HighCPUUsage

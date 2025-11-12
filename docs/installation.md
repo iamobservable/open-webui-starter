@@ -448,7 +448,8 @@ sudo firewall-cmd --reload
 
 - **OpenWebUI:** <https://your-domain/> (основной интерфейс)
 - **Grafana:** <https://your-domain/grafana> (мониторинг)
-- **Kibana:** <https://your-domain/kibana> (логи)
+- **Grafana Explore (Loki):** <https://your-domain/grafana> → вкладка
+  **Explore**
 
 ### Первый вход
 

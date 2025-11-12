@@ -5,6 +5,7 @@
  * @author Альтэон Шульц (Tech Lead)
  * @version 1.0.0
  */
+/* eslint-disable comma-dangle */
 
 const { spawn } = require('child_process');
 const fs = require('fs');
@@ -52,10 +53,21 @@ class GPUMonitor {
 
   async getGPUMetrics() {
     return new Promise(resolve => {
-      const nvidia = spawn('nvidia-smi', [
-        '--query-gpu=timestamp,name,utilization.gpu,utilization.memory,memory.used,memory.total,temperature.gpu,power.draw',
+      const queryFields = [
+        'timestamp',
+        'name',
+        'utilization.gpu',
+        'utilization.memory',
+        'memory.used',
+        'memory.total',
+        'temperature.gpu',
+        'power.draw',
+      ];
+      const nvidiaQueryArgs = [
+        `--query-gpu=${queryFields.join(',')}`,
         '--format=csv,noheader,nounits',
-      ]);
+      ];
+      const nvidia = spawn('nvidia-smi', nvidiaQueryArgs);
 
       let output = '';
       nvidia.stdout.on('data', data => {
@@ -113,9 +125,15 @@ class GPUMonitor {
         this.data.push(metrics);
 
         // Вывод текущих метрик
-        console.log(
-          `GPU: ${metrics.gpuUtilization}% | Память: ${metrics.memoryUsed}MB/${metrics.memoryTotal}MB (${metrics.memoryUtilization}%) | Температура: ${metrics.temperature}°C`,
-        );
+        const memoryUsage =
+          `Память: ${metrics.memoryUsed}MB/${metrics.memoryTotal}MB ` +
+          `(${metrics.memoryUtilization}%)`;
+        const usageLineParts = [
+          `GPU: ${metrics.gpuUtilization}%`,
+          memoryUsage,
+          `Температура: ${metrics.temperature}°C`,
+        ];
+        console.log(usageLineParts.join(' | '));
       }
     }, intervalMs);
 
@@ -201,17 +219,21 @@ class GPUMonitor {
     console.log('📊 СВОДКА GPU МЕТРИК');
     console.log('='.repeat(50));
     console.log(
-      `🎮 GPU утилизация: ${summary.gpu.min}% - ${summary.gpu.max}% (среднее: ${summary.gpu.avg}%)`,
+      `🎮 GPU утилизация: ${summary.gpu.min}% - ${summary.gpu.max}% ` +
+        `(среднее: ${summary.gpu.avg}%)`
     );
     console.log(
-      `💾 Память: ${summary.memory.min}% - ${summary.memory.max}% (среднее: ${summary.memory.avg}%)`,
+      `💾 Память: ${summary.memory.min}% - ${summary.memory.max}% ` +
+        `(среднее: ${summary.memory.avg}%)`
     );
     console.log(`📈 Пиковое использование памяти: ${summary.memory.peakUsedMB} MB`);
     console.log(
-      `🌡️  Температура: ${summary.temperature.min}°C - ${summary.temperature.max}°C (среднее: ${summary.temperature.avg}°C)`,
+      `🌡️  Температура: ${summary.temperature.min}°C - ${summary.temperature.max}°C ` +
+        `(среднее: ${summary.temperature.avg}°C)`
     );
     console.log(
-      `⚡ Энергопотребление: ${summary.power.min}W - ${summary.power.max}W (среднее: ${summary.power.avg}W)`,
+      `⚡ Энергопотребление: ${summary.power.min}W - ${summary.power.max}W ` +
+        `(среднее: ${summary.power.avg}W)`
     );
     console.log('='.repeat(50));
   }

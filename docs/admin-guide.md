@@ -738,8 +738,8 @@ curl -I https://localhost:443/ | grep -i content-security
 **3. SearXNG API не работает:**
 
 ```bash
-# Проверить upstream статус
-docker exec erni-ki-nginx-1 curl -s http://searxng:8080/search?q=test&format=json
+# Проверить upstream статус через публичный API маршрут
+docker exec erni-ki-nginx-1 curl -s http://localhost/api/searxng/search?q=test&format=json
 
 # Проверить переменную $universal_request_id
 docker exec erni-ki-nginx-1 grep "universal_request_id" /etc/nginx/nginx.conf
@@ -750,7 +750,7 @@ docker exec erni-ki-nginx-1 grep "universal_request_id" /etc/nginx/nginx.conf
 ### Внутренние ресурсы
 
 - **Мониторинг:** https://your-domain/grafana
-- **Логи:** https://your-domain/kibana
+- **Логи:** https://your-domain/grafana (Explore → Loki)
 - **Метрики:** https://your-domain/prometheus
 
 ### Внешние ресурсы

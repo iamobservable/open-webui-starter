@@ -44,7 +44,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: containrrr/watchtower:latest
+    image: containrrr/watchtower:1.7.1
     logging: *default-logging
     restart: unless-stopped
     # Добавляем порт для HTTP API
@@ -103,7 +103,7 @@ services:
       timeout: 3s
       retries: 5
       start_period: 20s
-    image: redis/redis-stack:latest
+    image: redis:7-alpine
     logging: *fluentd-logging
     restart: unless-stopped
     volumes:
@@ -219,7 +219,7 @@ services:
     env_file: env/cloudflared.env
     healthcheck:
       disable: true
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2024.10.0
     logging: *fluentd-logging
     restart: unless-stopped
     volumes:
@@ -246,7 +246,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: travisvn/openai-edge-tts:latest
+    image: travisvn/openai-edge-tts@sha256:4e7e2773350a3296f301b5f66e361daad243bdc4b799eec32613fddcee849040
     logging: *fluentd-logging
     ports:
       - 5050:5050
@@ -268,7 +268,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: apache/tika:latest-full
+    image: apache/tika@sha256:21d8052de04e491ccf66e8680ade4da6f3d453a56d59f740b4167e54167219b7
     logging: *fluentd-logging
     ports:
       - 9998:9998
@@ -293,7 +293,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
-    image: ghcr.io/open-webui/mcpo:latest
+    image: ghcr.io/open-webui/mcpo:git-91e8f94
     logging: *fluentd-logging
     ports:
       - "8000:8000"
@@ -325,7 +325,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: searxng/searxng:latest
+    image: searxng/searxng@sha256:d477c0460cc06afa57541f24c7adcae3846303a125c3ae785b9893c9c2c2186f
     logging: *fluentd-logging
     restart: unless-stopped
     volumes:
@@ -382,7 +382,7 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
-    image: nginx:latest
+    image: nginx:1.29.3
     logging: *fluentd-logging
     ports:
       - "80:80"
@@ -448,7 +448,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: garethgeorge/backrest:latest
+    image: garethgeorge/backrest:v1.9.2
     logging: *fluentd-logging
     ports:
       - "9898:9898"
@@ -881,7 +881,6 @@ services:
       - FLB_HTTP_PORT=2020
       # Health check endpoint
       - FLB_HEALTH_CHECK=On
-      # Elasticsearch authentication (временно здесь для отладки)
     # Health check отключен из-за минимального образа Fluent Bit
     # Сервис мониторится через Prometheus метрики на порту 2020
     healthcheck:

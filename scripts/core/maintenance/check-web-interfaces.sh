@@ -90,8 +90,7 @@ check_monitoring() {
     check_url "Grafana" "http://localhost:3000" "200,302" || ((failed++))
     check_url "Prometheus" "http://localhost:9091" "200,302" || ((failed++))
     check_url "Alertmanager" "http://localhost:9093" "200" || ((failed++))
-    check_url "Kibana" "http://localhost:5601" "200,302" || ((failed++))
-    check_url "Elasticsearch" "http://localhost:9200" "200" || ((failed++))
+    check_url "Loki" "http://localhost:3100/ready" "200,204" || ((failed++))
 
     echo ""
     if [ $failed -eq 0 ]; then

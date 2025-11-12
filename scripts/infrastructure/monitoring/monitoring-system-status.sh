@@ -155,7 +155,13 @@ check_grafana_dashboards() {
     log "Проверка источников данных..."
     echo "  ├─ Prometheus: http://localhost:9091"
     echo "  ├─ Alertmanager: http://localhost:9093"
-    echo "  └─ Elasticsearch: http://localhost:9200"
+    echo "  └─ Loki: http://localhost:3100"
+
+    if curl -s http://localhost:3100/ready >/dev/null; then
+        success "Loki доступен (endpoint /ready)"
+    else
+        warning "Loki (/ready) недоступен"
+    fi
 
     # Информация о дашбордах
     log "Предустановленные дашборды:"
@@ -264,7 +270,7 @@ main() {
         echo "• Grafana: http://localhost:3000"
         echo "• Prometheus: http://localhost:9091"
         echo "• Alertmanager: http://localhost:9093"
-        echo "• Kibana: http://localhost:5601"
+        echo "• Loki: http://localhost:3100"
         echo ""
         echo "🔧 Exporters:"
         echo "• Node Exporter: http://localhost:9101/metrics"

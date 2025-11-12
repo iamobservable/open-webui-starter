@@ -11,6 +11,14 @@ secrets/
 ├── litellm_api_key.txt            # API ключ LiteLLM
 ├── context7_api_key.txt           # API ключ Context7
 ├── vllm_api_key.txt               # API ключ VLLM
+├── watchtower_api_token.txt       # Токен доступа к HTTP API Watchtower
+├── grafana_admin_password.txt     # Пароль администратора Grafana
+├── postgres_exporter_dsn.txt      # DSN для postgres-exporter
+├── redis_exporter_url.txt         # URL/pwd для redis-exporter
+├── openwebui_secret_key.txt       # FastAPI SECRET_KEY для OpenWebUI
+├── litellm_master_key.txt         # MASTER KEY LiteLLM
+├── litellm_salt_key.txt           # SALT KEY LiteLLM
+├── litellm_ui_password.txt        # Пароль UI LiteLLM
 ├── *.example                      # Примеры файлов
 └── README.md                      # Этот файл
 ```
@@ -26,6 +34,14 @@ cp secrets/litellm_db_password.txt.example secrets/litellm_db_password.txt
 cp secrets/litellm_api_key.txt.example secrets/litellm_api_key.txt
 cp secrets/context7_api_key.txt.example secrets/context7_api_key.txt
 cp secrets/vllm_api_key.txt.example secrets/vllm_api_key.txt
+cp secrets/watchtower_api_token.txt.example secrets/watchtower_api_token.txt
+cp secrets/grafana_admin_password.txt.example secrets/grafana_admin_password.txt
+cp secrets/postgres_exporter_dsn.txt.example secrets/postgres_exporter_dsn.txt
+cp secrets/redis_exporter_url.txt.example secrets/redis_exporter_url.txt
+cp secrets/openwebui_secret_key.txt.example secrets/openwebui_secret_key.txt
+cp secrets/litellm_master_key.txt.example secrets/litellm_master_key.txt
+cp secrets/litellm_salt_key.txt.example secrets/litellm_salt_key.txt
+cp secrets/litellm_ui_password.txt.example secrets/litellm_ui_password.txt
 
 # Установить права доступа
 chmod 600 secrets/*.txt
@@ -50,6 +66,26 @@ echo "ctx7sk-your-key" > secrets/context7_api_key.txt
 
 # VLLM API key
 echo "your-vllm-key" > secrets/vllm_api_key.txt
+
+# Watchtower HTTP API token
+echo "long-random-token" > secrets/watchtower_api_token.txt
+
+# Grafana admin password
+echo "your-very-strong-password" > secrets/grafana_admin_password.txt
+
+# Postgres exporter DSN
+echo "postgresql://postgres:your-password@db:5432/openwebui?sslmode=disable" > secrets/postgres_exporter_dsn.txt
+
+# Redis exporter URL
+echo "redis://:your-redis-password@redis:6379" > secrets/redis_exporter_url.txt
+
+# OpenWebUI secret key (64 hex chars)
+openssl rand -hex 32 > secrets/openwebui_secret_key.txt
+
+# LiteLLM master/salt keys и пароль UI
+openssl rand -base64 48 | tr -d '=+/ ' | cut -c1-48 > secrets/litellm_master_key.txt
+openssl rand -hex 32 > secrets/litellm_salt_key.txt
+openssl rand -base64 48 | tr -d '=+/ ' | cut -c1-32 > secrets/litellm_ui_password.txt
 
 # Установить права доступа
 chmod 600 secrets/*.txt
@@ -167,4 +203,3 @@ ls -l secrets/*.txt
 **Создано:** 2025-10-30  
 **Обновлено:** 2025-10-30  
 **Версия:** 1.0
-

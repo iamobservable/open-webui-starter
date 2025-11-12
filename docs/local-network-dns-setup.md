@@ -236,7 +236,7 @@ log-facility=/var/log/dnsmasq.log
 
 ```yaml
 dnsmasq:
-  image: jpillora/dnsmasq:latest
+  image: jpillora/dnsmasq:1.3.1
   container_name: erni-ki-dnsmasq
   restart: unless-stopped
   ports:

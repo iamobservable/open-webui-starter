@@ -210,7 +210,7 @@ version: '3.8'
 
 services:
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.0.0
     container_name: erni-ki-prometheus
     restart: unless-stopped
     ports:
@@ -232,7 +232,7 @@ services:
           cpus: '0.5'
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.3.0
     container_name: erni-ki-grafana
     restart: unless-stopped
     ports:

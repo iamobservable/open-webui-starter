@@ -200,7 +200,7 @@ searxng:
 **Локальный тест:**
 
 ```bash
-curl http://searxng:8080/search?q=test&format=json
+curl http://nginx:8080/api/searxng/search?q=test&format=json
 ```
 
 **Результаты:**

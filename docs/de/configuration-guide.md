@@ -43,6 +43,7 @@ WEBUI_URL="https://ki.erni-gruppe.ch"
 WEBUI_SECRET_KEY="your-secret-key-here"  # KRITISCH: Eindeutigen Schlüssel verwenden # pragma: allowlist secret
 ENABLE_SIGNUP=false                       # Registrierung in Production deaktivieren
 DEFAULT_USER_ROLE="user"                  # Standard-Rolle für neue Benutzer
+CORS_ALLOW_ORIGIN="https://diz.zone;https://webui.diz.zone;https://ki.erni-gruppe.ch;https://192.168.62.153;http://192.168.62.153:8080"  # Origins mit ';' trennen
 
 # === GPU BESCHLEUNIGUNG ===
 NVIDIA_VISIBLE_DEVICES=all                # Zugriff auf alle GPUs
@@ -51,7 +52,7 @@ NVIDIA_DRIVER_CAPABILITIES=compute,utility # Erforderliche Treiber-Funktionen
 # === INTEGRATIONEN ===
 OLLAMA_BASE_URL="http://ollama:11434"     # Verbindung zu Ollama
 LITELLM_BASE_URL="http://litellm:4000"    # LiteLLM Gateway
-SEARXNG_QUERY_URL="http://searxng:8080/search?q=<query>&format=json"
+SEARXNG_QUERY_URL="http://nginx:8080/api/searxng/search?q=<query>&format=json"
 
 # === DOKUMENTENVERARBEITUNG ===
 TIKA_BASE_URL="http://tika:9998"          # Apache Tika für Metadaten

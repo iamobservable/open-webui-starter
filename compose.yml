@@ -63,6 +63,8 @@ services:
     # Команда запуска с оптимизированными параметрами (schedule задается через env)
     command: --cleanup --label-enable --http-api-update --http-api-metrics
     env_file: env/watchtower.env
+    environment:
+      WATCHTOWER_HTTP_API_TOKEN: /run/secrets/watchtower_api_token
     healthcheck:
       test: ["CMD", "/watchtower", "--health-check"]
       interval: 60s
@@ -72,31 +74,26 @@ services:
     image: containrrr/watchtower:1.7.1 # Закреплена версия для production (последняя стабильная)
     logging: *default-logging
     restart: unless-stopped
+    mem_limit: 256m
+    mem_reservation: 128m
+    cpus: "0.2"
+    oom_score_adj: 500
+    user: "0"
     # Добавляем порт для HTTP API
     ports:
-      - "8091:8080" # Изменен порт для избежания конфликта
+      - "127.0.0.1:8091:8080" # Доступ ограничен localhost для HTTP API
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    secrets:
+      - watchtower_api_token
     labels:
       # Исключить Watchtower из собственного мониторинга
       - "com.centurylinklabs.watchtower.enable=false"
       # Метка для идентификации в логах
       - "com.centurylinklabs.watchtower.scope=infrastructure"
-    # Ограничения ресурсов для предотвращения перегрузки
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: "0.2"
-        reservations:
-          memory: 128M
-          cpus: "0.1"
 
   # База данных PostgreSQL с векторным расширением (оптимизированная сетевая конфигурация)
   db:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     env_file: env/db.env
     # Добавлено: 2025-10-30 - Docker Secrets для безопасного хранения пароля
     secrets:
@@ -128,9 +125,6 @@ services:
 
   # Redis кэш и очереди (оптимизированная сетевая конфигурация)
   redis:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     env_file: env/redis.env
     # Используем конфигурационный файл вместо параметров командной строки
     # Обновлено: 2025-10-02 для поддержки active defragmentation
@@ -166,11 +160,12 @@ services:
         condition: service_healthy
       ollama:
         condition: service_healthy
-      watchtower:
-        condition: service_healthy
 
     # Environment файл с конфигурацией
     env_file: env/litellm.env
+    entrypoint:
+      - /bin/bash
+      - /opt/erni/bin/litellm-entrypoint.sh
 
     # Порт для API (внутренний Docker network)
     ports:
@@ -199,6 +194,7 @@ services:
     volumes:
       - ./conf/litellm/config.yaml:/app/config.yaml:ro # Конфигурация моделей
       - ./data/litellm:/app/data # Логи и временные файлы
+      - ./scripts/entrypoints/litellm.sh:/opt/erni/bin/litellm-entrypoint.sh:ro # Wrapper для секретов
 
     # Command с базовыми настройками
     command: ["--config", "/app/config.yaml", "--port", "4000", "--host", "0.0.0.0"]
@@ -208,14 +204,10 @@ services:
       - "host.docker.internal:host-gateway"
 
     # Resource limits для стабильности (критическое увеличение памяти)
-    deploy:
-      resources:
-        limits:
-          memory: 12G # Лимит памяти (увеличено для предотвращения OOM; было 8G)
-          cpus: "1.0" # Лимит CPU
-        reservations:
-          memory: 6G # Минимальная память (увеличена с 4G до 6G для буфера)
-          cpus: "0.5" # Минимальный CPU
+    mem_limit: 12g # Лимит памяти (увеличено для предотвращения OOM; было 8G)
+    mem_reservation: 6g # Минимальная память (увеличена с 4G до 6G для буфера)
+    cpus: "1.0" # Лимит CPU
+    oom_score_adj: -300 # Защитить прокси от агрессивного OOM-killer
 
     # Используем стандартную Docker bridge сеть
 
@@ -226,15 +218,19 @@ services:
       - "com.erni-ki.description=Context Engineering Gateway"
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=ai-services"
+    secrets:
+      - litellm_db_password
+      - litellm_api_key
+      - litellm_master_key
+      - litellm_salt_key
+      - litellm_ui_password
+      - openai_api_key
 
   # JWT аутентификация сервис
   auth:
     build:
       context: ./auth
       dockerfile: Dockerfile
-    depends_on:
-      watchtower:
-        condition: service_healthy
     env_file: env/auth.env
     logging: *important-logging
     ports:
@@ -255,8 +251,6 @@ services:
   cloudflared:
     command: tunnel --no-autoupdate run
     depends_on:
-      watchtower:
-        condition: service_healthy
       nginx:
         condition: service_healthy
       openwebui:
@@ -282,9 +276,6 @@ services:
   # Сервис извлечения документов
   # Сервис синтеза речи
   edgetts:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     env_file: env/edgetts.env
     healthcheck:
       test:
@@ -296,7 +287,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: travisvn/openai-edge-tts:latest # NOTE: Проект использует только latest/canary теги, нет версионных релизов
+    image: travisvn/openai-edge-tts@sha256:1aa9b25c71c91071ec7ff18f6b38bf817a9b19dd5a7722c2860c9cb085dbd742 # pinned 2025-11 digest (linux/amd64)
     logging: *auxiliary-logging
     ports:
       - 5050:5050
@@ -308,9 +299,6 @@ services:
 
   # Сервис обработки файлов Apache Tika
   tika:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     env_file: env/tika.env
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:9998/tika || exit 1"]
@@ -318,7 +306,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: apache/tika:latest-full # Используем latest (конкретные версии не найдены)
+    image: apache/tika@sha256:3fafa194474c5f3a8cff25a0eefd07e7c0513b7f552074ad455e1af58a06bbea # pinned 2025-11 digest (linux/amd64)
     logging: *auxiliary-logging
     ports:
       - 9998:9998
@@ -332,8 +320,6 @@ services:
   mcposerver:
     command: ["--config", "/app/conf/config.json"]
     depends_on:
-      watchtower:
-        condition: service_healthy
       db:
         condition: service_healthy
     env_file: env/mcposerver.env
@@ -362,8 +348,6 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      watchtower:
-        condition: service_healthy
     env_file: env/searxng.env
     healthcheck:
       test:
@@ -375,7 +359,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: searxng/searxng:latest # Откат: 2025-11-04 с 2025.1.3-a060c0985 на latest (версия 2025.1.3 имеет проблему "unavailable modifier requested")
+    image: searxng/searxng@sha256:aaa855e878bd4f6e61c7c471f03f0c9dd42d223914729382b34b875c57339b98 # pinned 2025-11-12 digest (linux/amd64)
     logging: *important-logging
     restart: unless-stopped
     volumes:
@@ -391,30 +375,19 @@ services:
 
   # Ollama LLM сервер с GPU ускорением (оптимизированная сетевая конфигурация)
   ollama:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     runtime: nvidia
+    mem_limit: 16g
+    mem_reservation: 8g
+    cpus: "12.0"
+    oom_score_adj: -900
     environment:
-      - NVIDIA_VISIBLE_DEVICES=0
+      - NVIDIA_VISIBLE_DEVICES=${OLLAMA_GPU_VISIBLE_DEVICES:-0}
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
-      - CUDA_VISIBLE_DEVICES=0
+      - CUDA_VISIBLE_DEVICES=${OLLAMA_CUDA_VISIBLE_DEVICES:-0}
       - CUDA_DEVICE_ORDER=PCI_BUS_ID
     env_file: env/ollama.env
     # GPU Memory Limits оптимизированы для RTX 5000 (16GB VRAM)
     # Ollama получает приоритет GPU (управление VRAM через OLLAMA_MAX_VRAM=0.75)
-    deploy:
-      resources:
-        limits:
-          cpus: "12.0"
-          memory: 16G
-        reservations:
-          cpus: "8.0"
-          memory: 8G
-          devices:
-            - driver: nvidia
-              device_ids: ["0"]
-              capabilities: [gpu]
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 30s
@@ -485,23 +458,18 @@ services:
         condition: service_healthy
     image: ghcr.io/open-webui/open-webui:v0.6.35 # Обновлено: 2025-11-07 до v0.6.35 (последняя стабильная версия)
     runtime: nvidia
+    mem_limit: 8g
+    mem_reservation: 4g
+    cpus: "4.0"
+    oom_score_adj: -600
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_VISIBLE_DEVICES=${OPENWEBUI_GPU_VISIBLE_DEVICES:-0}
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - CUDA_VISIBLE_DEVICES=${OPENWEBUI_CUDA_VISIBLE_DEVICES:-0}
     env_file: env/openwebui.env
-    # GPU доступ для OpenWebUI (VRAM управляется через переменные окружения)
-    deploy:
-      resources:
-        limits:
-          cpus: "4.0"
-          memory: 8G
-        reservations:
-          cpus: "2.0"
-          memory: 4G
-          devices:
-            - driver: nvidia
-              device_ids: ["0"]
-              capabilities: [gpu]
+    entrypoint:
+      - /bin/bash
+      - /opt/erni/bin/openwebui-entrypoint.sh
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://localhost:8080/health || exit 1"]
       interval: 30s
@@ -512,12 +480,57 @@ services:
     restart: unless-stopped
     volumes:
       - ./data/openwebui:/app/backend/data
-      # Shared volume для передачи файлов в Docling (добавлено 2025-11-07)
+      - ./data/docling/shared:/app/backend/data/docling-shared
+      - ./scripts/entrypoints/openwebui.sh:/opt/erni/bin/openwebui-entrypoint.sh:ro
+      # Shared volume для передачи файлов в Docling (mount по умолчанию для обмена)
+      # Entry-point wrapper подставляет секреты из Docker secrets
+    secrets:
+      - postgres_password
+      - litellm_api_key
+      - openwebui_secret_key
     # Используем стандартную Docker bridge сеть
     labels:
       # Разрешить автообновление для OpenWebUI
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=web-interface"
+
+  # Docling OCR/ingestion pipeline (GPU aware)
+  docling:
+    depends_on:
+      ollama:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    image: ghcr.io/docling-project/docling-serve:v1.8.0
+    runtime: nvidia
+    mem_limit: 12g
+    mem_reservation: 8g
+    cpus: "8.0"
+    oom_score_adj: -500
+    env_file: env/docling.env
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=${DOCLING_GPU_VISIBLE_DEVICES:-1}
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - CUDA_VISIBLE_DEVICES=${DOCLING_CUDA_VISIBLE_DEVICES:-1}
+      - CUDA_DEVICE_ORDER=PCI_BUS_ID
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:5001/health || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *auxiliary-logging
+    restart: unless-stopped
+    volumes:
+      - ./data/docling/models:/opt/app-root/src/.cache/huggingface
+      - ./data/docling/easyocr:/opt/app-root/src/.EasyOCR
+      - ./data/docling/docling-models:/opt/app-root/src/.cache/docling
+      - ./data/docling-artifacts:/docling-artifacts
+      - ./data/docling/shared:/docling-shared
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "com.centurylinklabs.watchtower.scope=document-processing"
+      - "com.erni-ki.service=docling"
 
   backrest:
     depends_on:
@@ -557,12 +570,6 @@ services:
 
   # Prometheus - сбор метрик
   prometheus:
-    depends_on:
-      watchtower:
-        condition: service_healthy
-      # Убрано 2025-11-07: healthcheck dependency для postgres-exporter, чтобы Prometheus мог запуститься даже если exporter down
-      # postgres-exporter:
-      #   condition: service_healthy
     image: prom/prometheus:v3.0.0 # Стабильная версия (v3.8.0 не существует)
     container_name: erni-ki-prometheus
     # Исправлено 2025-11-07: явная связь с postgres-exporter для DNS resolution
@@ -586,7 +593,7 @@ services:
       - ./conf/prometheus/alerts:/etc/prometheus/alerts:ro # Добавлено: 2025-10-02 для litellm-memory.yml
       - ./data/prometheus:/prometheus
     ports:
-      - "9091:9090"
+      - "127.0.0.1:9091:9090"
     restart: unless-stopped
     logging: *monitoring-logging
     healthcheck:
@@ -608,15 +615,13 @@ services:
   # Grafana - dashboard и визуализация
   grafana:
     depends_on:
-      watchtower:
-        condition: service_healthy
       prometheus:
         condition: service_healthy
     # Обновлено: 2025-10-02 с 10.2.0 до 11.6.6 (последняя стабильная версия 11.x)
     image: grafana/grafana:11.3.0 # Стабильная версия (11.7.0 не существует)
     container_name: erni-ki-grafana
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_SECURITY_ADMIN_PASSWORD__FILE=/run/secrets/grafana_admin_password
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=http://grafana.erni-ki.local
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
@@ -628,7 +633,7 @@ services:
       - ./conf/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./conf/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     restart: unless-stopped
     logging: *monitoring-logging
     healthcheck:
@@ -641,19 +646,18 @@ services:
       # Разрешить автообновление для Grafana
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=monitoring-stack"
+    secrets:
+      - grafana_admin_password
     # Используем стандартную Docker bridge сеть
 
   # Loki - современная система логирования (замена Elasticsearch)
   loki:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     image: grafana/loki:3.0.0 # Стабильная версия (3.6.0 не существует)
     container_name: erni-ki-loki
     logging: *monitoring-logging
     restart: unless-stopped
     ports:
-      - "3100:3100"
+      - "127.0.0.1:3100:3100"
     volumes:
       - ./conf/loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
       - ./data/loki:/loki
@@ -671,9 +675,6 @@ services:
       - "com.centurylinklabs.watchtower.scope=logging-stack"
   # Alertmanager - управление алертами
   alertmanager:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     image: prom/alertmanager:v0.27.0 # Стабильная версия (v0.29.0 не существует)
     container_name: erni-ki-alertmanager
     command:
@@ -691,8 +692,8 @@ services:
       - ./conf/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - ./data/alertmanager:/alertmanager
     ports:
-      - "9093:9093"
-      - "9094:9094"
+      - "127.0.0.1:9093:9093"
+      - "127.0.0.1:9094:9094"
     restart: unless-stopped
     logging: *monitoring-logging
     healthcheck:
@@ -713,9 +714,6 @@ services:
 
   # Node Exporter - системные метрики
   node-exporter:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     image: prom/node-exporter:v1.8.2 # Стабильная версия (v1.10.0 не существует)
     container_name: erni-ki-node-exporter
     command:
@@ -737,7 +735,7 @@ services:
       - /run/udev/data:/host/run/udev/data:ro # Монтируем udev данные для diskstats
       - /run/systemd/private:/run/systemd/private:ro
     ports:
-      - "9101:9100"
+      - "127.0.0.1:9101:9100"
     pid: host
     restart: unless-stopped
     logging: *monitoring-logging
@@ -760,27 +758,26 @@ services:
   # Postgres Exporter - мониторинг PostgreSQL
   postgres-exporter:
     depends_on:
-      watchtower:
-        condition: service_healthy
       db:
         condition: service_healthy
     # Возврат к prometheuscommunity образу 2025-11-07: wrouesnel не содержит wget/curl для healthcheck
     image: prometheuscommunity/postgres-exporter:v0.15.0
     container_name: erni-ki-postgres-exporter
     environment:
-      - DATA_SOURCE_NAME=postgresql://postgres:aEnbxS4MrXqzurHNGxkcEgCBm@db:5432/openwebui?sslmode=disable
       - PG_EXPORTER_DISABLE_DEFAULT_METRICS=false
       - PG_EXPORTER_DISABLE_SETTINGS_METRICS=true
       - PG_EXPORTER_AUTO_DISCOVER_DATABASES=true
       - PG_EXPORTER_EXCLUDE_DATABASES=template0,template1,postgres
       - PG_EXPORTER_COLLECTOR_STAT_BGWRITER=false
-    # Отключено 2025-11-07: конфиг несовместим с v0.17.0
-    # volumes:
-    #   - ./conf/postgres-exporter/postgres_exporter.yml:/postgres_exporter.yml:ro
+    volumes:
+      - ./scripts/infrastructure/postgres-exporter-entrypoint.sh:/entrypoint/postgres-exporter.sh:ro
+      - ./secrets/postgres_exporter_dsn.txt:/etc/postgres_exporter_dsn.txt:ro
     # Публикуем порт 9188 для socat proxy (2025-11-07)
     ports:
-      - "9188:9188"
+      - "127.0.0.1:9188:9188"
     restart: unless-stopped
+    entrypoint:
+      - /entrypoint/postgres-exporter.sh
     logging: *monitoring-logging
     healthcheck:
       test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:9187/metrics || exit 1"]
@@ -801,28 +798,25 @@ services:
     depends_on:
       postgres-exporter:
         condition: service_healthy
-    image: alpine/socat:latest
+    image: alpine/socat@sha256:86b69d2e491f6c32a9ce5ec8e3489c195ba314a0f99ca30debf6007376e795e5
     container_name: erni-ki-postgres-exporter-proxy
     network_mode: "service:postgres-exporter"
     command: ["TCP4-LISTEN:9188,fork,reuseaddr", "TCP6:[::1]:9187"]
     restart: unless-stopped
     logging: *monitoring-logging
     labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+      - "com.centurylinklabs.watchtower.enable=false"
       - "com.centurylinklabs.watchtower.scope=monitoring-stack"
 
   # NVIDIA GPU Exporter - мониторинг GPU
   nvidia-exporter:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     image: mindprince/nvidia_gpu_prometheus_exporter:0.1
     container_name: erni-ki-nvidia-exporter
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
     ports:
-      - "9445:9445"
+      - "127.0.0.1:9445:9445"
     restart: unless-stopped
     logging: *monitoring-logging
     # Health check отключен: минимальный образ не содержит wget/curl/nc
@@ -835,15 +829,12 @@ services:
 
   # Blackbox Exporter - мониторинг доступности
   blackbox-exporter:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     image: prom/blackbox-exporter:v0.25.0 # Стабильная версия (v0.28.0 не существует)
     container_name: erni-ki-blackbox-exporter
     volumes:
       - ./conf/blackbox-exporter/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
     ports:
-      - "9115:9115"
+      - "127.0.0.1:9115:9115"
     restart: unless-stopped
     logging: *monitoring-logging
     healthcheck:
@@ -865,8 +856,6 @@ services:
   # Redis Exporter - мониторинг Redis
   redis-exporter:
     depends_on:
-      watchtower:
-        condition: service_healthy
       redis:
         condition: service_healthy
     # Обновлено: 2025-10-02 с v1.55.0 до v1.62.0 (стабильная версия без проблем v1.77.0)
@@ -874,13 +863,18 @@ services:
     container_name: erni-ki-redis-exporter
     # Исправлено: 2025-11-07 используем полный URL с паролем (формат redis://:password@host:port)
     environment:
-      - REDIS_ADDR=redis://:ErniKiRedisSecurePassword2024@redis:6379
       - REDIS_EXPORTER_INCL_SYSTEM_METRICS=true
       - REDIS_EXPORTER_LOG_FORMAT=txt
       - REDIS_EXPORTER_DEBUG=true
     ports:
-      - "9121:9121"
+      - "127.0.0.1:9121:9121"
     restart: unless-stopped
+    command:
+      - /bin/sh
+      - -c
+      - |
+        export REDIS_ADDR="$(cat /run/secrets/redis_exporter_url)"
+        exec /redis_exporter
     logging: *monitoring-logging
     # Health check отключен: минимальный образ не содержит wget/curl/nc
     # Сервис мониторится через Prometheus scrape успешность
@@ -888,13 +882,13 @@ services:
       # Разрешить автообновление для Redis Exporter
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=monitoring-stack"
+    secrets:
+      - redis_exporter_url
     # Используем стандартную Docker bridge сеть
 
   # Ollama Exporter - мониторинг AI сервисов
   ollama-exporter:
     depends_on:
-      watchtower:
-        condition: service_healthy
       ollama:
         condition: service_healthy
     build:
@@ -906,7 +900,7 @@ services:
       - EXPORTER_PORT=9778
       - LOG_LEVEL=info
     ports:
-      - "9778:9778"
+      - "127.0.0.1:9778:9778"
     restart: unless-stopped
     logging: *monitoring-logging
     # Health check отключен для минимального образа без wget/curl
@@ -927,8 +921,6 @@ services:
   # Nginx Exporter - мониторинг веб-сервера
   nginx-exporter:
     depends_on:
-      watchtower:
-        condition: service_healthy
       nginx:
         condition: service_healthy
     # Обновлено: 2025-10-02 с 1.1.0 до 1.4.2 (последняя стабильная версия)
@@ -938,7 +930,7 @@ services:
       - "--nginx.scrape-uri=http://nginx:80/nginx_status" # Исправлен порт с 8080 на 80
       - "--web.listen-address=:9113"
     ports:
-      - "9113:9113"
+      - "127.0.0.1:9113:9113"
     restart: unless-stopped
     logging: *monitoring-logging
     # Health check отключен: минимальный образ не содержит wget/curl/nc
@@ -950,11 +942,8 @@ services:
 
   # cAdvisor - мониторинг контейнеров
   cadvisor:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     # Обновлено: 2025-10-02 с v0.47.2 до v0.52.1 (последняя доступная версия)
-    image: gcr.io/cadvisor/cadvisor:v0.53.0
+    image: gcr.io/cadvisor/cadvisor:v0.52.1
     container_name: erni-ki-cadvisor
     command:
       - "--housekeeping_interval=10s"
@@ -968,7 +957,7 @@ services:
       - /var/run:/var/run:ro
       - /sys:/sys:ro
     ports:
-      - "8081:8080"
+      - "127.0.0.1:8081:8080"
     restart: unless-stopped
     logging: *monitoring-logging
     healthcheck:
@@ -992,8 +981,6 @@ services:
   # Fluent Bit - сборщик и обработчик логов
   fluent-bit:
     depends_on:
-      watchtower:
-        condition: service_healthy
       loki:
         condition: service_healthy
       # Дополнительная задержка для стабилизации Loki
@@ -1004,11 +991,10 @@ services:
       - FLB_LOG_LEVEL=info
       # HTTP сервер для метрик и health checks
       - FLB_HTTP_SERVER=On
-      - FLB_HTTP_LISTEN=0.0.0.0
+      - FLB_HTTP_LISTEN=127.0.0.1
       - FLB_HTTP_PORT=2020
       # Health check endpoint
       - FLB_HEALTH_CHECK=On
-      # Elasticsearch authentication (временно здесь для отладки)
     # Health check для мониторинга состояния Fluent Bit → Loki интеграции
     # Health check отключен: минимальный образ не содержит wget/curl/nc
     # Сервис мониторится через Prometheus scrape успешность и Loki логи
@@ -1027,9 +1013,9 @@ services:
       # Доступ к Docker socket для сбора логов контейнеров
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
-      - "2020:2020" # HTTP API и health checks
-      - "2021:2021" # Prometheus метрики (Фаза 2)
-      - "24224:24224" # Fluentd forward protocol
+      - "127.0.0.1:2020:2020" # HTTP API и health checks
+      - "127.0.0.1:2021:2021" # Prometheus метрики (Фаза 2)
+      - "127.0.0.1:24224:24224" # Fluentd forward protocol
     labels:
       # Разрешить автообновление для Fluent Bit
       - "com.centurylinklabs.watchtower.enable=true"
@@ -1037,9 +1023,6 @@ services:
 
   # RAG Exporter - метрики SLA RAG (latency, sources)
   rag-exporter:
-    depends_on:
-      watchtower:
-        condition: service_healthy
     build:
       context: ./conf
       dockerfile: Dockerfile.rag-exporter
@@ -1051,7 +1034,7 @@ services:
       - RAG_TEST_URL=http://openwebui:8080/health
       - RAG_TEST_INTERVAL=30
     ports:
-      - "9808:9808"
+      - "127.0.0.1:9808:9808"
     restart: unless-stopped
     logging: *monitoring-logging
     healthcheck:
@@ -1071,8 +1054,6 @@ services:
   # Webhook Receiver - обработка алертов от Alertmanager
   webhook-receiver:
     depends_on:
-      watchtower:
-        condition: service_healthy
       alertmanager:
         condition: service_healthy
     build:
@@ -1093,8 +1074,12 @@ services:
       # Скрипты для обработки алертов
       - ./conf/webhook-receiver/scripts:/app/scripts:ro
     ports:
-      - "9095:9093" # Webhook endpoint (избегаем конфликта с Alertmanager 9093)
+      - "127.0.0.1:9095:9093" # Webhook endpoint (избегаем конфликта с Alertmanager 9093)
     restart: unless-stopped
+    mem_limit: 256m
+    mem_reservation: 128m
+    cpus: "0.25"
+    oom_score_adj: 250
     logging: *monitoring-logging
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9093/health"]
@@ -1102,14 +1087,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: "0.2"
-        reservations:
-          memory: 128M
-          cpus: "0.1"
     labels:
       # Разрешить автообновление для Webhook Receiver
       - "com.centurylinklabs.watchtower.enable=true"
@@ -1170,3 +1147,37 @@ secrets:
   # VLLM API ключ
   vllm_api_key:
     file: ./secrets/vllm_api_key.txt
+
+  # Watchtower HTTP API токен
+  watchtower_api_token:
+    file: ./secrets/watchtower_api_token.txt
+
+  # Grafana admin password
+  grafana_admin_password:
+    file: ./secrets/grafana_admin_password.txt
+
+  # DSN для Postgres exporter
+  postgres_exporter_dsn:
+    file: ./secrets/postgres_exporter_dsn.txt
+
+  # Redis URL для redis-exporter
+  redis_exporter_url:
+    file: ./secrets/redis_exporter_url.txt
+
+  # Секретный ключ OpenWebUI (FastAPI SECRET_KEY)
+  openwebui_secret_key:
+    file: ./secrets/openwebui_secret_key.txt
+
+  # LiteLLM master key для админ-доступа
+  litellm_master_key:
+    file: ./secrets/litellm_master_key.txt
+
+  # LiteLLM salt key для шифрования API ключей
+  litellm_salt_key:
+    file: ./secrets/litellm_salt_key.txt
+
+  # Пароль UI LiteLLM
+  litellm_ui_password:
+    file: ./secrets/litellm_ui_password.txt
+  openai_api_key:
+    file: ./secrets/openai_api_key.txt
