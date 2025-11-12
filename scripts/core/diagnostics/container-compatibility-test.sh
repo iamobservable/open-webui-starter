@@ -154,7 +154,7 @@ test_services_startup() {
 
     # Список критичных сервисов в порядке запуска
     local critical_services=("db" "redis" "auth" "ollama" "nginx" "openwebui")
-    local optional_services=("searxng" "docling" "edgetts" "tika" "mcposerver")
+    local optional_services=("searxng" "edgetts" "tika" "mcposerver")
 
     # Остановка всех сервисов для чистого теста
     log "Остановка всех сервисов для чистого теста..."

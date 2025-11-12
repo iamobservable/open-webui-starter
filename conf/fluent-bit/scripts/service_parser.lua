@@ -62,7 +62,6 @@ function parse_service_name(tag, timestamp, record)
         ["backrest"] = "backup",
         ["auth"] = "security",
         ["mcp"] = "integration",
-        ["docling"] = "processing",
         ["tika"] = "processing",
         ["edgetts"] = "processing"
     }

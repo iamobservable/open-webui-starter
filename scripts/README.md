@@ -51,7 +51,7 @@ AI платформы ERNI-KI.
 
 ```bash
 # Проверка состояния системы
-./scripts/core/diagnostics/health-check.sh
+./scripts/health-monitor.sh
 
 # Мониторинг производительности
 ./scripts/infrastructure/monitoring/system-health-monitor.sh
@@ -73,11 +73,12 @@ AI платформы ERNI-KI.
 
 #### **maintenance/** - Обслуживание системы
 
-- `health-check.sh` - Комплексная диагностика (30-60 сек)
+- `health-monitor.sh` (алиас `core/diagnostics/health-check.sh`) - Комплексная
+  диагностика (30-60 сек)
 - `graceful-restart.sh` - Безопасный перезапуск
 - `system-restart-report.sh` - Отчет о перезапуске
 - `check-container-updates.sh` - Проверка обновлений
-- `update-critical-containers.sh` - Критические обновления
+- `update-critical-services.sh` - Критические обновления (единый сценарий)
 - `comprehensive-audit.sh` - Полный аудит системы
 - `quick-audit.sh` - Быстрая проверка
 
@@ -157,7 +158,7 @@ AI платформы ERNI-KI.
 ./scripts/core/deployment/quick-start.sh
 
 # 2. Проверка состояния
-./scripts/core/diagnostics/health-check.sh
+./scripts/health-monitor.sh
 
 # 3. Настройка мониторинга
 ./scripts/infrastructure/monitoring/system-health-monitor.sh
@@ -224,7 +225,7 @@ find scripts/ -name "*.sh" -exec ls -la {} \;
 При возникновении проблем:
 
 1. Проверьте права выполнения: `chmod +x scripts/**/*.sh`
-2. Запустите диагностику: `./scripts/core/diagnostics/health-check.sh`
+2. Запустите диагностику: `./scripts/health-monitor.sh`
 3. Создайте issue: [GitHub Issues](https://github.com/DIZ-admin/erni-ki/issues)
 
 **Время отклика:** Обычно в течение 24 часов **Поддерживаемые ОС:** Ubuntu

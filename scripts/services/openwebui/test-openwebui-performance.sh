@@ -155,16 +155,6 @@ else
     echo -e "${RED}❌ Failed${NC}"
 fi
 
-# Тест интеграции с Docling
-((total_tests++))
-echo -n "Testing Docling integration... "
-if docker exec erni-ki-openwebui-1 curl -s --max-time 5 "http://nginx:8080/api/docling/health" | grep -q "ok"; then
-    echo -e "${GREEN}✅ OK${NC}"
-    ((passed_tests++))
-else
-    echo -e "${RED}❌ Failed${NC}"
-fi
-
 # Тесты безопасности
 echo -e "\n${BLUE}🔒 Security Tests${NC}"
 echo "-----------------"

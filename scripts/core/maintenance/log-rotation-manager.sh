@@ -66,7 +66,7 @@ rotate_docker_logs() {
     log "Ротация логов Docker контейнеров..."
 
     local date_suffix=$(date +%Y%m%d_%H%M%S)
-    local services=("auth" "db" "redis" "ollama" "nginx" "openwebui" "searxng" "docling" "edgetts" "tika" "mcposerver" "cloudflared" "watchtower" "backrest")
+    local services=("auth" "db" "redis" "ollama" "nginx" "openwebui" "searxng" "edgetts" "tika" "mcposerver" "cloudflared" "watchtower" "backrest")
 
     for service in "${services[@]}"; do
         log "Обработка логов сервиса: $service"

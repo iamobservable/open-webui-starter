@@ -153,7 +153,7 @@ system_check() {
     log "Проверка состояния всех сервисов..."
 
     local unhealthy_services=()
-    local services=("auth" "db" "redis" "ollama" "nginx" "openwebui" "searxng" "docling" "edgetts" "tika" "mcposerver" "cloudflared" "watchtower")
+    local services=("auth" "db" "redis" "ollama" "nginx" "openwebui" "searxng" "edgetts" "tika" "mcposerver" "cloudflared" "watchtower")
 
     for service in "${services[@]}"; do
         if ! check_service_health "$service"; then

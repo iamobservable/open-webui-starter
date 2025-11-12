@@ -78,7 +78,6 @@ check_performance() {
     test_endpoint "http://localhost:8080/health" "HTTP Health"
     test_endpoint "https://localhost:443/health" "HTTPS Health" 15
     # RAG components
-    test_endpoint "https://localhost/api/docling/health" "Docling over HTTPS" 10
     test_endpoint "https://localhost/api/searxng/search?q=test&format=json" "SearXNG API over HTTPS" 10
     test_endpoint "https://localhost/searxng/healthz" "SearXNG health over HTTPS" 5
 

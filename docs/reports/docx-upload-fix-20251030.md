@@ -71,8 +71,6 @@ JSON.parse: unexpected end of data at line 1 column 1 of the JSON data
 **OpenWebUI:**
 
 - ✅ `FILE_UPLOAD_MAX_SIZE=104857600` (100MB)
-- ✅ `CONTENT_EXTRACTION_ENGINE=docling`
-- ✅ Docling и Tika сервисы healthy
 
 **Вывод:** Проблема не в размере файла или конфигурации лимитов.
 
@@ -234,7 +232,6 @@ curl -X POST "https://ki.erni-gruppe.ch/api/v1/files/" \
 
 - ✅ **Ошибка JSON.parse устранена**
 - ✅ **DOCX документы успешно загружаются в Firefox**
-- ✅ **Все сервисы (OpenWebUI, Docling, Tika) в статусе healthy**
 - ✅ **Логи не содержат ошибок обработки документов**
 - ✅ **Chrome продолжает работать корректно**
 - ✅ **Нет downtime при применении исправления**

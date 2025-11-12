@@ -66,9 +66,7 @@ WEB_SEARCH_ENGINE=searxng
 
 # === Обработка документов ===
 # Движок извлечения контента
-CONTENT_EXTRACTION_ENGINE=docling
-# URL сервера Docling (через nginx proxy)
-DOCLING_SERVER_URL=http://nginx:8080/api/docling
+CONTENT_EXTRACTION_ENGINE=tika
 # URL сервера Tika
 TIKA_SERVER_URL=http://tika:9998
 # Извлекать изображения из PDF

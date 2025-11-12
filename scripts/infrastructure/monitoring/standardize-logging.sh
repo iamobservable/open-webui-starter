@@ -53,7 +53,7 @@ standardize_log_levels() {
     local important_services=("searxng" "redis" "backrest" "auth" "cloudflared")
 
     # Вспомогательные сервисы (WARN уровень)
-    local auxiliary_services=("docling" "edgetts" "tika" "mcposerver")
+    local auxiliary_services=("edgetts" "tika" "mcposerver")
 
     # Мониторинговые сервисы (ERROR уровень)
     local monitoring_services=("prometheus" "grafana" "alertmanager" "node-exporter" "postgres-exporter" "redis-exporter" "nvidia-exporter" "blackbox-exporter" "cadvisor" "fluent-bit")

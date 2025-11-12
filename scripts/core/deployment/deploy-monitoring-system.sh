@@ -51,9 +51,9 @@ check_prerequisites() {
         exit 1
     fi
 
-    # Проверка Docker Compose
-    if ! command -v docker-compose &> /dev/null; then
-        error "Docker Compose не установлен"
+    # Проверка Docker Compose v2
+    if ! docker compose version &> /dev/null; then
+        error "Docker Compose v2 недоступен (нужен docker compose)"
         exit 1
     fi
 
@@ -128,7 +128,7 @@ deploy_monitoring_stack() {
 
     # Запуск базовых компонентов мониторинга
     log "Запуск Prometheus, Grafana, Alertmanager..."
-    docker-compose -f docker-compose.monitoring.yml up -d prometheus grafana alertmanager node-exporter
+    docker compose -f docker-compose.monitoring.yml up -d prometheus grafana alertmanager node-exporter
 
     # Ожидание готовности
     sleep 30
@@ -136,7 +136,7 @@ deploy_monitoring_stack() {
     # Проверка статуса
     local services=("prometheus" "grafana" "alertmanager" "node-exporter")
     for service in "${services[@]}"; do
-        if docker-compose -f docker-compose.monitoring.yml ps "$service" | grep -q "Up"; then
+        if docker compose -f docker-compose.monitoring.yml ps "$service" | grep -q "Up"; then
             success "$service запущен"
         else
             error "$service не запустился"
@@ -182,11 +182,11 @@ deploy_gpu_monitoring() {
         if nvidia-smi &> /dev/null; then
             log "Запуск NVIDIA GPU Exporter..."
             cd "$PROJECT_ROOT/monitoring"
-            docker-compose -f docker-compose.monitoring.yml up -d nvidia-exporter
+            docker compose -f docker-compose.monitoring.yml up -d nvidia-exporter
 
             sleep 10
 
-            if docker-compose -f docker-compose.monitoring.yml ps nvidia-exporter | grep -q "Up"; then
+            if docker compose -f docker-compose.monitoring.yml ps nvidia-exporter | grep -q "Up"; then
                 success "NVIDIA GPU Exporter запущен"
             else
                 warning "NVIDIA GPU Exporter не запустился"
@@ -206,11 +206,11 @@ setup_webhook_notifications() {
     cd "$PROJECT_ROOT/monitoring"
 
     # Запуск webhook receiver
-    docker-compose -f docker-compose.monitoring.yml up -d webhook-receiver
+    docker compose -f docker-compose.monitoring.yml up -d webhook-receiver
 
     sleep 10
 
-    if docker-compose -f docker-compose.monitoring.yml ps webhook-receiver | grep -q "Up"; then
+    if docker compose -f docker-compose.monitoring.yml ps webhook-receiver | grep -q "Up"; then
         success "Webhook receiver запущен"
 
         # Тестирование webhook
@@ -234,7 +234,7 @@ fix_problematic_services() {
     log "Проверка EdgeTTS..."
     if ! curl -s -f http://localhost:5050/voices &> /dev/null; then
         warning "EdgeTTS недоступен, перезапускаем..."
-        docker-compose restart edgetts
+        docker compose restart edgetts
         sleep 15
 
         if curl -s -f http://localhost:5050/voices &> /dev/null; then
@@ -246,20 +246,21 @@ fix_problematic_services() {
         success "EdgeTTS работает"
     fi
 
-    # Проверка и исправление Docling
-    log "Проверка Docling..."
-    if ! curl -s -f http://localhost:5001/health &> /dev/null; then
-        warning "Docling недоступен, перезапускаем..."
-        docker-compose restart docling
-        sleep 15
+    # Проверка проксированного SearXNG
+    local searx_url="http://localhost:8080/api/searxng/search?q=monitoring&format=json"
+    log "Проверка SearXNG..."
+    if ! curl -s -f --max-time 5 "$searx_url" &> /dev/null; then
+        warning "SearXNG недоступен, перезапускаем..."
+        docker compose restart searxng || true
+        sleep 20
 
-        if curl -s -f http://localhost:5001/health &> /dev/null; then
-            success "Docling восстановлен"
+        if curl -s -f --max-time 5 "$searx_url" &> /dev/null; then
+            success "SearXNG восстановлен"
         else
-            error "Docling все еще недоступен"
+            error "SearXNG все еще недоступен"
         fi
     else
-        success "Docling работает"
+        success "SearXNG работает"
     fi
 }
 
@@ -315,7 +316,7 @@ generate_deployment_report() {
 
         echo "=== СТАТУС КОМПОНЕНТОВ МОНИТОРИНГА ==="
         cd "$PROJECT_ROOT/monitoring"
-        docker-compose -f docker-compose.monitoring.yml ps
+        docker compose -f docker-compose.monitoring.yml ps
         echo ""
 
         echo "=== ДОСТУПНОСТЬ ENDPOINTS ==="

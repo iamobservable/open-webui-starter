@@ -123,7 +123,7 @@ async function tryLogin(page: Page) {
   }
 }
 
-// Логирование запросов для Docling/SearXNG/Ollama
+// Логирование запросов для SearXNG/Ollama
 function attachNetworkLogging(page: Page) {
   const append = (line: string) => {
     try {
@@ -132,7 +132,7 @@ function attachNetworkLogging(page: Page) {
   };
   page.on('request', (req: any) => {
     const url = req.url();
-    if (/docling|searxng|ollama|openwebui\/api/i.test(url)) {
+    if (/searxng|ollama|openwebui\/api/i.test(url)) {
       const line = `→ ${req.method()} ${url}`;
       console.log(line);
       append(line);
@@ -140,7 +140,7 @@ function attachNetworkLogging(page: Page) {
   });
   page.on('response', async (res: any) => {
     const url = res.url();
-    if (/docling|searxng|ollama|openwebui\/api/i.test(url)) {
+    if (/searxng|ollama|openwebui\/api/i.test(url)) {
       const line = `← ${res.status()} ${url}`;
       console.log(line);
       append(line);
@@ -708,13 +708,6 @@ test('RAG integrations health check', async ({ page }) => {
   const finalize = await assertNoConsoleErrors(page);
 
   console.log('🔍 Testing RAG system integrations...');
-
-  // Проверка Docling API (через nginx прокси)
-  const doclingResponse = await page.request
-    .get('http://localhost:8080/docling/health')
-    .catch(() => null);
-  console.log(`Docling health: ${doclingResponse?.status() || 'FAILED'}`);
-  expect(doclingResponse?.ok()).toBeTruthy();
 
   // Проверка SearXNG API
   const searxngResponse = await page.request

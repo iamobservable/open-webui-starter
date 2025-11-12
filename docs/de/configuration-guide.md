@@ -15,7 +15,6 @@ env/                    # Umgebungsvariablen für jeden Service
 ├── openwebui.env      # Haupt-AI-Interface
 ├── ollama.env         # LLM Server mit GPU
 ├── litellm.env        # Context Engineering Gateway
-├── docling.env        # Dokumentenverarbeitung
 ├── mcposerver.env     # Model Context Protocol
 ├── searxng.env        # Suchmaschine
 ├── tika.env           # Metadaten-Extraktion
@@ -55,7 +54,6 @@ LITELLM_BASE_URL="http://litellm:4000"    # LiteLLM Gateway
 SEARXNG_QUERY_URL="http://searxng:8080/search?q=<query>&format=json"
 
 # === DOKUMENTENVERARBEITUNG ===
-DOCLING_BASE_URL="http://docling:5001"    # Docling für OCR
 TIKA_BASE_URL="http://tika:9998"          # Apache Tika für Metadaten
 
 # === LEISTUNG ===
@@ -147,33 +145,6 @@ general_settings:
 ```
 
 ## 📄 Dokumentenverarbeitung
-
-### Docling Konfiguration
-
-**Datei:** `env/docling.env`
-
-```bash
-# === GRUNDEINSTELLUNGEN ===
-DOCLING_PORT=5001
-DOCLING_HOST="0.0.0.0"
-
-# === OCR EINSTELLUNGEN ===
-EASYOCR_LANG_LIST="en,de,fr,it"          # Unterstützte OCR-Sprachen
-DOCLING_FORCE_SINGLE_LANG=false          # Automatische Spracherkennung
-DOCLING_AUTO_LANG_DETECT=true            # Spracherkennung aktivieren
-
-# === LEISTUNG ===
-DOCLING_MAX_FILE_SIZE=104857600           # 100MB maximale Dateigröße
-DOCLING_TIMEOUT=300                       # 5 Minuten Verarbeitungs-Timeout
-
-# === SICHERHEIT ===
-DOCLING_ALLOWED_EXTENSIONS="pdf,docx,html,md,txt"  # Erlaubte Dateiformate
-DOCLING_DISABLE_TELEMETRY=true            # Telemetrie deaktivieren
-
-# === GPU DEAKTIVIERT ===
-CUDA_VISIBLE_DEVICES=""                   # CUDA deaktivieren (Quadro P2200 Inkompatibilität)
-CUDA_DEVICE_ORDER="PCI_BUS_ID"           # Geräte-Reihenfolge
-```
 
 ### Apache Tika Konfiguration
 
@@ -318,11 +289,6 @@ server {
         proxy_pass http://searxngUpstream;
     }
 
-    location /api/docling/ {
-        proxy_pass http://docling:5001/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
 }
 ```
 

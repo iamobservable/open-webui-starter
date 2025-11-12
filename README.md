@@ -280,10 +280,20 @@ docker compose up -d
 ### Security Checklist
 
 - [ ] Настроены уникальные пароли в env/ файлах
-- [ ] Настроен SSL сертификат в conf/nginx/ssl/
+- [ ] Настроен SSL сертификат в conf/nginx/ssl/ (см.
+      [LETSENCRYPT-QUICK-START.md](LETSENCRYPT-QUICK-START.md))
 - [ ] Настроен Cloudflare tunnel в env/cloudflared.env
 - [ ] Настроены backup в env/backrest.env
 - [ ] Настроены алерты в monitoring/alertmanager.yml
+
+**SSL/TLS сертификат:**
+
+- 🚀 **Быстрый старт:** [LETSENCRYPT-QUICK-START.md](LETSENCRYPT-QUICK-START.md)
+  (5-8 минут)
+- 📖 **Полное руководство:**
+  [docs/letsencrypt-ssl-setup-guide.md](docs/letsencrypt-ssl-setup-guide.md)
+- 🔧 **Скрипт установки:**
+  `scripts/infrastructure/security/setup-letsencrypt-dns01-production.sh`
 
 **Подробное руководство:** [docs/installation.md](docs/installation.md)
 
@@ -441,7 +451,6 @@ curl -s "http://localhost:8080/api/searxng/search?q=test&format=json" | jq '.res
 
 - ✅ **OpenWebUI:** <http://localhost:8080/>
 - ✅ **Tika:** <http://localhost:9998/>
-- ✅ **Docling:** <http://localhost:8080/api/docling/>
 - ✅ **EdgeTTS:** <http://localhost:5050/>
 - ✅ **MCP Server:** <http://localhost:8000/>
 - ✅ **LiteLLM:** <http://localhost:4000/>

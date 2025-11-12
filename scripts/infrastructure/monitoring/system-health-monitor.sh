@@ -68,7 +68,7 @@ check_docker_services() {
     log "Проверка статуса Docker сервисов..."
 
     local services=(
-        "auth" "backrest" "cloudflared" "db" "docling"
+        "auth" "backrest" "cloudflared" "db"
         "edgetts" "litellm" "mcposerver" "nginx" "ollama"
         "openwebui" "redis" "searxng" "tika" "watchtower"
     )

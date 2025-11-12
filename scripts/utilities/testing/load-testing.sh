@@ -21,6 +21,21 @@ error() { echo -e "${RED}❌ $1${NC}"; }
 info() { echo -e "${CYAN}ℹ️  $1${NC}"; }
 section() { echo -e "${PURPLE}🔍 $1${NC}"; }
 
+# Docker Compose helper
+declare -a COMPOSE_BIN
+if docker compose version &> /dev/null; then
+    COMPOSE_BIN=(docker compose)
+elif command -v docker-compose &> /dev/null; then
+    COMPOSE_BIN=(docker-compose)
+else
+    error "Docker Compose не найден"
+    exit 1
+fi
+
+compose() {
+    "${COMPOSE_BIN[@]}" "$@"
+}
+
 # Проверка зависимостей для тестирования
 check_dependencies() {
     section "Проверка зависимостей для нагрузочного тестирования"
@@ -77,7 +92,7 @@ test_ollama_performance() {
     local models=$(curl -s http://localhost:11434/api/tags | jq -r '.models[].name' 2>/dev/null || echo "")
     if [ -z "$models" ]; then
         warning "Модели не найдены, загружаю тестовую модель..."
-        docker-compose exec -T ollama ollama pull llama3.2:3b
+        compose exec -T ollama ollama pull llama3.2:3b
         models="llama3.2:3b"
     fi
 
@@ -141,7 +156,7 @@ test_ollama_performance() {
 
     # Тест 3: Мониторинг ресурсов во время работы
     log "Тест 3: Мониторинг использования ресурсов"
-    local ollama_container=$(docker-compose ps -q ollama)
+    local ollama_container=$(compose ps -q ollama)
     if [ -n "$ollama_container" ]; then
         local stats=$(docker stats --no-stream --format "{{.CPUPerc}}\t{{.MemUsage}}" "$ollama_container")
         local cpu_usage=$(echo "$stats" | cut -f1)
@@ -158,7 +173,7 @@ test_postgresql_performance() {
     section "Тестирование производительности PostgreSQL"
 
     # Проверка доступности БД
-    if ! docker-compose exec -T db pg_isready -U postgres &> /dev/null; then
+    if ! compose exec -T db pg_isready -U postgres &> /dev/null; then
         error "PostgreSQL недоступен"
         return 1
     fi
@@ -170,7 +185,7 @@ test_postgresql_performance() {
     local start_time=$(date +%s.%N)
 
     for i in {1..100}; do
-        docker-compose exec -T db psql -U postgres -d openwebui -c "SELECT 1;" &> /dev/null
+        compose exec -T db psql -U postgres -d openwebui -c "SELECT 1;" &> /dev/null
     done
 
     local end_time=$(date +%s.%N)
@@ -186,7 +201,7 @@ test_postgresql_performance() {
 
     for i in {1..20}; do
         {
-            docker-compose exec -T db psql -U postgres -d openwebui -c "SELECT current_timestamp;" &> /dev/null
+            compose exec -T db psql -U postgres -d openwebui -c "SELECT current_timestamp;" &> /dev/null
         } &
     done
 
@@ -200,15 +215,15 @@ test_postgresql_performance() {
     log "Тест 3: Статистика производительности БД"
 
     # Количество активных подключений
-    local active_connections=$(docker-compose exec -T db psql -U postgres -d openwebui -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';" | tr -d ' ')
+    local active_connections=$(compose exec -T db psql -U postgres -d openwebui -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';" | tr -d ' ')
     success "Активных подключений: $active_connections"
 
     # Размер базы данных
-    local db_size=$(docker-compose exec -T db psql -U postgres -d openwebui -t -c "SELECT pg_size_pretty(pg_database_size('openwebui'));" | tr -d ' ')
+    local db_size=$(compose exec -T db psql -U postgres -d openwebui -t -c "SELECT pg_size_pretty(pg_database_size('openwebui'));" | tr -d ' ')
     success "Размер БД: $db_size"
 
     # Статистика таблиц
-    local table_count=$(docker-compose exec -T db psql -U postgres -d openwebui -t -c "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';" | tr -d ' ')
+    local table_count=$(compose exec -T db psql -U postgres -d openwebui -t -c "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';" | tr -d ' ')
     success "Количество таблиц: $table_count"
 
     echo ""
@@ -241,7 +256,7 @@ test_webui_performance() {
     local endpoints=(
         "http://localhost:9090/health:Auth API"
         "http://localhost:11434/api/version:Ollama API"
-        "http://localhost:5001/health:Docling API"
+        "http://localhost:8080/api/searxng/search?q=load-test&format=json:SearXNG API"
         "http://localhost:9998/tika:Tika API"
     )
 
@@ -279,7 +294,7 @@ test_redis_performance() {
     section "Тестирование производительности Redis"
 
     # Проверка доступности Redis
-    if ! docker-compose exec -T redis redis-cli ping &> /dev/null; then
+    if ! compose exec -T redis redis-cli ping &> /dev/null; then
         error "Redis недоступен"
         return 1
     fi
@@ -293,7 +308,7 @@ test_redis_performance() {
 
     # Выполнение 1000 SET операций
     for i in {1..1000}; do
-        docker-compose exec -T redis redis-cli set "test_key_$i" "test_value_$i" &> /dev/null
+        compose exec -T redis redis-cli set "test_key_$i" "test_value_$i" &> /dev/null
     done
 
     local redis_set_end=$(date +%s.%N)
@@ -301,7 +316,7 @@ test_redis_performance() {
 
     # Выполнение 1000 GET операций
     for i in {1..1000}; do
-        docker-compose exec -T redis redis-cli get "test_key_$i" &> /dev/null
+        compose exec -T redis redis-cli get "test_key_$i" &> /dev/null
     done
 
     local redis_get_end=$(date +%s.%N)
@@ -311,12 +326,12 @@ test_redis_performance() {
     success "1000 GET операций: ${get_time}s"
 
     # Очистка тестовых данных
-    docker-compose exec -T redis redis-cli flushdb &> /dev/null
+    compose exec -T redis redis-cli flushdb &> /dev/null
 
     # Тест 2: Информация о производительности Redis
     log "Тест 2: Статистика Redis"
 
-    local redis_info=$(docker-compose exec -T redis redis-cli info stats)
+    local redis_info=$(compose exec -T redis redis-cli info stats)
     local total_commands=$(echo "$redis_info" | grep "total_commands_processed" | cut -d: -f2 | tr -d '\r')
     local keyspace_hits=$(echo "$redis_info" | grep "keyspace_hits" | cut -d: -f2 | tr -d '\r')
     local keyspace_misses=$(echo "$redis_info" | grep "keyspace_misses" | cut -d: -f2 | tr -d '\r')
@@ -326,7 +341,7 @@ test_redis_performance() {
     success "Промахов кэша: $keyspace_misses"
 
     # Использование памяти Redis
-    local memory_info=$(docker-compose exec -T redis redis-cli info memory)
+    local memory_info=$(compose exec -T redis redis-cli info memory)
     local used_memory=$(echo "$memory_info" | grep "used_memory_human" | cut -d: -f2 | tr -d '\r')
     local max_memory=$(echo "$memory_info" | grep "maxmemory_human" | cut -d: -f2 | tr -d '\r')
 
@@ -387,7 +402,7 @@ generate_performance_report() {
     fi
 
     # Оценка PostgreSQL
-    if docker-compose exec -T db pg_isready -U postgres &> /dev/null; then
+    if compose exec -T db pg_isready -U postgres &> /dev/null; then
         overall_score=$((overall_score + 1))
         success "PostgreSQL: Работает стабильно"
     else
@@ -395,7 +410,7 @@ generate_performance_report() {
     fi
 
     # Оценка Redis
-    if docker-compose exec -T redis redis-cli ping &> /dev/null; then
+    if compose exec -T redis redis-cli ping &> /dev/null; then
         overall_score=$((overall_score + 1))
         success "Redis: Работает стабильно"
     else

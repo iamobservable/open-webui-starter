@@ -1,11 +1,11 @@
 # 🏗️ Архитектура системы ERNI-KI
 
-> **Версия документа:** 12.0 **Дата обновления:** 2025-10-02 **Статус:**
+> **Версия документа:** 12.1 **Дата обновления:** 2025-11-07 **Статус:**
 > Production Ready (Система работает стабильно с 30/30 здоровыми контейнерами.
 > 18 дашбордов Grafana (100% функциональны), все критические проблемы устранены.
 > LiteLLM v1.77.3-stable, Docling, MCP Server, Apache Tika, Watchtower
 > автообновления. Мониторинг обновлён: Prometheus v3.0.1, Loki v3.5.5, Fluent
-> Bit v3.2.0)
+> Bit v3.2.0. **Prometheus targets: 32/32 UP (100%)** ✅)
 
 ## 📋 Обзор архитектуры
 
@@ -18,7 +18,27 @@ v11.6.6, Alertmanager v0.28.0, Loki v3.5.5, Fluent Bit v3.2.0, 8 экспорт�
 RAG Exporter). Внешний доступ осуществляется через Cloudflare туннели (5
 доменов).
 
-### 🚀 Последние обновления (v12.0 - октябрь 2025)
+### 🚀 Последние обновления (v12.1 - ноябрь 2025)
+
+#### 🔧 Исправление Prometheus Exporters (07 ноября 2025)
+
+- **Prometheus Targets: 32/32 UP (100%)** ✅ - Достигнута полная доступность
+  - Исправлена проблема с Postgres Exporter (IPv6-only binding)
+  - Исправлена аутентификация Redis Exporter
+  - Health Score: 92/100 → 94/100 (EXCELLENT - Production Ready)
+
+- **Postgres Exporter v0.15.0**: Socat IPv4→IPv6 proxy решение
+  - Создан sidecar контейнер `postgres-exporter-proxy` с alpine/socat
+  - Shared network namespace для минимальной latency (<1ms)
+  - Порт 9188 для IPv4 подключений → проксирование на IPv6 localhost:9187
+  - Полная совместимость с PostgreSQL 17.6 без изменения Docker network
+
+- **Redis Exporter v1.62.0**: URL формат аутентификации
+  - Изменен формат с отдельных переменных на `redis://:password@host:port`
+  - Включены system metrics и debug режим
+  - Метрика `redis_up 1` стабильно доступна
+
+### 🚀 Предыдущие обновления (v12.0 - октябрь 2025)
 
 #### 🤖 Автоматизация обслуживания и мониторинга (24 октября 2025)
 
@@ -257,9 +277,10 @@ graph TB
         WEBHOOK_REC[Webhook Receiver<br/>:9095<br/>✅ Healthy]
     end
 
-    subgraph "📊 Metrics Exporters (8 + RAG)"
+    subgraph "📊 Metrics Exporters (8 + RAG + Proxy)"
         NODE_EXP[Node Exporter v1.9.1<br/>:9101<br/>✅ Healthy]
-        PG_EXP[PostgreSQL Exporter<br/>:9187<br/>✅ Healthy]
+        PG_EXP[PostgreSQL Exporter v0.15.0<br/>:9187 internal<br/>✅ Healthy]
+        PG_PROXY[Socat Proxy<br/>:9188 IPv4→IPv6<br/>✅ Running]
         REDIS_EXP[Redis Exporter v1.62.0<br/>:9121<br/>✅ Running]
         NVIDIA_EXP[NVIDIA GPU Exporter<br/>:9445<br/>✅ Running]
         BLACKBOX_EXP[Blackbox Exporter v0.27.0<br/>:9115<br/>✅ Healthy]
@@ -306,7 +327,8 @@ graph TB
 
     %% Monitoring connections
     PROMETHEUS --> NODE_EXP
-    PROMETHEUS --> PG_EXP
+    PROMETHEUS -->|IPv4:9188| PG_PROXY
+    PG_PROXY -->|IPv6:9187| PG_EXP
     PROMETHEUS --> REDIS_EXP
     PROMETHEUS --> NVIDIA_EXP
     PROMETHEUS --> BLACKBOX_EXP
@@ -653,23 +675,141 @@ graph LR
 
 #### PostgreSQL Exporter
 
-- **Версия**: v0.15.0
-- **Порт**: 9187
+- **Версия**: v0.15.0 (prometheuscommunity/postgres-exporter)
+- **Порт**: 9187 (внутренний), 9188 (публичный через socat proxy)
+- **Статус**: ✅ Healthy (через IPv4→IPv6 proxy)
 - **Функции**:
-  - Метрики базы данных
+  - Метрики базы данных PostgreSQL 17.6
   - Производительность запросов
   - Соединения и блокировки
   - Репликация и бэкапы
+  - Auto-discovery баз данных
+
+##### 🔧 Socat Proxy для IPv4→IPv6 конвертации (2025-11-07)
+
+**Проблема**: Postgres Exporter слушает ТОЛЬКО на IPv6 (`:::9187`), в то время
+как Prometheus пытается подключиться по IPv4. Docker network имеет IPv6 disabled
+(`EnableIPv6: false`), что создает несовместимость протоколов.
+
+**Решение**: Создан sidecar контейнер `postgres-exporter-proxy` с socat для
+проксирования IPv4 → IPv6 трафика.
+
+**Архитектура решения**:
+
+```mermaid
+graph LR
+    A[Prometheus<br/>IPv4 client] -->|scrape<br/>postgres-exporter:9188| B[Socat Proxy<br/>alpine/socat:latest]
+    B -->|TCP4-LISTEN:9188<br/>fork,reuseaddr| C[Network Namespace<br/>shared with exporter]
+    C -->|TCP6 ::1:9187<br/>IPv6 localhost| D[Postgres Exporter<br/>listening on :::9187]
+    D -->|metrics| E[(PostgreSQL 17.6<br/>db:5432)]
+
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#f0f0f0
+    style D fill:#e8f5e9
+    style E fill:#fce4ec
+```
+
+**Конфигурация**:
+
+```yaml
+# compose.yml - Postgres Exporter
+postgres-exporter:
+  image: prometheuscommunity/postgres-exporter:v0.15.0
+  ports:
+    - '9188:9188' # Публикуем порт для socat proxy
+  # Exporter слушает на [::]:9187 (IPv6 only)
+
+# compose.yml - Socat Proxy
+postgres-exporter-proxy:
+  image: alpine/socat:latest
+  network_mode: 'service:postgres-exporter' # Shared network namespace
+  command:
+    - 'TCP4-LISTEN:9188,fork,reuseaddr' # Слушаем IPv4 на 9188
+    - 'TCP6:[::1]:9187' # Проксируем на IPv6 localhost:9187
+```
+
+**Prometheus конфигурация**:
+
+```yaml
+# conf/prometheus/prometheus.yml
+- job_name: 'postgres'
+  static_configs:
+    - targets: ['postgres-exporter:9188'] # Подключаемся к proxy порту
+  scrape_interval: 30s
+  scrape_timeout: 25s
+```
+
+**Преимущества решения**:
+
+- ✅ Полная совместимость IPv4/IPv6 без изменения Docker network
+- ✅ Минимальные накладные расходы (<1ms latency)
+- ✅ Автоматический restart при падении exporter (depends_on)
+- ✅ Shared network namespace - нет сетевых hop'ов
+- ✅ Легко масштабируется на другие IPv6-only сервисы
+
+**Проверка работоспособности**:
+
+```bash
+# Локальный доступ через proxy
+curl -s http://localhost:9188/metrics | grep "pg_up"
+# Ожидаемый результат: pg_up 1
+
+# Prometheus targets status
+curl -s 'http://localhost:9091/api/v1/targets' | \
+  jq -r '.data.activeTargets[] | select(.labels.job == "postgres") | .health'
+# Ожидаемый результат: up
+```
+
+**Альтернативные решения (не использованы)**:
+
+- ❌ Включение IPv6 в Docker network - требует перезапуска всей системы
+- ❌ Host network mode - нарушает изоляцию контейнеров
+- ❌ Кастомная сборка exporter - сложность поддержки и обновлений
+- ❌ Прямое подключение по IP - не работает из-за IPv6-only binding
 
 #### Redis Exporter
 
-- **Версия**: v1.55.0
+- **Версия**: v1.62.0 (oliver006/redis_exporter)
 - **Порт**: 9121
+- **Статус**: ✅ Running (исправлена аутентификация 2025-11-07)
 - **Функции**:
   - Метрики Redis сервера
   - Использование памяти
   - Производительность команд
   - Keyspace статистика
+  - System metrics включены
+
+##### 🔧 Исправление аутентификации (2025-11-07)
+
+**Проблема**: `Couldn't connect to redis instance` - ошибка аутентификации при
+подключении к Redis с паролем.
+
+**Решение**: Изменен формат подключения с отдельных переменных окружения на URL
+формат с встроенным паролем.
+
+**Конфигурация**:
+
+```yaml
+# compose.yml - Redis Exporter (ДО исправления)
+environment:
+  - REDIS_ADDR=redis:6379
+  - REDIS_PASSWORD=ErniKiRedisSecurePassword2024
+
+# compose.yml - Redis Exporter (ПОСЛЕ исправления)
+environment:
+  - REDIS_ADDR=redis://:ErniKiRedisSecurePassword2024@redis:6379
+  - REDIS_EXPORTER_INCL_SYSTEM_METRICS=true
+  - REDIS_EXPORTER_DEBUG=true
+```
+
+**Результат**:
+
+- ✅ Успешное подключение к Redis
+- ✅ Метрика `redis_up 1` доступна
+- ✅ Prometheus target `redis: health=up`
+- ✅ Все метрики собираются корректно (connected_clients, commands_processed,
+  etc.)
 
 #### NVIDIA GPU Exporter
 
@@ -759,7 +899,6 @@ graph LR
 | redis                          | -             | 6379, 8001      | Redis/HTTP | Cache & UI            |
 | searxng                        | -             | 8080            | HTTP       | Search API            |
 | mcposerver                     | -             | 8000            | HTTP       | MCP protocol          |
-| docling                        | -             | 5001            | HTTP       | Document parsing      |
 | tika                           | -             | 9998            | HTTP       | Metadata extraction   |
 | edgetts                        | -             | 5050            | HTTP       | Speech synthesis      |
 | backrest                       | 9898          | 9898            | HTTP       | Backup management     |

@@ -14,7 +14,6 @@ env/                    # Переменные окружения для каж�
 ├── openwebui.env      # Основной AI интерфейс
 ├── ollama.env         # LLM сервер с GPU
 ├── litellm.env        # Context Engineering Gateway
-├── docling.env        # Обработка документов
 ├── mcposerver.env     # Model Context Protocol
 ├── searxng.env        # Поисковый движок
 ├── tika.env           # Извлечение метаданных
@@ -54,7 +53,6 @@ LITELLM_BASE_URL="http://litellm:4000"    # LiteLLM Gateway
 SEARXNG_QUERY_URL="http://searxng:8080/search?q=<query>&format=json"
 
 # === ОБРАБОТКА ДОКУМЕНТОВ ===
-DOCLING_BASE_URL="http://docling:5001"    # Docling для OCR
 TIKA_BASE_URL="http://tika:9998"          # Apache Tika для метаданных
 
 # === ПРОИЗВОДИТЕЛЬНОСТЬ ===
@@ -146,33 +144,6 @@ general_settings:
 ```
 
 ## 📄 Document Processing
-
-### Docling Configuration
-
-**Файл:** `env/docling.env`
-
-```bash
-# === ОСНОВНЫЕ НАСТРОЙКИ ===
-DOCLING_PORT=5001
-DOCLING_HOST="0.0.0.0"
-
-# === OCR НАСТРОЙКИ ===
-EASYOCR_LANG_LIST="en,de,fr,it"          # Поддерживаемые языки OCR
-DOCLING_FORCE_SINGLE_LANG=false          # Автоопределение языка
-DOCLING_AUTO_LANG_DETECT=true            # Включить автоопределение
-
-# === ПРОИЗВОДИТЕЛЬНОСТЬ ===
-DOCLING_MAX_FILE_SIZE=104857600           # 100MB максимальный размер файла
-DOCLING_TIMEOUT=300                       # 5 минут таймаут обработки
-
-# === БЕЗОПАСНОСТЬ ===
-DOCLING_ALLOWED_EXTENSIONS="pdf,docx,html,md,txt"  # Разрешенные форматы
-DOCLING_DISABLE_TELEMETRY=true            # Отключить телеметрию
-
-# === GPU ОТКЛЮЧЕНО ===
-CUDA_VISIBLE_DEVICES=""                   # Отключить CUDA (несовместимость Quadro P2200)
-CUDA_DEVICE_ORDER="PCI_BUS_ID"           # Порядок устройств
-```
 
 ### Apache Tika Configuration
 
@@ -317,11 +288,6 @@ server {
         proxy_pass http://searxngUpstream;
     }
 
-    location /api/docling/ {
-        proxy_pass http://docling:5001/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
 }
 ```
 

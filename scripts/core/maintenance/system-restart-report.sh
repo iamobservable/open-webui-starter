@@ -38,7 +38,6 @@ check_all_services() {
         "auth"
         "backrest"
         "db"
-        "docling"
         "edgetts"
         "litellm"
         "mcposerver"

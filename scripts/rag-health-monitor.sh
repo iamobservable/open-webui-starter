@@ -18,7 +18,6 @@ NC='\033[0m' # No Color
 SEARXNG_THRESHOLD=2000  # 2 секунды
 PGVECTOR_THRESHOLD=100  # 100 мс
 OLLAMA_THRESHOLD=2000   # 2 секунды
-DOCLING_THRESHOLD=5000  # 5 секунд
 
 # Лог файл
 LOG_FILE="logs/rag-health-$(date +%Y%m%d).log"
@@ -71,7 +70,7 @@ log "=== RAG Health Check Started ==="
 echo -e "${BLUE}1. СТАТУС RAG СЕРВИСОВ${NC}"
 echo "-----------------------------------"
 
-services=("erni-ki-openwebui-1" "erni-ki-searxng-1" "erni-ki-db-1" "erni-ki-ollama-1" "erni-ki-docling-1" "erni-ki-nginx-1")
+services=("erni-ki-openwebui-1" "erni-ki-searxng-1" "erni-ki-db-1" "erni-ki-ollama-1" "erni-ki-nginx-1")
 all_healthy=true
 
 for service in "${services[@]}"; do
@@ -160,28 +159,8 @@ fi
 
 echo ""
 
-# 5. Проверка Docling
-echo -e "${BLUE}5. DOCLING SERVICE${NC}"
-echo "-----------------------------------"
-
-docling_result=$(docker exec erni-ki-docling-1 curl -s -o /dev/null -w "%{http_code}" "http://localhost:5001/health" 2>/dev/null || echo "000")
-docling_duration=0
-docling_http="$docling_result"
-
-printf "Health Check:  %d ms " "$docling_duration"
-if [ "$docling_http" = "200" ]; then
-    echo -e "${GREEN}✅${NC}"
-    log "Docling: ${docling_duration}ms - OK"
-else
-    echo -e "${RED}❌ (HTTP $docling_http)${NC}"
-    log "Docling: HTTP $docling_http - ERROR"
-    all_healthy=false
-fi
-
-echo ""
-
-# 6. Проверка nginx кэширования
-echo -e "${BLUE}6. NGINX CACHING${NC}"
+# 5. Проверка nginx кэширования
+echo -e "${BLUE}5. NGINX CACHING${NC}"
 echo "-----------------------------------"
 
 # Первый запрос (не кэшированный)

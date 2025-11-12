@@ -21,6 +21,20 @@ error() { echo -e "${RED}❌ $1${NC}"; }
 info() { echo -e "${CYAN}ℹ️  $1${NC}"; }
 section() { echo -e "${PURPLE}🔍 $1${NC}"; }
 
+declare -a COMPOSE_BIN
+if docker compose version &> /dev/null; then
+    COMPOSE_BIN=(docker compose)
+elif command -v docker-compose &> /dev/null; then
+    COMPOSE_BIN=(docker-compose)
+else
+    error "Docker Compose не найден"
+    exit 1
+fi
+
+compose() {
+    "${COMPOSE_BIN[@]}" "$@"
+}
+
 # Быстрый тест API endpoints
 quick_api_test() {
     section "Быстрое тестирование API производительности"
@@ -29,7 +43,7 @@ quick_api_test() {
         "http://localhost:80:Nginx"
         "http://localhost:9090/health:Auth"
         "http://localhost:11434/api/version:Ollama"
-        "http://localhost:5001/health:Docling"
+        "http://localhost:8080/api/searxng/search?q=quick-check&format=json:SearXNG"
         "http://localhost:9998/tika:Tika"
     )
 
@@ -59,19 +73,19 @@ quick_api_test() {
 quick_db_test() {
     section "Быстрое тестирование PostgreSQL"
 
-    if docker-compose exec -T db pg_isready -U postgres &> /dev/null; then
+    if compose exec -T db pg_isready -U postgres &> /dev/null; then
         success "PostgreSQL: доступен"
 
         # Простой тест производительности
         local start_time=$(date +%s.%N)
-        docker-compose exec -T db psql -U postgres -d openwebui -c "SELECT count(*) FROM information_schema.tables;" &> /dev/null
+        compose exec -T db psql -U postgres -d openwebui -c "SELECT count(*) FROM information_schema.tables;" &> /dev/null
         local end_time=$(date +%s.%N)
         local query_time=$(echo "scale=0; ($end_time - $start_time) * 1000" | bc 2>/dev/null || echo "N/A")
 
         success "Время запроса к БД: ${query_time}ms"
 
         # Размер БД
-        local db_size=$(docker-compose exec -T db psql -U postgres -d openwebui -t -c "SELECT pg_size_pretty(pg_database_size('openwebui'));" 2>/dev/null | tr -d ' ' || echo "N/A")
+        local db_size=$(compose exec -T db psql -U postgres -d openwebui -t -c "SELECT pg_size_pretty(pg_database_size('openwebui'));" 2>/dev/null | tr -d ' ' || echo "N/A")
         success "Размер БД: $db_size"
     else
         error "PostgreSQL недоступен"
@@ -83,21 +97,21 @@ quick_db_test() {
 quick_redis_test() {
     section "Быстрое тестирование Redis"
 
-    if docker-compose exec -T redis redis-cli ping 2>/dev/null | grep -q "PONG"; then
+    if compose exec -T redis redis-cli ping 2>/dev/null | grep -q "PONG"; then
         success "Redis: доступен"
 
         # Тест производительности
         local start_time=$(date +%s.%N)
-        docker-compose exec -T redis redis-cli set test_key test_value &> /dev/null
-        docker-compose exec -T redis redis-cli get test_key &> /dev/null
-        docker-compose exec -T redis redis-cli del test_key &> /dev/null
+        compose exec -T redis redis-cli set test_key test_value &> /dev/null
+        compose exec -T redis redis-cli get test_key &> /dev/null
+        compose exec -T redis redis-cli del test_key &> /dev/null
         local end_time=$(date +%s.%N)
         local redis_time=$(echo "scale=0; ($end_time - $start_time) * 1000" | bc 2>/dev/null || echo "N/A")
 
         success "Время SET/GET/DEL: ${redis_time}ms"
 
         # Использование памяти
-        local memory_usage=$(docker-compose exec -T redis redis-cli info memory 2>/dev/null | grep "used_memory_human" | cut -d: -f2 | tr -d '\r' || echo "N/A")
+        local memory_usage=$(compose exec -T redis redis-cli info memory 2>/dev/null | grep "used_memory_human" | cut -d: -f2 | tr -d '\r' || echo "N/A")
         success "Использование памяти: $memory_usage"
     else
         error "Redis недоступен"
@@ -113,7 +127,7 @@ quick_ollama_test() {
         success "Ollama API: доступен"
 
         # Проверка моделей
-        local models=$(docker-compose exec -T ollama ollama list 2>/dev/null | tail -n +2 | wc -l || echo "0")
+        local models=$(compose exec -T ollama ollama list 2>/dev/null | tail -n +2 | wc -l || echo "0")
         success "Загружено моделей: $models"
 
         if [ "$models" -gt 0 ]; then
@@ -207,14 +221,14 @@ generate_quick_report() {
         issues+=("Ollama API недоступен")
     fi
 
-    if docker-compose exec -T db pg_isready -U postgres &> /dev/null; then
+    if compose exec -T db pg_isready -U postgres &> /dev/null; then
         score=$((score + 1))
         success "PostgreSQL: Работает"
     else
         issues+=("PostgreSQL недоступен")
     fi
 
-    if docker-compose exec -T redis redis-cli ping &> /dev/null; then
+    if compose exec -T redis redis-cli ping &> /dev/null; then
         score=$((score + 1))
         success "Redis: Работает"
     else

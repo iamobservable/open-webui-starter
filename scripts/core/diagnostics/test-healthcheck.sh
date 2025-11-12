@@ -112,10 +112,10 @@ test_service_startup() {
 
     # Проверяем статус сервисов
     log "Проверка статуса сервисов..."
-    if command -v docker-compose &> /dev/null; then
-        docker-compose ps
+    if [[ "$compose_cmd" == "docker-compose" ]]; then
+        $compose_cmd ps
     else
-        docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Health}}"
+        $compose_cmd ps --format "table {{.Name}}\t{{.Status}}\t{{.Health}}"
     fi
 }
 
@@ -126,18 +126,14 @@ check_healthcheck_status() {
     local compose_cmd=$(get_compose_cmd)
 
     # Получаем список всех сервисов
-    if command -v docker-compose &> /dev/null; then
-        services=$(docker-compose ps --services)
-    else
-        services=$(docker compose ps --services)
-    fi
+    services=$($compose_cmd ps --services)
 
     for service in $services; do
         # Проверяем health статус
-        if command -v docker-compose &> /dev/null; then
-            health_status=$(docker-compose ps "$service" | grep "$service" | awk '{print $4}' 2>/dev/null || echo "no-healthcheck")
+        if [[ "$compose_cmd" == "docker-compose" ]]; then
+            health_status=$($compose_cmd ps "$service" | awk 'NR==2 {print $4}' 2>/dev/null || echo "no-healthcheck")
         else
-            health_status=$(docker compose ps "$service" --format "{{.Health}}" 2>/dev/null || echo "no-healthcheck")
+            health_status=$($compose_cmd ps "$service" --format "{{.Health}}" 2>/dev/null || echo "no-healthcheck")
         fi
 
         case $health_status in
@@ -172,7 +168,7 @@ test_http_endpoints() {
         ["http://localhost:9090/health"]="Auth сервис"
         ["http://localhost:11434/api/version"]="Ollama API"
         ["http://localhost:8080/health"]="OpenWebUI"
-        ["http://localhost:5001/health"]="Docling"
+        ["http://localhost:8080/api/searxng/search?q=health-check&format=json"]="SearXNG через Nginx"
         ["http://localhost:5050/voices"]="EdgeTTS"
         ["http://localhost:9998/tika"]="Tika (GET)"
     )
@@ -210,10 +206,10 @@ generate_healthcheck_report() {
         echo ""
 
         echo "=== СТАТУС СЕРВИСОВ ==="
-        if command -v docker-compose &> /dev/null; then
-            docker-compose ps
+        if [[ "$compose_cmd" == "docker-compose" ]]; then
+            $compose_cmd ps
         else
-            docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Health}}"
+            $compose_cmd ps --format "table {{.Name}}\t{{.Status}}\t{{.Health}}"
         fi
         echo ""
 

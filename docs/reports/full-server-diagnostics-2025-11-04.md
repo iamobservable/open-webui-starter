@@ -204,7 +204,6 @@ prometheuscommunity/postgres-exporter:latest
 | **openwebui**      | 3.742 GiB    | 125.5 GiB    | 2.98%  | ✅ Нормально |
 | **ragflow-server** | 2.207 GiB    | 125.5 GiB    | 1.76%  | ✅ Нормально |
 | **litellm**        | 2.193 GiB    | 12 GiB       | 18.27% | ✅ Нормально |
-| **docling**        | 1.284 GiB    | 12 GiB       | 10.70% | ✅ Нормально |
 
 **Вывод:** ragflow-es-01 использует 60.59% от лимита - требует мониторинга.
 

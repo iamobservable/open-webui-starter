@@ -9,9 +9,8 @@ automatisiertem Management.
 > **✅ Systemstatus (25. September 2025):** System läuft auf **96,4%** Niveau
 > mit **26/30 gesunden Containern**. **18 Grafana-Dashboards (100%
 > funktionsfähig)**, alle kritischen Probleme behoben. **LiteLLM Context
-> Engineering v1.77.2**, **Docling Document Processing**, **MCP Server**,
-> **Apache Tika**, **Context7-Integration**. GPU-Beschleunigung aktiv (Ollama +
-> OpenWebUI). System produktionsbereit.
+> **Apache Tika**, **Context7-Integration\*\*. GPU-Beschleunigung aktiv
+> (Ollama + OpenWebUI). System produktionsbereit.
 
 [![CI](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml)
 [![Security](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml)
@@ -33,7 +32,6 @@ automatisiertem Management.
 - **RAG-Suche** - Integration mit SearXNG (Startpage, Brave, Bing Engines)
   - Antwortzeit: <3 Sekunden, 60+ Suchergebnisse
 - **MCP-Server** - erweiterte Funktionen über Model Context Protocol
-- **Docling** - Dokumentenverarbeitung mit OCR-Unterstützung (EN, DE, FR, IT)
 - **Apache Tika** - Textextraktion aus verschiedenen Dokumentformaten
 - **EdgeTTS** - Sprachsynthese für Audioausgabe
 
@@ -49,7 +47,6 @@ automatisiertem Management.
 - **PostgreSQL + pgvector** - Vektordatenbank für RAG
 - **Redis** - hochperformantes Caching und Sessions
 - **Backrest** - automatische Backups mit Verschlüsselung
-- **Dokumentenverarbeitung** - Unterstützung für Docling und Apache Tika
 
 ### 🛠️ **DevOps-Bereitschaft**
 
@@ -174,7 +171,6 @@ Hauptvariablen für die Konfiguration in `env/*.env` Dateien:
 | **redis**       | Cache und Message Broker        | 6379, 8001    | -                |
 | **searxng**     | Meta-Suchmaschine               | 8080          | redis            |
 | **mcposerver**  | MCP-Server                      | 8000          | -                |
-| **docling**     | Dokumentenverarbeitung          | 5001          | -                |
 | **tika**        | Metadaten-Extraktion            | 9998          | -                |
 | **edgetts**     | Sprachsynthese                  | 5050          | -                |
 | **backrest**    | Backup-System                   | 9898          | db, redis        |
@@ -291,9 +287,8 @@ optimiert):
 ### 👨‍💻 Für Entwickler
 
 - [🏗️ Systemarchitektur](architecture.md) - technische Dokumentation
-- [🔌 API-Referenz](../api-reference.md) - API-Dokumentation
-- [📎 Docling Upload Hinweis](snippets/docling-multipart-note.md) – Multipart
-  Feldname ist "files" (nicht "file")
+- [🔌 API-Referenz](../api-reference.md) - API-Dokumentation Feldname ist
+  "files" (nicht "file")
 - [💻 Entwicklerhandbuch](../development.md) - Entwicklungsumgebung einrichten
 
 ## 🤝 Mitwirkung

@@ -316,10 +316,10 @@ graceful_restart_all() {
     create_state_backup
 
     # Определение порядка остановки (обратный порядок зависимостей)
-    local stop_order=("openwebui" "nginx" "auth" "searxng" "ollama" "docling" "edgetts" "tika" "mcposerver" "cloudflared" "backrest" "redis" "db" "watchtower")
+    local stop_order=("openwebui" "nginx" "auth" "searxng" "ollama" "edgetts" "tika" "mcposerver" "cloudflared" "backrest" "redis" "db" "watchtower")
 
     # Определение порядка запуска
-    local start_order=("watchtower" "db" "redis" "auth" "ollama" "searxng" "docling" "edgetts" "tika" "mcposerver" "nginx" "openwebui" "cloudflared" "backrest")
+    local start_order=("watchtower" "db" "redis" "auth" "ollama" "searxng" "edgetts" "tika" "mcposerver" "nginx" "openwebui" "cloudflared" "backrest")
 
     # Остановка сервисов
     log "Остановка сервисов в правильном порядке"

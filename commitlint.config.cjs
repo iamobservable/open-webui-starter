@@ -60,7 +60,6 @@ module.exports = {
         'searxng', // SearXNG
         'cloudflare', // Cloudflare
         'tika', // Apache Tika
-        'docling', // Docling
         'edgetts', // EdgeTTS
         'mcposerver', // MCP Server
         'watchtower', // Watchtower

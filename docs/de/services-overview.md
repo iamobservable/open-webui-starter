@@ -18,11 +18,10 @@
 
 ## 🔧 Processing Layer (Document & Media Processing)
 
-| Service        | Status              | Ports                  | Konfiguration | Umgebungsvariablen | Konfigurationstyp | Anmerkungen                                          |
-| -------------- | ------------------- | ---------------------- | ------------- | ------------------ | ----------------- | ---------------------------------------------------- |
-| **📄 docling** | ✅ Up 29h (healthy) | `5001,8080` (internal) | ❌ Keine      | `env/docling.env`  | ENV               | OCR: EasyOCR • Mehrsprachig (EN,DE,FR,IT) • CPU-only |
-| **📋 tika**    | ✅ Up 9d (healthy)  | `9998:9998`            | ❌ Keine      | `env/tika.env`     | ENV               | Apache Tika • Metadaten-Extraktion • 100MB Limit     |
-| **🎤 edgetts** | ✅ Up 5d (healthy)  | `5050:5050`            | ❌ Keine      | `env/edgetts.env`  | ENV               | Sprachsynthese • OpenAI Edge TTS                     |
+| Service        | Status             | Ports       | Konfiguration | Umgebungsvariablen | Konfigurationstyp | Anmerkungen                                      |
+| -------------- | ------------------ | ----------- | ------------- | ------------------ | ----------------- | ------------------------------------------------ |
+| **📋 tika**    | ✅ Up 9d (healthy) | `9998:9998` | ❌ Keine      | `env/tika.env`     | ENV               | Apache Tika • Metadaten-Extraktion • 100MB Limit |
+| **🎤 edgetts** | ✅ Up 5d (healthy) | `5050:5050` | ❌ Keine      | `env/edgetts.env`  | ENV               | Sprachsynthese • OpenAI Edge TTS                 |
 
 ## 💾 Data Layer (Databases & Cache)
 

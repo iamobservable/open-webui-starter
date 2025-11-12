@@ -174,7 +174,6 @@ searxng:
 
 - OpenWebUI: GPU ускорение (NVIDIA)
 - Ollama: 4GB VRAM limit
-- Docling: 8 CPU cores (без GPU)
 - SearXNG: стандартные ресурсы
 
 **Оценка:** ✅ Корректная архитектура зависимостей
@@ -191,7 +190,6 @@ searxng:
 | openwebui       | running | 1 hour  | healthy |
 | ollama          | running | 1 hour  | healthy |
 | searxng         | running | 1 hour  | healthy |
-| docling         | running | 1 hour  | healthy |
 | redis           | running | 1 hour  | healthy |
 | nginx           | running | 1 hour  | healthy |
 
@@ -278,12 +276,10 @@ curl -X POST http://ollama:11434/api/embeddings \
 
 **Результат:** ✅ Ollama embeddings работают корректно
 
-### 3.5 Тестирование Docling
-
 **Health check:**
 
 ```bash
-curl http://docling:5001/health
+
 ```
 
 **Результат:** `{"status": "ok"}` ✅
@@ -295,8 +291,6 @@ curl http://docling:5001/health
 - Max file size: 100MB
 - Timeout: 600s
 - Workers: 4
-
-**Результат:** ✅ Docling готов к обработке документов
 
 ### 3.6 Браузерное тестирование (Playwright)
 
@@ -326,7 +320,6 @@ curl http://docling:5001/health
 
 **Использование ресурсов:** | Сервис | CPU | Memory | |--------|-----|--------|
 | openwebui | 0.13% | 2.24 GB | | ollama | 0.61% | 2.83 GB | | searxng | 0.00% |
-171 MB | | db | 0.00% | 133 MB | | docling | 0.28% | 1.26 GB |
 
 **Результат:** ✅ Нормальное использование ресурсов
 

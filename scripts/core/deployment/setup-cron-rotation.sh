@@ -5,17 +5,19 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+ROTATE_SCRIPT="$PROJECT_ROOT/scripts/rotate-logs.sh"
+ES_SCRIPT="$PROJECT_ROOT/scripts/elasticsearch-retention.sh"
 
 echo "⏰ Настройка автоматической ротации логов через cron..."
 
 # Проверка существования скриптов
-if [ ! -f "$SCRIPT_DIR/rotate-logs.sh" ]; then
+if [ ! -f "$ROTATE_SCRIPT" ]; then
     echo "❌ Скрипт rotate-logs.sh не найден"
     exit 1
 fi
 
-if [ ! -f "$SCRIPT_DIR/elasticsearch-retention.sh" ]; then
+if [ ! -f "$ES_SCRIPT" ]; then
     echo "❌ Скрипт elasticsearch-retention.sh не найден"
     exit 1
 fi

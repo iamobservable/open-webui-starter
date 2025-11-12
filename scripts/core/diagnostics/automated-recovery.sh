@@ -375,7 +375,7 @@ auto_recovery() {
 
     # Финальная проверка всех сервисов
     log "Финальная проверка всех сервисов"
-    local all_services=("db" "redis" "nginx" "auth" "ollama" "openwebui" "searxng" "docling" "edgetts" "tika" "mcposerver" "cloudflared" "watchtower" "backrest")
+    local all_services=("db" "redis" "nginx" "auth" "ollama" "openwebui" "searxng" "edgetts" "tika" "mcposerver" "cloudflared" "watchtower" "backrest")
     local unhealthy_count=0
 
     for service in "${all_services[@]}"; do

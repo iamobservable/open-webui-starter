@@ -117,7 +117,7 @@ copy_env_files() {
     log "Копирование файлов переменных окружения..."
 
     env_files=(
-        "auth" "cloudflared" "db" "docling" "edgetts"
+        "auth" "cloudflared" "db" "edgetts"
         "mcposerver" "ollama" "openwebui" "redis"
         "searxng" "tika" "watchtower"
     )

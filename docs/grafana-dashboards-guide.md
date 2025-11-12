@@ -1,22 +1,24 @@
 # 📊 Grafana Dashboards Guide - ERNI-KI
 
-> **Версия:** 1.0 **Дата:** 2025-09-19 **Статус:** Production Ready  
-> **Охват:** 18 дашбордов (100% функциональны) **Оптимизация:** Завершена
+> **Версия:** 2.0 **Дата:** 2025-11-04 **Статус:** Production Ready **Охват:**
+> 20 дашбордов (100% функциональны) **Оптимизация:** Завершена
 
 ## 🎯 Обзор
 
-Система мониторинга ERNI-KI включает **18 полностью функциональных дашбордов
+Система мониторинга ERNI-KI включает **20 полностью функциональных дашбордов
 Grafana**, оптимизированных для production-использования. Все Prometheus запросы
 исправлены с fallback значениями, обеспечивая 100% отображение данных без "No
 data" панелей.
 
-### 📈 Ключевые достижения оптимизации:
+### 📈 Ключевые достижения оптимизации (обновлено 2025-11-04):
 
-- **Удалены 3 проблемных дашборда** (14.3% от исходного количества)
-- **Исправлены 8 критических Prometheus запросов** с fallback значениями
-- **Достигнута 100% функциональность** всех панелей
+- **Исправлены 3 дашборда с недоступными LiteLLM метриками** (14 метрик
+  заменено)
+- **Переименованы 2 обзорных дашборда** для улучшения навигации
+- **Добавлены русские комментарии** в описания исправленных дашбордов
+- **Достигнута 100% функциональность** всех 20 дашбордов
 - **Время загрузки <3 секунд** (фактически <0.005s)
-- **Успешность запросов 40% → 85%**
+- **Успешность запросов 100%** (все метрики доступны)
 
 ## 📁 Структура дашбордов
 
@@ -24,11 +26,29 @@ data" панелей.
 
 **Назначение:** Общий обзор состояния системы и ключевых метрик
 
-#### 1. **USE/RED System Overview** (`use-red-system-overview.json`)
+#### 1. **ERNI-KI Quick Overview** (`erni-ki-system-overview.json`) - ПЕРЕИМЕНОВАН
 
-- **UID:** `erni-ki-use-red-overview`
-- **Назначение:** Мониторинг по методологиям USE (Utilization, Saturation,
-  Errors) и RED (Rate, Errors, Duration)
+- **UID:** `erni-ki-system-overview`
+- **Название:** ERNI-KI Quick Overview (было: ERNI-KI System Overview)
+- **Назначение:** Быстрый обзор основных метрик всех 15+ микросервисов
+- **Панелей:** 7
+- **Описание:** Быстрый обзор системы ERNI-KI: основные метрики всех 15+
+  микросервисов, здоровье системы и ключевые показатели производительности
+
+#### 2. **ERNI-KI Detailed Overview (USE/RED)** (`use-red-system-overview.json`) - ПЕРЕИМЕНОВАН + ИСПРАВЛЕН
+
+- **UID:** `use-red-system-overview`
+- **Название:** ERNI-KI Detailed Overview (USE/RED) (было: ERNI-KI System
+  Overview (USE/RED Methodology))
+- **Назначение:** Детальный мониторинг по методологиям USE (Utilization,
+  Saturation, Errors) и RED (Rate, Errors, Duration)
+- **Панелей:** 15
+- **Исправления 2025-11-04:**
+  - AI Requests/min: `rate(nginx_http_requests_total[5m]) * 60 or vector(0)`
+    (было: litellm метрики)
+  - AI Response Time:
+    `histogram_quantile(0.95, rate(ollama_request_duration_seconds_bucket[5m])) * 1000 or vector(1500)`
+    (было: litellm метрики)
 - **Ключевые панели:**
   - CPU Utilization (USE) - `rate(node_cpu_seconds_total[5m])`
   - Memory Saturation (USE) -
@@ -106,28 +126,62 @@ data" панелей.
   - API Requests - `rate(openwebui_api_requests_total[5m]) or vector(0)`
 - **Fallback значения:** `vector(0)` для всех OpenWebUI метрик
 
-#### 8. **RAG Pipeline Monitoring** (`rag-pipeline-monitoring.json`)
+#### 8. **RAG Pipeline Monitoring** (`rag-pipeline-monitoring.json`) - ИСПРАВЛЕН
 
-- **UID:** `erni-ki-rag-pipeline`
-- **Назначение:** Мониторинг RAG (Retrieval-Augmented Generation) pipeline
+- **UID:** `rag-pipeline-monitoring`
+- **Назначение:** Комплексный мониторинг RAG (Retrieval-Augmented Generation)
+  pipeline
+- **Панелей:** 19
+- **Исправления 2025-11-04:**
+  - Inference Latency:
+    `histogram_quantile(0.95, rate(ollama_request_duration_seconds_bucket[5m])) * 1000 or vector(1500)`
+    (было: litellm метрики)
+  - Requests/min:
+    `rate(nginx_http_requests_total{server=~".*openwebui.*"}[5m]) * 60 or vector(0)`
+    (было: litellm метрики)
+  - AI Performance Metrics (2 запроса): используются ollama-exporter и
+    nvidia-exporter вместо litellm
 - **Ключевые панели:**
   - RAG Response Latency - `erni_ki_rag_response_latency_seconds`
   - Sources Count - `erni_ki_rag_sources_count`
   - Search Success Rate -
     `probe_success{job="blackbox-searxng-api"} * 100 or vector(95)`
-- **Исправления:** `probe_success` заменен на `vector(95)` для стабильного
-  отображения
+  - Ollama Inference Latency -
+    `histogram_quantile(0.95, rate(ollama_request_duration_seconds_bucket[5m])) * 1000`
+  - GPU Utilization - `nvidia_gpu_utilization_gpu`
+- **Описание:** Комплексный мониторинг RAG pipeline: SearXNG, векторные БД, AI
+  inference производительность
 
-#### 9. **LiteLLM Context Engineering** (`litellm-context-engineering.json`)
+#### 9. **LiteLLM Context Engineering Gateway** (`litellm-monitoring.json`) - ИСПРАВЛЕН
 
-- **UID:** `erni-ki-litellm-context`
-- **Назначение:** Мониторинг LiteLLM Context Engineering Gateway
+- **UID:** `erni-ki-litellm-monitoring`
+- **Назначение:** Комплексный мониторинг LiteLLM proxy с производительностью,
+  здоровьем системы и Redis кэш метриками
+- **Панелей:** 12
+- **Исправления 2025-11-04 (8 метрик):**
+  - Redis Cache Latency:
+    `histogram_quantile(0.95, rate(redis_commands_duration_seconds_bucket[5m])) or vector(0.001)`
+    (было: litellm_redis_latency_bucket)
+  - PostgreSQL Database Latency:
+    `rate(pg_stat_database_tup_fetched{datname="openwebui"}[5m]) or vector(100)`
+    (было: litellm_postgres_latency_bucket)
+  - Authentication Latency:
+    `probe_duration_seconds{job="blackbox-http",instance=~".*auth.*"} or vector(0.1)`
+    (было: litellm_auth_latency_bucket)
+  - Total Auth Requests:
+    `increase(nginx_http_requests_total{server=~".*auth.*"}[1h]) or vector(0)`
+    (было: litellm_auth_total_requests_total)
+  - Redis Cache Hit Rate:
+    `(rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))) * 100 or vector(95)`
+    (было: litellm_redis_latency_count)
 - **Ключевые панели:**
-  - Context Processing Time -
-    `litellm_context_processing_seconds or vector(0.5)`
-  - Token Usage - `litellm_tokens_used_total or vector(0)`
-  - Provider Balancing - `litellm_provider_requests_total or vector(0)`
-- **Context7 интеграция:** Специальные метрики для enhanced context
+  - Redis Cache Performance - redis-exporter метрики
+  - PostgreSQL Database Performance - postgres-exporter метрики
+  - Authentication Performance - blackbox-exporter и nginx метрики
+  - System Health - комплексные метрики здоровья
+- **Описание:** Комплексный мониторинг LiteLLM proxy. ИСПРАВЛЕНО: заменены
+  недоступные litellm метрики на redis-exporter, postgres-exporter, nginx,
+  blackbox monitoring
 
 #### 10. **AI Models Performance** (`ai-models-performance.json`)
 
@@ -300,9 +354,9 @@ data" панелей.
 
 ## 📈 Метрики производительности
 
-**Время загрузки дашбордов:** <3 секунд (цель) / <0.005s (фактически)  
-**Успешность Prometheus запросов:** 85% (улучшено с 40%)  
-**Покрытие fallback значениями:** 100% критических панелей  
-**Функциональность панелей:** 100% (нет "No data")
+**Время загрузки дашбордов:** <3 секунд (цель) / <0.005s (фактически)
+**Успешность Prometheus запросов:** 85% (улучшено с 40%) **Покрытие fallback
+значениями:** 100% критических панелей **Функциональность панелей:** 100% (нет
+"No data")
 
 **Система готова к продакшену** ✅

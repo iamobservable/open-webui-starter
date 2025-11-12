@@ -1,236 +1,317 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# 🔍 ERNI-KI Health Monitor Script
-# Автоматический мониторинг состояния системы после миграции PostgreSQL
-# Создано: Альтэон Шульц, Tech Lead
+# Unified ERNI-KI health monitor
 
 set -euo pipefail
 
-# === КОНФИГУРАЦИЯ ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-LOG_DIR="$PROJECT_DIR/.config-backup/monitoring"
-TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-REPORT_FILE="$LOG_DIR/health-report-$TIMESTAMP.md"
+REPORT_PATH=""
+REPORT_FORMAT="markdown"
 
-# Создание директории для логов
-mkdir -p "$LOG_DIR"
+RESULTS=()
+FAILED=0
+WARNINGS=0
 
-# === ЦВЕТА ДЛЯ ВЫВОДА ===
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# === ФУНКЦИИ ===
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1" | tee -a "$REPORT_FILE"
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [options]
+
+Options:
+  -r, --report PATH     Сохранить отчёт в указанный файл (Markdown по умолчанию)
+  -f, --format FORMAT   Формат отчёта: markdown | text (по умолчанию markdown)
+  -h, --help            Показать справку
+EOF
 }
 
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1" | tee -a "$REPORT_FILE"
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -r|--report)
+        REPORT_PATH="$2"
+        shift 2
+        ;;
+      -f|--format)
+        REPORT_FORMAT="$2"
+        shift 2
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        echo "Неизвестный аргумент: $1" >&2
+        usage
+        exit 1
+        ;;
+    esac
+  done
 }
 
-log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1" | tee -a "$REPORT_FILE"
+log() {
+  printf "${BLUE}[%s]${NC} %s\n" "$(date +'%Y-%m-%d %H:%M:%S')" "$1"
 }
 
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1" | tee -a "$REPORT_FILE"
+record_result() {
+  local status="$1"
+  local summary="$2"
+  local details="$3"
+
+  RESULTS+=("$status|$summary|$details")
+
+  case "$status" in
+    FAIL) FAILED=$((FAILED + 1)) ;;
+    WARN) WARNINGS=$((WARNINGS + 1)) ;;
+  esac
+
+  local icon output
+  case "$status" in
+    PASS)
+      icon="✅"
+      output="${GREEN}${icon} $summary${NC} - $details"
+      ;;
+    WARN)
+      icon="⚠️ "
+      output="${YELLOW}${icon} $summary${NC} - $details"
+      ;;
+    FAIL)
+      icon="❌"
+      output="${RED}${icon} $summary${NC} - $details"
+      ;;
+    *)
+      icon="ℹ️ "
+      output="${icon} $summary - $details"
+      ;;
+  esac
+
+  echo -e "$output"
 }
 
-# === ПРОВЕРКА СЕРВИСОВ ===
-check_services() {
-    log_info "=== ПРОВЕРКА СТАТУСА СЕРВИСОВ ==="
-
-    cd "$PROJECT_DIR"
-
-    # Получение статуса всех сервисов
-    local services_status
-    services_status=$(docker-compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Health}}" 2>/dev/null || echo "ERROR: Cannot get services status")
-
-    if [[ "$services_status" == "ERROR:"* ]]; then
-        log_error "Не удалось получить статус сервисов"
-        return 1
-    fi
-
-    echo "$services_status" >> "$REPORT_FILE"
-
-    # Подсчет healthy сервисов
-    local total_services healthy_services unhealthy_services
-    total_services=$(echo "$services_status" | grep -c "erni-ki-" || echo "0")
-    healthy_services=$(echo "$services_status" | grep -c "healthy" || echo "0")
-    unhealthy_services=$((total_services - healthy_services))
-
-    log_info "Всего сервисов: $total_services"
-    log_info "Healthy сервисов: $healthy_services"
-
-    if [[ $unhealthy_services -gt 0 ]]; then
-        log_warning "Unhealthy сервисов: $unhealthy_services"
-        return 1
-    else
-        log_success "Все сервисы в состоянии healthy"
-        return 0
-    fi
+compose() {
+  (cd "$PROJECT_DIR" && docker compose "$@")
 }
 
-# === ПРОВЕРКА КРИТИЧЕСКИХ ОШИБОК ===
-check_critical_errors() {
-    log_info "=== ПРОВЕРКА КРИТИЧЕСКИХ ОШИБОК (последние 30 минут) ==="
+load_env_value() {
+  local file="$PROJECT_DIR/env/$1"
+  local key="$2"
 
-    cd "$PROJECT_DIR"
+  if [[ ! -f "$file" ]]; then
+    return 1
+  fi
 
-    # Проверка ошибок в критических сервисах
-    local critical_services=("db" "openwebui" "ollama" "nginx" "litellm")
-    local total_errors=0
+  local line
+  line="$(grep -E "^${key}=" "$file" | tail -n 1 || true)"
+  [[ -z "$line" ]] && return 1
 
-    for service in "${critical_services[@]}"; do
-        local error_count
-        error_count=$(docker-compose logs "$service" --since 30m 2>/dev/null | grep -c -E "(ERROR|FATAL|CRITICAL)" || echo "0")
+  local value="${line#*=}"
+  value="${value%\"}"
+  value="${value#\"}"
+  printf '%s' "$value"
+}
 
-        if [[ "$error_count" =~ ^[0-9]+$ ]] && [[ $error_count -gt 0 ]]; then
-            log_warning "$service: $error_count ошибок за последние 30 минут"
-            total_errors=$((total_errors + error_count))
-        else
-            log_success "$service: нет критических ошибок"
-        fi
+check_compose_services() {
+  log "Проверка статуса контейнеров..."
+
+  local parsed
+  if ! parsed="$(
+    compose ps --format json 2>/dev/null | python - <<'PY'
+from __future__ import annotations
+import json
+import sys
+
+try:
+    data = json.load(sys.stdin)
+except json.JSONDecodeError:
+    sys.exit(2)
+
+total = len(data)
+healthy = sum(1 for svc in data if svc.get("Health") == "healthy")
+running = sum(1 for svc in data if svc.get("State") == "running")
+unhealthy = [svc.get("Service") for svc in data if svc.get("Health") not in (None, "healthy")]
+detail = " ".join(unhealthy) if unhealthy else "none"
+print(f"{healthy}/{total} healthy, {running}/{total} running|{detail}")
+PY
+  )"; then
+    record_result "FAIL" "Контейнеры" "Не удалось получить docker compose ps"
+    return
+  fi
+
+  local summary="${parsed%%|*}"
+  local detail="${parsed#*|}"
+
+  if [[ "$detail" == "none" ]]; then
+    record_result "PASS" "Контейнеры" "$summary"
+  else
+    record_result "WARN" "Контейнеры" "$summary (проблемы: $detail)"
+  fi
+}
+
+check_http_endpoint() {
+  local name="$1"
+  local url="$2"
+  local expected="$3"
+
+  local response
+  if ! response=$(curl -fsS --max-time 8 "$url" 2>/dev/null); then
+    record_result "FAIL" "$name" "Endpoint недоступен: $url"
+    return
+  fi
+
+  if [[ -n "$expected" && "$response" != *"$expected"* ]]; then
+    record_result "WARN" "$name" "Ответ не содержит ожидаемое значение ($expected)"
+    return
+  fi
+
+  record_result "PASS" "$name" "$url"
+}
+
+check_rag_latency() {
+  log "Проверка RAG веб-поиска..."
+  local result
+  result=$(curl -s -o /dev/null -w "%{http_code}|%{time_total}" "http://localhost:8080/api/searxng/search?q=health-check&format=json" --max-time 10 || echo "000|10")
+  local code="${result%%|*}"
+  local duration="${result#*|}"
+
+  if [[ "$code" != "200" ]]; then
+    record_result "FAIL" "RAG web search" "HTTP $code через /api/searxng/"
+    return
+  fi
+
+  if (( $(echo "$duration > 2.0" | bc -l) )); then
+    record_result "WARN" "RAG web search" "Ответ ${duration}s (порог 2s)"
+  else
+    record_result "PASS" "RAG web search" "${duration}s"
+  fi
+}
+
+check_postgres() {
+  log "Проверка PostgreSQL..."
+  if compose exec -T db pg_isready -U postgres >/dev/null 2>&1; then
+    record_result "PASS" "PostgreSQL" "pg_isready ok"
+  else
+    record_result "FAIL" "PostgreSQL" "pg_isready вернул ошибку"
+  fi
+}
+
+check_redis() {
+  log "Проверка Redis..."
+  local redis_pass
+  redis_pass="$(load_env_value redis.env REDIS_PASSWORD || true)"
+
+  local cmd="redis-cli ping"
+  if [[ -n "$redis_pass" ]]; then
+    cmd="redis-cli -a '$redis_pass' ping"
+  fi
+
+  if compose exec -T redis sh -c "$cmd" 2>/dev/null | grep -q "PONG"; then
+    record_result "PASS" "Redis" "ping OK"
+  else
+    record_result "FAIL" "Redis" "Redis не ответил PONG"
+  fi
+}
+
+check_disk_usage() {
+  log "Проверка дискового пространства..."
+  local usageLine
+  usageLine=$(df -h "$PROJECT_DIR" | tail -1)
+  local percent
+  percent=$(echo "$usageLine" | awk '{print $5}' | tr -d '%')
+  local detail=$(echo "$usageLine" | awk '{print $3 "/" $2 " используется"}')
+
+  if [[ -z "$percent" ]]; then
+    record_result "WARN" "Диск" "Не удалось определить использование"
+    return
+  fi
+
+  if (( percent >= 90 )); then
+    record_result "FAIL" "Диск" "$percent% - $detail"
+  elif (( percent >= 80 )); then
+    record_result "WARN" "Диск" "$percent% - $detail"
+  else
+    record_result "PASS" "Диск" "$percent% - $detail"
+  fi
+}
+
+check_logs() {
+  log "Анализ логов за последние 30 минут..."
+  local count
+  count=$(compose logs --since 30m 2>/dev/null | grep -i -E "(ERROR|FATAL|CRITICAL)" | wc -l || echo "0")
+
+  if [[ "$count" -eq 0 ]]; then
+    record_result "PASS" "Логи" "Критические ошибки не найдены"
+  elif [[ "$count" -le 10 ]]; then
+    record_result "WARN" "Логи" "$count критических записей за 30 мин"
+  else
+    record_result "FAIL" "Логи" "$count критических записей за 30 мин"
+  fi
+}
+
+write_report() {
+  [[ -z "$REPORT_PATH" ]] && return
+
+  mkdir -p "$(dirname "$REPORT_PATH")"
+  local ts
+  ts="$(date '+%Y-%m-%d %H:%M:%S')"
+
+  if [[ "$REPORT_FORMAT" == "text" ]]; then
+    {
+      echo "ERNI-KI Health Report - $ts"
+      echo "========================================"
+      for row in "${RESULTS[@]}"; do
+        IFS='|' read -r status summary detail <<< "$row"
+        echo "[$status] $summary - $detail"
+      done
+      echo ""
+      echo "Failures: $FAILED, Warnings: $WARNINGS"
+    } > "$REPORT_PATH"
+    return
+  fi
+
+  {
+    echo "# ERNI-KI Health Report"
+    echo "_$ts_"
+    echo ""
+    echo "| Статус | Проверка | Детали |"
+    echo "|--------|----------|--------|"
+    for row in "${RESULTS[@]}"; do
+      IFS='|' read -r status summary detail <<< "$row"
+      echo "| $status | $summary | $detail |"
     done
-
-    if [[ $total_errors -gt 5 ]]; then
-        log_error "Слишком много ошибок: $total_errors (порог: 5)"
-        return 1
-    else
-        log_success "Критические ошибки в пределах нормы: $total_errors"
-        return 0
-    fi
+    echo ""
+    echo "**Failures:** $FAILED &nbsp;&nbsp; **Warnings:** $WARNINGS"
+  } > "$REPORT_PATH"
 }
 
-# === ПРОВЕРКА ПРОИЗВОДИТЕЛЬНОСТИ RAG ===
-check_rag_performance() {
-    log_info "=== ПРОВЕРКА ПРОИЗВОДИТЕЛЬНОСТИ RAG ==="
-
-    local start_time end_time duration
-    start_time=$(date +%s.%N)
-
-    # Тест RAG поиска
-    local rag_result
-    rag_result=$(curl -s -w "%{time_total}" "http://localhost:8080/searxng/search?q=test&format=json" 2>/dev/null | tail -1 || echo "ERROR")
-
-    end_time=$(date +%s.%N)
-    duration=$(echo "$end_time - $start_time" | bc -l 2>/dev/null || echo "0")
-
-    if [[ "$rag_result" == "ERROR" ]]; then
-        log_error "RAG поиск недоступен"
-        return 1
-    fi
-
-    # Проверка времени ответа (цель <2s)
-    if (( $(echo "$duration > 2.0" | bc -l) )); then
-        log_warning "RAG поиск медленный: ${duration}s (цель <2s)"
-        return 1
-    else
-        log_success "RAG поиск быстрый: ${duration}s"
-        return 0
-    fi
-}
-
-# === ПРОВЕРКА POSTGRESQL ===
-check_postgresql() {
-    log_info "=== ПРОВЕРКА POSTGRESQL pg17 ==="
-
-    cd "$PROJECT_DIR"
-
-    # Проверка версии PostgreSQL
-    local pg_version
-    pg_version=$(docker-compose exec -T db psql -U postgres -c "SELECT version();" 2>/dev/null | grep "PostgreSQL" || echo "ERROR")
-
-    if [[ "$pg_version" == "ERROR" ]]; then
-        log_error "PostgreSQL недоступен"
-        return 1
-    fi
-
-    if [[ "$pg_version" == *"PostgreSQL 17"* ]]; then
-        log_success "PostgreSQL 17 работает корректно"
-    else
-        log_warning "Неожиданная версия PostgreSQL: $pg_version"
-    fi
-
-    # Проверка pgvector
-    local pgvector_version
-    pgvector_version=$(docker-compose exec -T db psql -U postgres -c "SELECT extversion FROM pg_extension WHERE extname='vector';" 2>/dev/null | grep -E "0\.[0-9]" || echo "ERROR")
-
-    if [[ "$pgvector_version" == "ERROR" ]]; then
-        log_error "pgvector расширение недоступно"
-        return 1
-    else
-        log_success "pgvector версия: $pgvector_version"
-        return 0
-    fi
-}
-
-# === ПРОВЕРКА WEBSOCKET ПРОБЛЕМ ===
-check_websocket_issues() {
-    log_info "=== ПРОВЕРКА WEBSOCKET ПРОБЛЕМ ==="
-
-    cd "$PROJECT_DIR"
-
-    # Проверка 400 ошибок WebSocket в OpenWebUI
-    local websocket_errors
-    websocket_errors=$(docker-compose logs openwebui --since 30m 2>/dev/null | grep -c "socket.io.*400" || echo "0")
-
-    if [[ $websocket_errors -gt 10 ]]; then
-        log_warning "Много WebSocket 400 ошибок: $websocket_errors (последние 30 мин)"
-        log_info "Рекомендация: WebSocket отключен намеренно из-за проблем с Redis аутентификацией"
-        return 1
-    elif [[ $websocket_errors -gt 0 ]]; then
-        log_info "WebSocket 400 ошибки: $websocket_errors (ожидаемо, WebSocket отключен)"
-        return 0
-    else
-        log_success "Нет WebSocket ошибок"
-        return 0
-    fi
-}
-
-# === ГЛАВНАЯ ФУНКЦИЯ ===
 main() {
-    log_info "🔍 ERNI-KI Health Monitor - $(date)"
-    log_info "Отчет сохранен: $REPORT_FILE"
-    echo "" >> "$REPORT_FILE"
+  parse_args "$@"
 
-    local exit_code=0
+  log "=== ERNI-KI Health Monitor ==="
+  check_compose_services
 
-    # Выполнение всех проверок
-    check_services || exit_code=1
-    echo "" >> "$REPORT_FILE"
+  check_http_endpoint "OpenWebUI" "http://localhost:8080/health" ""
+  check_http_endpoint "LiteLLM" "http://localhost:4000/health/liveliness" "alive"
+  check_http_endpoint "Ollama API" "http://localhost:11434/api/tags" "models"
+  check_http_endpoint "Nginx proxy" "http://localhost/health" "ok"
 
-    check_critical_errors || exit_code=1
-    echo "" >> "$REPORT_FILE"
+  check_rag_latency
+  check_postgres
+  check_redis
+  check_disk_usage
+  check_logs
 
-    check_rag_performance || exit_code=1
-    echo "" >> "$REPORT_FILE"
+  write_report
 
-    check_postgresql || exit_code=1
-    echo "" >> "$REPORT_FILE"
+  if [[ $FAILED -gt 0 ]]; then
+    exit 1
+  fi
 
-    check_websocket_issues || exit_code=1
-    echo "" >> "$REPORT_FILE"
-
-    # Итоговый статус
-    if [[ $exit_code -eq 0 ]]; then
-        log_success "🎉 ВСЕ ПРОВЕРКИ ПРОЙДЕНЫ УСПЕШНО!"
-        log_success "Система ERNI-KI работает стабильно"
-    else
-        log_warning "⚠️ ОБНАРУЖЕНЫ ПРОБЛЕМЫ"
-        log_warning "Требуется внимание администратора"
-    fi
-
-    log_info "Следующая проверка рекомендуется через 1 час"
-
-    return $exit_code
+  exit 0
 }
 
-# === ЗАПУСК ===
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-fi
+main "$@"

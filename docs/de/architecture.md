@@ -3,7 +3,6 @@
 > **Dokumentversion:** 12.0 **Aktualisierungsdatum:** 2025-10-02 **Status:**
 > Production Ready (System läuft stabil mit 30/30 gesunden Containern. 18
 > Grafana-Dashboards (100% funktionsfähig), alle kritischen Probleme behoben.
-> LiteLLM v1.77.3-stable, Docling, MCP Server, Apache Tika, Watchtower
 > Auto-Updates. Monitoring aktualisiert: Prometheus v3.0.1, Loki v3.5.5, Fluent
 > Bit v3.2.0)
 
@@ -12,7 +11,6 @@
 ERNI-KI ist eine moderne Microservice-basierte AI-Plattform, die auf den
 Prinzipien der Containerisierung, Sicherheit und Skalierbarkeit aufbaut. Das
 System besteht aus **30 Microservices**: OpenWebUI v0.6.34, Ollama 0.12.3 (GPU),
-LiteLLM v1.77.3-stable (Context Engineering), SearXNG, Docling, Tika, EdgeTTS,
 MCP Server, Watchtower und vollständigem Observability-Stack (Prometheus v3.0.1,
 Grafana v11.6.6, Alertmanager v0.28.0, Loki v3.5.5, Fluent Bit v3.2.0, 8
 Exporter + RAG Exporter). Externer Zugriff über Cloudflare-Tunnel (5 Domains).
@@ -46,7 +44,6 @@ Exporter + RAG Exporter). Externer Zugriff über Cloudflare-Tunnel (5 Domains).
 
 - **Neue Komponenten integriert**:
   - **LiteLLM v1.77.2**: Context Engineering Gateway mit PostgreSQL Integration
-  - **Docling**: Document Processing mit mehrsprachiger OCR (EN, DE, FR, IT)
   - **MCP Server**: Model Context Protocol für erweiterte AI-Funktionen
   - **Apache Tika**: Metadaten-Extraktion für Dokumente
   - **Fluent Bit**: Zentralisierte Log-Sammlung
@@ -80,7 +77,6 @@ Exporter + RAG Exporter). Externer Zugriff über Cloudflare-Tunnel (5 Domains).
 - **Ollama 0.12.3**: Lokaler LLM-Server mit GPU-Beschleunigung (4GB VRAM Limit)
 - **LiteLLM v1.77.3-stable**: Context Engineering Gateway (12GB Memory Limit)
 - **MCP Server**: Model Context Protocol für erweiterte AI-Funktionen
-- **Docling**: Document Processing mit mehrsprachigem OCR (EN, DE, FR, IT)
 - **Apache Tika**: Text- und Metadaten-Extraktion aus Dokumenten
 - **EdgeTTS**: Sprachsynthese über OpenAI Edge TTS
 
@@ -160,7 +156,6 @@ graph TB
 
     %% Document Processing
     subgraph "📄 Document Processing"
-        DOCLING[Docling<br/>:5001 OCR CPU<br/>12GB Memory<br/>✅ Healthy]
         TIKA[Apache Tika<br/>:9998<br/>✅ Healthy]
         EDGETTS[EdgeTTS<br/>:5050<br/>✅ Healthy]
         SEARXNG[SearXNG<br/>:8080<br/>6+ Quellen<br/>✅ Healthy]
@@ -207,7 +202,6 @@ graph TB
 
     WEBUI --> OLLAMA
     WEBUI --> LITELLM
-    WEBUI --> DOCLING
     WEBUI --> TIKA
     WEBUI --> SEARXNG
     WEBUI --> POSTGRES
@@ -246,7 +240,6 @@ graph TB
     end
 
     subgraph "🔧 Processing Layer"
-        DOCLING[📄 Docling Parser]
         TIKA[📋 Apache Tika]
         EDGETTS[🎤 EdgeTTS Speech]
     end
@@ -288,7 +281,6 @@ graph TB
     OWUI --> OLLAMA
     OWUI --> SEARXNG
     OWUI --> MCP
-    OWUI --> DOCLING
     OWUI --> TIKA
     OWUI --> EDGETTS
 
@@ -389,8 +381,6 @@ graph TB
 
 ### 🔧 **Processing Layer (Verarbeitung)**
 
-#### Docling Document Parser
-
 - **Technologie**: Python + AI-Modelle
 - **Port**: 5001
 - **Funktionen**:
@@ -477,7 +467,6 @@ graph TB
 | redis      | -             | 6379, 8001    | Redis/HTTP | Cache & UI           |
 | searxng    | -             | 8080          | HTTP       | Such-API             |
 | mcposerver | -             | 8000          | HTTP       | MCP-Protokoll        |
-| docling    | -             | 5001          | HTTP       | Dokument-Parsing     |
 | tika       | -             | 9998          | HTTP       | Metadaten-Extraktion |
 | edgetts    | -             | 5050          | HTTP       | Sprachsynthese       |
 | backrest   | 9898          | 9898          | HTTP       | Backup-Management    |
@@ -507,7 +496,6 @@ graph TB
 
 ### Dokumentenverarbeitung
 
-1. **Open WebUI** → **Docling/Tika** (Dokument-Parsing)
 2. **Open WebUI** → **PostgreSQL/pgvector** (Vektor-Speicherung)
 3. **Open WebUI** → **Ollama** (Inhalts-Analyse)
 

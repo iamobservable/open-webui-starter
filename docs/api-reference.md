@@ -2,7 +2,6 @@
 
 > **Версия документа:** 4.0 **Дата обновления:** 2025-09-19 **API Версия:** v1
 > **Статус:** ✅ Все endpoints протестированы и работают (включая LiteLLM
-> Context Engineering, Docling OCR, Context7 интеграция)
 
 ## 📋 Обзор API
 
@@ -26,7 +25,6 @@ ERNI-KI предоставляет RESTful API для интеграции с в
 - ✅ **Health Check**: `/health` - проверка состояния системы
 - ✅ **Backrest API**: `/v1.Backrest/Backup`, `/v1.Backrest/GetOperations` -
   управление бэкапами
-- ✅ **Docling API**: `/api/docling` - обработка документов с OCR
 - ✅ **MCP API**: `/api/mcp/*` - Model Context Protocol endpoints
 
 ### Базовые URL
@@ -727,8 +725,6 @@ curl "http://localhost:8080/api/searxng/search?q=artificial+intelligence&format=
   }
 }
 ```
-
-### Docling OCR API
 
 #### POST /api/v1/convert
 

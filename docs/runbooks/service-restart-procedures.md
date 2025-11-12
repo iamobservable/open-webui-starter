@@ -18,7 +18,6 @@
 
 ### ⚠️ **Порядок перезапуска (критически важно):**
 
-1. **Auxiliary сервисы** (EdgeTTS, Tika, Docling)
 2. **Monitoring сервисы** (Exporters, Fluent-bit)
 3. **Infrastructure сервисы** (Redis, PostgreSQL)
 4. **AI сервисы** (Ollama, LiteLLM)
@@ -104,20 +103,13 @@ docker compose logs tika --tail=10
 curl -f http://localhost:9998/tika && echo "Tika восстановлен"
 ```
 
-#### **Docling (OCR)**
-
 ```bash
 # Проверка статуса
-docker compose ps docling
-curl -f http://localhost:5001/health || echo "Docling недоступен"
 
 # Перезапуск
-docker compose restart docling
 
 # Проверка после перезапуска
 sleep 20
-docker compose logs docling --tail=10
-curl -f http://localhost:5001/health && echo "Docling восстановлен"
 ```
 
 ### **2. MONITORING СЕРВИСЫ**
