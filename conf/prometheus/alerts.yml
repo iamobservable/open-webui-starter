@@ -66,23 +66,28 @@ groups:
 
       - alert: ContainerRestarting
         expr: |
-          sum by (name) (
-            changes(
-              container_start_time_seconds{
-                job="cadvisor",
-                container_label_com_docker_compose_project="erni-ki",
-                name!~"erni-ki-(cadvisor|node-exporter|alertmanager).*"
-              }[15m]
+          sum by (service) (
+            label_replace(
+              changes(
+                container_start_time_seconds{
+                  job="cadvisor",
+                  name=~"[0-9a-f]{10,}_erni-ki-(redis|prometheus|alertmanager|fluent-bit|openwebui|litellm|nginx|ollama|db|grafana|searxng|watchtower|webhook-receiver|mcposerver).*"
+                }[30m]
+              ),
+              "service",
+              "$1",
+              "name",
+              "^[0-9a-f]{10,}_(erni-ki-[a-z0-9-]+)"
             )
-          ) >= 2
-        for: 1m
+          ) >= 3
+        for: 5m
         labels:
           severity: warning
-          component: "{{ $labels.name }}"
+          component: "{{ $labels.service }}"
         annotations:
-          summary: "Контейнер {{ $labels.name }} перезапускается слишком часто"
-          description: "Контейнер {{ $labels.name }} перезапустился {{ printf \"%.0f\" $value }} раз(а) за последние 15 минут"
-          action: "Проверить docker logs {{ $labels.name }} и причины перезапусков"
+          summary: "Контейнер {{ $labels.service }} перезапускается слишком часто"
+          description: "У сервиса {{ $labels.service }} зафиксировано {{ printf \"%.0f\" $value }} перезапусков за последние 30 минут"
+          action: "Проверить docker logs {{ $labels.service }} и причины перезапусков"
 
       # === CPU ALERTS ===
       - alert: HighCPUUsage
@@ -227,3 +232,30 @@ groups:
           summary: "Docker storage pool почти заполнен"
           description: "Использовано {{ $value | humanizePercentage }} storage pool"
           action: "Выполнить docker system prune"
+
+      # === LITELLM PUBLICAI MONITORING ===
+      - alert: LiteLLMPublicAIHighErrorRate
+        expr: |
+          sum(rate(litellm_publicai_requests_total{status=~"4..|5.."}[5m]))
+          /
+          clamp_min(sum(rate(litellm_publicai_requests_total[5m])), 1)
+          > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          component: litellm
+        annotations:
+          summary: "PublicAI error rate > 10%"
+          description: "Доля 4xx/5xx ответов PublicAI превысила 10% за последние 5 минут"
+          action: "Проверить ключ PublicAI, ограничения тарифа и логи litellm"
+
+      - alert: LiteLLMPublicAIRepeated404
+        expr: rate(litellm_publicai_requests_total{status="404"}[5m]) > 0.05
+        for: 1m
+        labels:
+          severity: warning
+          component: litellm
+        annotations:
+          summary: "Модель PublicAI отсутствует"
+          description: "liteLLM получает непрерывные 404 ('Model not found') от PublicAI"
+          action: "Проверить, что модель publicai-apertus-70b активна и настроены алиасы"

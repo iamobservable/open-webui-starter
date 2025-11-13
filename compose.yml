@@ -170,6 +170,8 @@ services:
     # Порт для API (внутренний Docker network)
     ports:
       - "4000:4000" # LiteLLM Proxy API
+    expose:
+      - "9109" # Prometheus metrics for PublicAI provider
 
     # Restart policy для production
     restart: unless-stopped
@@ -195,6 +197,7 @@ services:
       - ./conf/litellm/config.yaml:/app/config.yaml:ro # Конфигурация моделей
       - ./data/litellm:/app/data # Логи и временные файлы
       - ./scripts/entrypoints/litellm.sh:/opt/erni/bin/litellm-entrypoint.sh:ro # Wrapper для секретов
+      - ./conf/litellm/custom_providers:/app/custom_providers:ro # Кастомные провайдеры LiteLLM
 
     # Command с базовыми настройками
     command: ["--config", "/app/config.yaml", "--port", "4000", "--host", "0.0.0.0"]
@@ -225,6 +228,7 @@ services:
       - litellm_salt_key
       - litellm_ui_password
       - openai_api_key
+      - publicai_api_key
 
   # JWT аутентификация сервис
   auth:
@@ -866,15 +870,11 @@ services:
       - REDIS_EXPORTER_INCL_SYSTEM_METRICS=true
       - REDIS_EXPORTER_LOG_FORMAT=txt
       - REDIS_EXPORTER_DEBUG=true
+      - REDIS_ADDR=redis://redis:6379
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_exporter_url
     ports:
       - "127.0.0.1:9121:9121"
     restart: unless-stopped
-    command:
-      - /bin/sh
-      - -c
-      - |
-        export REDIS_ADDR="$(cat /run/secrets/redis_exporter_url)"
-        exec /redis_exporter
     logging: *monitoring-logging
     # Health check отключен: минимальный образ не содержит wget/curl/nc
     # Сервис мониторится через Prometheus scrape успешность
@@ -1181,3 +1181,6 @@ secrets:
     file: ./secrets/litellm_ui_password.txt
   openai_api_key:
     file: ./secrets/openai_api_key.txt
+  # PublicAI API ключ для внешних моделей
+  publicai_api_key:
+    file: ./secrets/publicai_api_key.txt

@@ -15,7 +15,6 @@ Sprachinteraktion.
 
 ### 🚀 Erste Schritte
 
-- **[README](README.md)** - Projektübersicht und Schnellstart
 - **[Installationsanleitung](installation-guide.md)** - Detaillierte
   Installationsschritte
 - **[Benutzerhandbuch](user-guide.md)** - Anleitung für Endbenutzer

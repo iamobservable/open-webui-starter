@@ -370,6 +370,18 @@ scrape_configs:
   #   # - litellm_deployment_success_responses (Success Rate)
   #   # - litellm_deployment_failure_responses (Error Rate)
 
+  # Custom PublicAI provider metrics exported из LiteLLM
+  - job_name: "litellm-publicai"
+    static_configs:
+      - targets: ["litellm:9109"]
+    scrape_interval: 15s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+    # Метрики:
+    # - litellm_publicai_requests_total (Rate)
+    # - litellm_publicai_request_latency_seconds (Duration)
+    # - litellm_publicai_request_errors_total (Errors)
+
   # MCP Tools доступность (blackbox monitoring) - ОТКЛЮЧЕНО (endpoints возвращают 404)
   # - job_name: "mcp-tools-blackbox"
   #   metrics_path: /probe

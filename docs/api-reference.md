@@ -9,6 +9,21 @@ ERNI-KI предоставляет RESTful API для интеграции с в
 включает endpoints для работы с чатами, моделями, поиском, резервным
 копированием и управлением пользователями.
 
+### 🧠 RAG и Model Context Protocol
+
+- **LiteLLM Context Engineering** (`/lite/api/v1/context` и
+  `/lite/api/v1/think`) собирает контексты, inject’ит history и маршрутизирует
+  запросы на Ollama/Docling.
+- **MCP Server** (`/api/mcp/**`) обеспечивает context-aware инструменты (Time,
+  Filesystem, PostgreSQL, Memory) и используется `MCPO` CLI для ambient actions.
+- **RAG-эндпоинты** (`/api/search`, `/api/documents`,
+  `/api/v1/chats/{chat_id}/rag`) обмениваются с `Docling`/`SearXNG`, возвращают
+  `source_id`, `source_url`, `cursor`, `tokens_used`.
+- Все запросы требуют JWT (см. раздел `🔐 Аутентификация`), а ответы содержат
+  `model`, `estimated_tokens`, `sources[]`.
+- Для быстрой проверки доступны `curl -s https://localhost:8080/api/v1/chats` и
+  `curl -s https://localhost:8080/api/v1/rag/status`.
+
 ## 🚀 Обновления API (сентябрь 2025)
 
 ### ✅ Исправленные endpoints (11 сентября 2025)

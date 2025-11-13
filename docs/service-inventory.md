@@ -32,24 +32,24 @@
 
 ## Мониторинг и логирование
 
-| Сервис                    | Назначение                                          | Порты                             | Зависимости и конфигурация                                                               | Обновления и замечания                                                                                                       |
-| ------------------------- | --------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `prometheus`              | Сбор метрик.                                        | `127.0.0.1:9091->9090`.           | Конфиги в `./conf/prometheus`, данные `./data/prometheus`.                               | Доступен только локально; внешний доступ через Nginx/SSH-туннель.                                                            |
-| `grafana`                 | Дашборды и алерты.                                  | `127.0.0.1:3000->3000`.           | Данные `./data/grafana`, provisioning `./conf/grafana`, secret `grafana_admin_password`. | Порт доступен только локально; админ-пароль берётся из Docker secret, внешний доступ через Nginx/VPN.                        |
-| `loki`                    | Хранилище логов.                                    | `127.0.0.1:3100->3100`.           | Конфиг `./conf/loki/loki-config.yaml`, данные `./data/loki`.                             | Watchtower включён; порт теперь доступен только локально.                                                                    |
-| `alertmanager`            | Управление алертами Prometheus.                     | `127.0.0.1:9093/9094`.            | Конфиг `./conf/alertmanager`, данные `./data/alertmanager`.                              | Теперь только localhost; проксируйте через Nginx при необходимости.                                                          |
-| `node-exporter`           | Метрики узла.                                       | `127.0.0.1:9101->9100`.           | Монтирует `/proc`, `/sys`, `/rootfs`, `pid: host`.                                       | Слушает только localhost, утечки наружу исключены.                                                                           |
-| `postgres-exporter`       | Метрики PostgreSQL.                                 | `127.0.0.1:9188->9188`.           | DSN читается из Docker secret `postgres_exporter_dsn` (shell wrapper), зависит от `db`.  | Доступ локальный; подключение извне через туннель.                                                                           |
-| `postgres-exporter-proxy` | Socat-прокси IPv4→IPv6.                             | Делит сеть с `postgres-exporter`. | Без env/volumes, работает на `alpine/socat@sha256:86b69d2e...`.                          | Следим за ресурсами, автообновление разрешено.                                                                               |
-| `redis-exporter`          | Метрики Redis.                                      | `127.0.0.1:9121->9121`.           | URL читается из Docker secret `redis_exporter_url` (shell wrapper).                      | Теперь виден только с локального хоста.                                                                                      |
-| `nvidia-exporter`         | Метрики GPU.                                        | `127.0.0.1:9445->9445`.           | Требует GPU (`runtime: nvidia`).                                                         | Healthcheck отсутствует, но порт локальный.                                                                                  |
-| `blackbox-exporter`       | HTTP/TCP проверки доступности.                      | `127.0.0.1:9115->9115`.           | Конфиг `./conf/blackbox-exporter/blackbox.yml`.                                          | Используйте Nginx/SSH для удалённого доступа.                                                                                |
-| `nginx-exporter`          | Метрики Nginx.                                      | `127.0.0.1:9113->9113`.           | Команда `--nginx.scrape-uri=http://nginx:80/nginx_status`.                               | Порт доступен только локально.                                                                                               |
-| `ollama-exporter`         | Метрики Ollama.                                     | `127.0.0.1:9778->9778`.           | Dockerfile в `./monitoring/Dockerfile.ollama-exporter`.                                  | Нет healthcheck; порт не публикуется наружу.                                                                                 |
-| `cadvisor`                | Метрики контейнеров.                                | `127.0.0.1:8081->8080`.           | Монтирует корневые FS.                                                                   | Порт ограничен localhost; внешний доступ через прокси.                                                                       |
-| `fluent-bit`              | Централизованный сбор логов → Loki.                 | `127.0.0.1:2020/2021/24224`.      | Конфиги `./conf/fluent-bit`, volume `erni-ki-logs`.                                      | Доступ к HTTP/metrics/forward только через localhost.                                                                        |
-| `rag-exporter`            | SLA-мониторинг RAG.                                 | `127.0.0.1:9808->9808`.           | Переменные `RAG_TEST_URL`, зависит от `openwebui`.                                       | Endpoint виден только локально.                                                                                              |
-| `webhook-receiver`        | Приём уведомлений Alertmanager и кастомные скрипты. | `127.0.0.1:9095->9093`.           | Скрипты `./conf/webhook-receiver`, логи `./data/webhook-logs`.                           | Endpoint доступен через локальный прокси; лимиты `mem_limit=256M`, `mem_reservation=128M`, `cpus=0.25`, `oom_score_adj=250`. |
+| Сервис                    | Назначение                                          | Порты                             | Зависимости и конфигурация                                                                | Обновления и замечания                                                                                                       |
+| ------------------------- | --------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `prometheus`              | Сбор метрик.                                        | `127.0.0.1:9091->9090`.           | Конфиги в `./conf/prometheus`, данные `./data/prometheus`.                                | Доступен только локально; внешний доступ через Nginx/SSH-туннель.                                                            |
+| `grafana`                 | Дашборды и алерты.                                  | `127.0.0.1:3000->3000`.           | Данные `./data/grafana`, provisioning `./conf/grafana`, secret `grafana_admin_password`.  | Порт доступен только локально; админ-пароль берётся из Docker secret, внешний доступ через Nginx/VPN.                        |
+| `loki`                    | Хранилище логов.                                    | `127.0.0.1:3100->3100`.           | Конфиг `./conf/loki/loki-config.yaml`, данные `./data/loki`.                              | Watchtower включён; порт теперь доступен только локально.                                                                    |
+| `alertmanager`            | Управление алертами Prometheus.                     | `127.0.0.1:9093/9094`.            | Конфиг `./conf/alertmanager`, данные `./data/alertmanager`.                               | Теперь только localhost; проксируйте через Nginx при необходимости.                                                          |
+| `node-exporter`           | Метрики узла.                                       | `127.0.0.1:9101->9100`.           | Монтирует `/proc`, `/sys`, `/rootfs`, `pid: host`.                                        | Слушает только localhost, утечки наружу исключены.                                                                           |
+| `postgres-exporter`       | Метрики PostgreSQL.                                 | `127.0.0.1:9188->9188`.           | DSN читается из Docker secret `postgres_exporter_dsn` (shell wrapper), зависит от `db`.   | Доступ локальный; подключение извне через туннель.                                                                           |
+| `postgres-exporter-proxy` | Socat-прокси IPv4→IPv6.                             | Делит сеть с `postgres-exporter`. | Без env/volumes, работает на `alpine/socat@sha256:86b69d2e...`.                           | Следим за ресурсами, автообновление разрешено.                                                                               |
+| `redis-exporter`          | Метрики Redis.                                      | `127.0.0.1:9121->9121`.           | Авторизация через `REDIS_PASSWORD_FILE` (`redis_exporter_url` содержит JSON host→пароль). | Теперь виден только с локального хоста.                                                                                      |
+| `nvidia-exporter`         | Метрики GPU.                                        | `127.0.0.1:9445->9445`.           | Требует GPU (`runtime: nvidia`).                                                          | Healthcheck отсутствует, но порт локальный.                                                                                  |
+| `blackbox-exporter`       | HTTP/TCP проверки доступности.                      | `127.0.0.1:9115->9115`.           | Конфиг `./conf/blackbox-exporter/blackbox.yml`.                                           | Используйте Nginx/SSH для удалённого доступа.                                                                                |
+| `nginx-exporter`          | Метрики Nginx.                                      | `127.0.0.1:9113->9113`.           | Команда `--nginx.scrape-uri=http://nginx:80/nginx_status`.                                | Порт доступен только локально.                                                                                               |
+| `ollama-exporter`         | Метрики Ollama.                                     | `127.0.0.1:9778->9778`.           | Dockerfile в `./monitoring/Dockerfile.ollama-exporter`.                                   | Нет healthcheck; порт не публикуется наружу.                                                                                 |
+| `cadvisor`                | Метрики контейнеров.                                | `127.0.0.1:8081->8080`.           | Монтирует корневые FS.                                                                    | Порт ограничен localhost; внешний доступ через прокси.                                                                       |
+| `fluent-bit`              | Централизованный сбор логов → Loki.                 | `127.0.0.1:2020/2021/24224`.      | Конфиги `./conf/fluent-bit`, volume `erni-ki-logs`.                                       | Доступ к HTTP/metrics/forward только через localhost.                                                                        |
+| `rag-exporter`            | SLA-мониторинг RAG.                                 | `127.0.0.1:9808->9808`.           | Переменные `RAG_TEST_URL`, зависит от `openwebui`.                                        | Endpoint виден только локально.                                                                                              |
+| `webhook-receiver`        | Приём уведомлений Alertmanager и кастомные скрипты. | `127.0.0.1:9095->9093`.           | Скрипты `./conf/webhook-receiver`, логи `./data/webhook-logs`.                            | Endpoint доступен через локальный прокси; лимиты `mem_limit=256M`, `mem_reservation=128M`, `cpus=0.25`, `oom_score_adj=250`. |
 
 > **Примечание:** Docling восстановлен в основном `compose.yml`; shared volume
 > `./data/docling/shared` используется совместно с OpenWebUI.
@@ -131,3 +131,41 @@
 - Kibana/Elasticsearch исключены; для просмотра логов используйте Grafana →
   Explore (Loki), а для обслуживания хранилища —
   `scripts/maintenance/docling-shared-cleanup.sh` + Fluent Bit ↔ Loki пайплайн.
+
+## Наблюдаемость и безопасность
+
+- **LLM & Model Context**: LiteLLM v1.77.3-stable, MCP Server 8000 и RAG API
+  (`/api/mcp/*`, `/api/search`) используют PostgreSQL + Redis для context
+  storage; `docs/api-reference.md` и `docs/operations/handbook.md` содержат
+  маршруты, SLA и список инструментов.
+- **Docling/EdgeTTS**: работают через internal ports, используют CPU,
+  обеспечивают многоязычный RAG pipeline и служат источником для
+  `docs/monitoring-guide.md`.
+
+- Журналы высылаются во Fluent Bit (24224 forward, 2020 HTTP) и передаются в
+  Loki, а критические сервисы (OpenWebUI, Ollama, PostgreSQL, Nginx) также пишут
+  в `json-file` с tag `critical.*` по настройке `compose.yml`.
+- Прометей 3.0.1 опрашивает 32 target’а и содержит 27 активных правил в
+  `conf/prometheus/alerts.yml` (Critical, Performance, Database, GPU, Nginx).
+  Alertmanager v0.28.0 отправляет оповещения по предопределённому каналу
+  (Slack/Teams через Watchtower metrics API).
+- Grafana v11.6.6 содержит 18 дашбордов, включая GPU/LLM, PostgreSQL, Redis,
+  Docker-хост. Каждое обновление дашборда фиксируется в
+  `docs/grafana-dashboards-guide.md`.
+- Безопасность базируется на Nginx WAF, Cloudflare Zero Trust (5 туннелей), JWT
+  Go-сервисе и секретах в `secrets/`. Подробнее см.
+  `security/security-policy.md`.
+
+## Источники и ссылки
+
+- Docker Compose: `compose.yml` (logging tiers, healthchecks, restart policies,
+  GPU labels).
+- Конфигурации: `env/*.env`, `conf/nginx`, `conf/redis/redis.conf`,
+  `conf/litellm`, `conf/prometheus`.
+- Мониторинг и runbooks: `docs/monitoring-guide.md`,
+  `docs/automated-maintenance-guide.md`, `docs/runbooks/`.
+- Архитектура: `docs/architecture.md` (GPU allocation, Cloudflare tunnels, 30
+  сервисов).
+- Безопасность: `security/security-policy.md`,
+  `docs/reports/documentation-audit-2025-10-24.md` (указаны риски и необходимые
+  актуализации).

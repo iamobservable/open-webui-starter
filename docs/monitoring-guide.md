@@ -15,6 +15,19 @@ ERNI-KI monitoring system includes:
 - **Loki v3.5.5 + Fluent Bit v3.2.0** - centralized logging
 - **AlertManager v0.28.0** - notifications and alerting
 
+## 📋 Аудит и соответствие
+
+- Счетчик несоответствий из `docs/reports/documentation-audit-2025-10-24.md`
+  больше не включает мониторинг: 27 активных правил и Prometheus v3.0.1
+  задокументированы и отражены в разделе «Prometheus Alerts Configuration».
+- Все 18 новых системных предупреждений сгруппированы по критичности (Critical,
+  Performance, Database, GPU, Nginx) и сопровождаются списоком индикаций, что
+  позволяет быстро проверять состояние после аудита.
+- Раздел «Monitoring Guide» теперь связывается с `prometheus-alerts-guide.md`
+  (специальный справочник) и c Runbook’ами `operations/handbook.md`,
+  `automated-maintenance-guide.md`, чтобы DevOps видел консистентность и
+  регламенты ответов.
+
 ## 📈 Exporters Configuration
 
 ### 🖥️ Node Exporter (Port 9101)
@@ -101,23 +114,26 @@ redis-exporter:
   image: oliver006/redis_exporter:v1.62.0
   ports:
     - '127.0.0.1:9121:9121'
-  command:
-    - /bin/sh
-    - -c
-    - |
-      export REDIS_ADDR="$(cat /run/secrets/redis_exporter_url)"
-      exec /redis_exporter
+  environment:
+    - REDIS_EXPORTER_INCL_SYSTEM_METRICS=true
+    - REDIS_EXPORTER_LOG_FORMAT=txt
+    - REDIS_EXPORTER_DEBUG=true
+    - REDIS_ADDR=redis://redis:6379
+    - REDIS_PASSWORD_FILE=/run/secrets/redis_exporter_url
   secrets:
     - redis_exporter_url
   healthcheck: {} # monitoring via Prometheus scrape
 ```
 
-**Status:** 🔧 Running | HTTP 200 | TCP healthcheck (fixed from wget) **Issue:**
-Redis authentication (not critical for HTTP metrics endpoint)
+**Status:** ✅ Running | HTTP 200 | Auth works via `REDIS_PASSWORD_FILE`
+
+> `redis_exporter_url` secret теперь содержит JSON вида
+> `{"redis://redis:6379":"<password>"}` — это позволяет `redis_exporter`
+> автоматически подобрать пароль по адресу.
 
 **Key Metrics:**
 
-- `redis_up` - Redis availability (shows 0 due to auth issue)
+- `redis_up` - Redis availability (now reflects actual status)
 - `redis_memory_used_bytes` - memory usage
 - `redis_connected_clients` - connected clients
 - `redis_keyspace_hits_total` / `redis_keyspace_misses_total` - hit ratio

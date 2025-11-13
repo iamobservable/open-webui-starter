@@ -1,20 +1,27 @@
 # Cron задачи для автоматических отчетов о системе логгирования ERNI-KI
 # Фаза 3: Мониторинг и алертинг
+PROJECT_ROOT=/home/konstantin/Documents/augment-projects/erni-ki
 
 # Ежедневный отчет в 06:00
-0 6 * * * cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/logging-reports.sh daily >> /var/log/erni-ki-reports.log 2>&1
+0 6 * * * cd $PROJECT_ROOT && ./scripts/logging-reports.sh daily >> /var/log/erni-ki-reports.log 2>&1
 
 # Еженедельный отчет в воскресенье в 07:00
-0 7 * * 0 cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/logging-reports.sh weekly >> /var/log/erni-ki-reports.log 2>&1
+0 7 * * 0 cd $PROJECT_ROOT && ./scripts/logging-reports.sh weekly >> /var/log/erni-ki-reports.log 2>&1
 
 # Очистка старых отчетов (старше 90 дней) каждый месяц
-0 8 1 * * find /home/konstantin/Documents/augment-projects/erni-ki/.config-backup/reports -name "*.txt" -mtime +90 -delete >> /var/log/erni-ki-reports.log 2>&1
+0 8 1 * * find $PROJECT_ROOT/.config-backup/reports -name "*.txt" -mtime +90 -delete >> /var/log/erni-ki-reports.log 2>&1
+
+# Health Monitor: ежечасный запуск .config-backup/logging-monitor.sh
+0 * * * * cd $PROJECT_ROOT && /usr/bin/env bash ./.config-backup/logging-monitor.sh >> /var/log/erni-ki-health-monitor.log 2>&1
+
+# Снимок активных Alertmanager событий каждые 30 минут
+*/30 * * * * cd $PROJECT_ROOT && /usr/bin/env bash ./.config-backup/logging-alerts.sh >> /var/log/erni-ki-alertmanager-active.log 2>&1
 
 # Watchdog фрагментации Redis: каждые 5 минут
-*/5 * * * * cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/maintenance/redis-fragmentation-watchdog.sh >> /var/log/erni-ki-redis-watchdog.log 2>&1
+*/5 * * * * cd $PROJECT_ROOT && ./scripts/maintenance/redis-fragmentation-watchdog.sh >> /var/log/erni-ki-redis-watchdog.log 2>&1
 
 # Ротация Alertmanager webhook-логов (архив + очистка)
-30 2 * * * cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/maintenance/webhook-logs-rotate.sh >> /var/log/erni-ki-webhook-rotation.log 2>&1
+30 2 * * * cd $PROJECT_ROOT && ./scripts/maintenance/webhook-logs-rotate.sh >> /var/log/erni-ki-webhook-rotation.log 2>&1
 
 # Мониторинг очереди Alertmanager (логирование значения)
-*/5 * * * * cd /home/konstantin/Documents/augment-projects/erni-ki && ./scripts/monitoring/alertmanager-queue-watch.sh >> /var/log/erni-ki-alertmanager-queue.log 2>&1
+*/5 * * * * cd $PROJECT_ROOT && ./scripts/monitoring/alertmanager-queue-watch.sh >> /var/log/erni-ki-alertmanager-queue.log 2>&1

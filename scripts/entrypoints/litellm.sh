@@ -77,6 +77,15 @@ configure_openai_credentials() {
   fi
 }
 
+configure_publicai_credentials() {
+  local publicai_key
+  if publicai_key="$(read_secret "publicai_api_key")"; then
+    export PUBLICAI_API_KEY="${PUBLICAI_API_KEY:-$publicai_key}"
+  else
+    log "warning: publicai_api_key secret missing; PUBLICAI_API_KEY is unchanged"
+  fi
+}
+
 configure_redis_url() {
   local host="${LITELLM_REDIS_HOST:-redis}"
   local port="${LITELLM_REDIS_PORT:-6379}"
@@ -93,12 +102,23 @@ configure_redis_url() {
   export REDIS_URL="${REDIS_URL:-redis://${host}:${port}/${db}}"
 }
 
+prepare_publicai_metrics_dir() {
+  local metrics_dir="${LITELLM_PUBLICAI_METRICS_DIR:-/tmp/litellm-publicai-prom}"
+  rm -rf "${metrics_dir}"
+  mkdir -p "${metrics_dir}"
+  chmod 700 "${metrics_dir}"
+  export LITELLM_PUBLICAI_METRICS_DIR="${metrics_dir}"
+  export PROMETHEUS_MULTIPROC_DIR="${metrics_dir}"
+}
+
 main() {
+  prepare_publicai_metrics_dir
   configure_database_url
   configure_master_and_salt_keys
   configure_ui_credentials
   configure_api_key
   configure_openai_credentials
+  configure_publicai_credentials
   configure_redis_url
 
   if [[ $# -gt 0 ]]; then

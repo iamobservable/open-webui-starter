@@ -58,7 +58,11 @@ docker exec erni-ki-nginx-1 nginx -s reload
 docker cp conf/nginx/includes/ erni-ki-nginx-1:/etc/nginx/
 ```
 
-## 📊 System-Monitoring
+#monitoring
+
+## Monitoring
+
+### 📊 System-Monitoring
 
 ### Service-Status prüfen
 
@@ -186,6 +190,8 @@ ORDER BY idx_tup_read DESC;
 # Datenbank-Backup
 docker compose exec db pg_dump -U openwebui openwebui > backup_$(date +%Y%m%d).sql
 ```
+
+## Backup
 
 ## 💾 Backup-Management
 

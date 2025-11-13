@@ -383,7 +383,7 @@ done
 - [GitHub Environments Documentation](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment)
 - [GitHub Secrets Documentation](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
 - [GitHub CLI Documentation](https://cli.github.com/manual/)
-- [ERNI-KI Security Policy](../security/security-policy.md)
+- [ERNI-KI Security Policy](security/security-policy.md)
 
 ---
 

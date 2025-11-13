@@ -70,12 +70,12 @@ redis-exporter:
   image: oliver006/redis_exporter:v1.62.0
   ports:
     - '127.0.0.1:9121:9121'
-  command:
-    - /bin/sh
-    - -c
-    - |
-      export REDIS_ADDR="$(cat /run/secrets/redis_exporter_url)"
-      exec /redis_exporter
+  environment:
+    - REDIS_EXPORTER_INCL_SYSTEM_METRICS=true
+    - REDIS_EXPORTER_LOG_FORMAT=txt
+    - REDIS_EXPORTER_DEBUG=true
+    - REDIS_ADDR=redis://redis:6379
+    - REDIS_PASSWORD_FILE=/run/secrets/redis_exporter_url
   secrets:
     - redis_exporter_url
   healthcheck: {} # Überwachung via Prometheus Scrape
@@ -83,7 +83,12 @@ redis-exporter:
 
 **Wichtige Metriken:**
 
-- `redis_up` - Redis-Verfügbarkeit (zeigt 0 wegen Auth-Problem)
+- `redis_up` - Redis-Verfügbarkeit (korrekt dank Passwortdatei)
+
+> Das Secret `redis_exporter_url` enthält jetzt eine JSON-Map
+> `{"redis://redis:6379":"<passwort>"}`, sodass der Exporter das Kennwort anhand
+> der Adresse auswählt.
+
 - `redis_memory_used_bytes` - Speichernutzung
 - `redis_connected_clients` - verbundene Clients
 - `redis_keyspace_hits_total` / `redis_keyspace_misses_total` - Hit-Ratio

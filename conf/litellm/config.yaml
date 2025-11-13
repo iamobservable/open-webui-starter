@@ -36,18 +36,7 @@ router_settings:
   allowed_fails: 3 # Количество неудачных попыток перед fallback
   # === CONTEXT WINDOW FALLBACK CONFIGURATION ===
   # Автоматическое переключение на модели с большим контекстом при превышении лимита
-  context_window_fallbacks:
-    # Для моделей с контекстом 8K переключаться на доступные модели
-    - model_group: "swiss-ai/apertus-70b-instruct"
-      fallback_models:
-        - "ollama/gpt-oss:20b"  # 8K context, но более эффективная модель
-        - "ollama/gemma3:12b"  # 8K context
-        - "ollama/llama3.2:latest"  # 128K context (3.2B параметров)
-    - model_group: "apertus-70b-instruct"
-      fallback_models:
-        - "ollama/gpt-oss:20b"
-        - "ollama/gemma3:12b"
-        - "ollama/llama3.2:latest"
+  context_window_fallbacks: []
   # Redis настройки для router временно отключены из-за несовместимости
   # redis_host: "redis"
   # redis_port: 6379
@@ -120,6 +109,9 @@ litellm_settings:
   num_retries: 3
   request_timeout: 300
   max_parallel_requests: 20  # Ограничение одновременных запросов для снижения пиков памяти
+  custom_provider_map:
+    - provider: "publicai"
+      custom_handler: custom_providers.publicai.publicai_handler
   # === CONTEXT WINDOW MANAGEMENT ===
   # Автоматическое усечение контекста при превышении лимита модели
   enable_context_window_fallback: true
@@ -137,7 +129,7 @@ litellm_settings:
   store_prompts_in_logs: true
   # Alias map для внешних моделей, чтобы сохранять дружественные имена в OpenWebUI.
   model_alias_map:
-    apertus-70b-instruct: "swiss-ai/apertus-70b-instruct"
+    apertus-70b-instruct: "publicai/apertus-70b-instruct"
   # === PROMETHEUS METRICS ===
   # Отключено: требует Enterprise лицензию
   # callbacks: ["prometheus"]  # Включить экспорт Prometheus метрик

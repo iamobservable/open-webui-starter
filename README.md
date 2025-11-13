@@ -88,6 +88,14 @@ docker compose ps
   - 🔍 6+ источников поиска (Brave, Startpage, Bing, Wikipedia)
   - ✅ JSON API работает
   - ✅ Статус: Healthy
+- **Model Context & API** — документированное взаимодействие между LiteLLM
+  (Context Engineering), MCP и REST API:
+  - `docs/api-reference.md` описывает JWT, chatchats, модели и
+    streaming-эндпоинты
+  - `docs/operations/handbook.md` и `docs/service-inventory.md` содержат SLA по
+    RAG и Model Context Protocol
+  - Поддерживается `LiteLLM v1.77.3-stable` и `MCP Server` для расширенного
+    routing контекста
 
 ### 🔒 **Enterprise Security**
 

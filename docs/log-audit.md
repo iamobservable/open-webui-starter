@@ -221,3 +221,152 @@
 Отчёт нужно синхронизировать с runbook-ами (`docs/monitoring-guide.md`,
 `docs/prometheus-alerts-guide.md`) и создать отдельный таск на чистку
 `data/webhook-logs`.
+
+## Повторный аудит (13 ноября 2025)
+
+### Актуальные метрики (09:05 UTC+1)
+
+- `alertmanager_cluster_messages_queued` — **301** (порог 100, см.
+  `.config-backup/logs/alertmanager-queue.log`).
+- Активные алерты (`/api/v2/alerts`): 13 шт. (6× `HTTPErrors`, 3×
+  `HighHTTPResponseTime`, 1× `AlertmanagerClusterHealthLow`,
+  `FluentBitHighMemoryUsage`, `CriticalServiceLogsMissing`,
+  `ContainerWarningMemoryUsage`).
+- Redis `mem_fragmentation_ratio` — **5.89**
+  (`docker compose exec redis redis-cli info memory`).
+- `data/webhook-logs/`: 48 МБ, 5 303 «сырых» JSON и 67 архивов в
+  `archive/alert-*.tar.gz` (ротация работает).
+
+### Новые наблюдения
+
+1. **Cron health-monitor** (`.config-backup/monitoring/cron.log`) каждый час
+   падает на `docker compose ps`, т.к. таски запускаются не из корня
+   репозитория. `conf/cron/logging-reports.cron` теперь задаёт
+   `PROJECT_ROOT=/home/konstantin/Documents/augment-projects/erni-ki` и вызывает
+   `.config-backup/logging-monitor.sh`/`logging-alerts.sh` через `bash`, что
+   исключает ошибку `./.config-backup/...: not found`.
+2. **Очередь Alertmanager**: мониторинг
+   (`scripts/monitoring/alertmanager-queue-watch.sh`) не запускался с 12 ноября;
+   вручную зафиксировано **304** сообщений (WARN). Cron-задача добавлена в
+   `conf/cron/logging-reports.cron`, лог теперь пополняется при каждом запуске.
+3. **Правило `ContainerRestarting`** порождало ​>12 k спур. алертов. В
+   `conf/prometheus/alerts.yml` оно переписано: учитываются только сервисные
+   контейнеры `erni-ki-*`, метрики агрегируются по сервису (strip хеша),
+   требуется ≥3 рестарта за 30 мин + `for: 5m`. Это гасит шум и оставляет только
+   реально «флапающие» сервисы.
+4. **redis-exporter**: ранее
+   `command: /bin/sh -c "export REDIS_ADDR=$(cat secret)"` не выполнялся
+   (entrypoint=/redis_exporter), экспортер смотрел на `redis://localhost:6379` и
+   падал с `dial redis: unknown network redis`. В `compose.yml` теперь прописан
+   стабильный `REDIS_ADDR=redis://redis:6379`, а секрет `redis_exporter_url`
+   хранит JSON-карту `{"redis://redis:6379":""}`. При включении `requirepass`
+   достаточно вписать пароль в карту — экспортер подхватит его через
+   `REDIS_PASSWORD_FILE`.
+5. **Fluent Bit parser conflict**: предупреждение
+   `parser named 'postgres' already exists` убрано переименованием парсера в
+   `postgres_structured` (`conf/fluent-bit/parsers.conf`). После
+   `docker compose restart fluent-bit` ошибки исчезли.
+6. **Redis fragmentation watchdog**: скрипт писал логи в `scripts/logs/...`,
+   т.к. `PROJECT_DIR` указывал на `scripts/`. Исправлено на корень репо
+   (`logs/redis-fragmentation-watchdog.log`), запуск (включая cron) теперь
+   работает из правильной директории.
+7. **Ротация webhook-логов**: `scripts/maintenance/webhook-logs-rotate.sh`
+   очистил каталог до 5.3 k файлов, остальное сложено в 67 архивов —
+   подтверждение, что cron `30 2 * * *` выполняет задачи.
+
+### Выполненные remediation (13 ноября)
+
+- `compose.yml`: для `redis-exporter` заданы постоянные
+  `REDIS_ADDR`/`REDIS_PASSWORD_FILE`, контейнер пересобран.
+- `conf/cron/logging-reports.cron`: введена переменная `PROJECT_ROOT`, добавлены
+  cron’ы для `.config-backup/logging-monitor.sh`,
+  `.config-backup/logging-alerts.sh` и очереди Alertmanager.
+- `conf/fluent-bit/parsers.conf`: парсер `postgres` → `postgres_structured`.
+- `scripts/maintenance/redis-fragmentation-watchdog.sh`: `PROJECT_DIR` → корень
+  репозитория; логи складываются в `logs/`.
+- `scripts/monitoring/alertmanager-queue-watch.sh` выполнен вручную,
+  зафиксировав WARN 304 — база для алерта.
+- `conf/prometheus/alerts.yml`: правило `ContainerRestarting` ужесточено для
+  борьбы со спур. предупреждениями.
+- `docs/monitoring-guide.md`, `docs/de/monitoring-guide.md`,
+  `docs/service-inventory.md`, `secrets/README.md` и
+  `secrets/redis_exporter_url.txt.example` обновлены под новую схему
+  redis-exporter.
+
+### Следующие шаги
+
+- Отследить снижение шума от `ContainerRestarting`. При необходимости добавить
+  `apply_modulo` по namespace либо вынести правило в отдельный silence.
+- Использовать обновлённые cron-файлы на хосте (`crontab -e` / `/etc/cron.d`) и
+  проверить, что `.config-backup/logging-monitor.sh` больше не падает на
+  `docker compose ps`.
+- Мониторить `alertmanager_cluster_messages_queued`: при сохранении уровня
+  > 100 продолжить чистку шумных алертов (`HTTPErrors`,
+  > `CriticalServiceLogsMissing`).
+- Решить, когда включать `requirepass` для Redis и, соответственно, вписать
+  пароль в `redis_exporter_url` (JSON). Пока значение пустое, redis-exporter
+  работает без `AUTH`.
+- Использовать `logs/redis-fragmentation-watchdog.log` для автоматического
+  завершения remediation (порог 4.0), т.к. текущее значение 5.89 всё ещё выше
+  нормы.
+
+## Дополнение (13 ноября 2025): публичный провайдер PublicAI в LiteLLM
+
+- Добавлен собственный обработчик `conf/litellm/custom_providers/publicai.py`
+  (поддерживает sync/async/streaming, формирует ответы через
+  `convert_to_model_response_object`, маскирует user-agent). Провайдер
+  подключается через `litellm_settings.custom_provider_map` в
+  `conf/litellm/config.yaml`.
+- `compose.yml` теперь монтирует каталог `conf/litellm/custom_providers` в
+  контейнер LiteLLM, а `env/litellm.env` экспортирует
+  `PYTHONPATH=/app/custom_providers:/app`, чтобы не пересобирать образ.
+- Модель `publicai-apertus-70b` обновлена через
+  `PATCH /model/704e30c3-e423-4fc2-9c42-087c070e7a41/update` (api_base
+  `https://api.publicai.co/v1`, `custom_llm_provider=publicai`, `mode=chat`,
+  свежий PublicAI API‑ключ).
+- Ключ LiteLLM `sk-7b788…38bb` снова видит список моделей: `models` для его
+  token-хеша `52b606a12ab1…` в `LiteLLM_VerificationToken` выставлены в
+  `{'all-proxy-models'}`.
+- `conf/litellm/config.yaml` теперь мапит `apertus-70b-instruct` →
+  `publicai/apertus-70b-instruct`, чтобы запросы от OpenWebUI проходили через
+  PublicAI (custom_llm_provider `publicai`) вместо неправильно распознаваемого
+  `swiss-ai/apertus-70b-instruct`.
+- Были прогнаны smoke‑тесты (13.11.2025 08:31 UTC):
+
+  ```bash
+  # /v1/models вновь возвращает 3 модели
+  curl -s -H 'Authorization: Bearer sk-7b7…38bb' http://localhost:4000/models
+
+  # обычный completion
+  curl -s -H 'Authorization: Bearer sk-7b7…38bb' \
+    -H 'Content-Type: application/json' \
+    -d '{"model":"publicai-apertus-70b","messages":[{"role":"user","content":"привет"}]}' \
+    http://localhost:4000/v1/chat/completions
+
+  # streaming completion
+  curl -sN -H 'Authorization: Bearer sk-7b7…38bb' \
+    -H 'Content-Type: application/json' \
+    -d '{"model":"publicai-apertus-70b","stream":true,"messages":[{"role":"user","content":"привет"}]}' \
+    http://localhost:4000/v1/chat/completions | head
+
+  # OpenWebUI → LiteLLM
+  docker compose exec openwebui curl -s -H 'Authorization: Bearer sk-7b7…38bb' \
+    -H 'Content-Type: application/json' \
+    -d '{"model":"publicai-apertus-70b","messages":[{"role":"user","content":"ping"}]}' \
+    http://litellm:4000/v1/chat/completions
+  ```
+
+  Все запросы завершились HTTP 200 и валидным JSON/SSE ответом («Привет! Как я
+  могу помочь вам сегодня?»), что подтверждает восстановление цепочки LiteLLM ↔
+  PublicAI ↔ OpenWebUI.
+
+- Ключ хранится в Docker Secret `publicai_api_key` (см.
+  `secrets/publicai_api_key.txt`
+  - README). Entry-point `scripts/entrypoints/litellm.sh` экспортирует его в
+    `PUBLICAI_API_KEY`, а сама модель в БД ссылается на
+    `os.environ/PUBLICAI_API_KEY`, поэтому ротация теперь сводится к обновлению
+    файла секрета без SQL.
+- Кастомный провайдер публикует Prometheus-метрики (`litellm_publicai_*`) на
+  `litellm:9109`, Prometheus job `litellm-publicai` собирает их, а новые алерты
+  `LiteLLMPublicAIHighErrorRate` и `LiteLLMPublicAIRepeated404` предупреждают о
+  всплесках 4xx/5xx до того, как проблемы доберутся до UI.

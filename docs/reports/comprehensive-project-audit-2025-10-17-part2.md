@@ -579,7 +579,7 @@ curl -k https://localhost/health
 
 **Документация:**
 
-- Основная: [README.md](../../README.md)
+- Основная: [Документация Home](../overview.md)
 - Архитектура: [docs/architecture.md](../architecture.md)
 - Руководство администратора: [docs/admin-guide.md](../admin-guide.md)
 

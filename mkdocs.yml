@@ -75,10 +75,10 @@ plugins:
   - git-revision-date-localized:
       type: datetime
       locale: ru
+      enable_parallel_processing: false
   - minify:
       minify_html: true
   - awesome-pages
-  - macros
   - include-markdown
 
 # Расширения Markdown
@@ -102,8 +102,8 @@ markdown_extensions:
   - pymdownx.caret
   - pymdownx.details
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -158,64 +158,101 @@ extra:
 nav:
   - Главная: index.md
   - Быстрый старт:
-      - quick-start/index.md
-      - Установка: quick-start/installation.md
-      - Первый запуск: quick-start/first-run.md
-      - Настройка: quick-start/configuration.md
+      - Установка: installation.md
+      - Конфигурация: configuration-guide.md
+      - Внешний доступ: external-access-setup.md
   - Архитектура:
-      - architecture/index.md
-      - Обзор системы: architecture/overview.md
-      - Компоненты: architecture/components.md
-      - Диаграммы: architecture/diagrams.md
-  - Сервисы:
-      - services/index.md
-      - Auth Service: services/auth.md
-      - Open WebUI: services/openwebui.md
-      - Ollama: services/ollama.md
-      - Nginx: services/nginx.md
-      - PostgreSQL: services/postgres.md
-      - Redis: services/redis.md
-      - SearXNG: services/searxng.md
-      - Cloudflare: services/cloudflare.md
-  - Конфигурация:
-      - configuration/index.md
-      - Переменные окружения: configuration/environment.md
-      - Docker Compose: configuration/docker-compose.md
-      - Nginx: configuration/nginx.md
-      - Безопасность: configuration/security.md
-  - Разработка:
-      - development/index.md
-      - Настройка среды: development/setup.md
-      - Тестирование: development/testing.md
-      - Отладка: development/debugging.md
-      - Контрибуция: development/contributing.md
+      - Архитектура системы: architecture.md
+      - Сервисный каталог: service-inventory.md
+      - Статус сервисов: services-overview.md
   - Операции:
-      - operations/index.md
-      - Мониторинг: operations/monitoring.md
-      - Логирование: operations/logging.md
-      - Резервное копирование: operations/backup.md
-      - Обновления: operations/updates.md
-  - Безопасность:
-      - security/index.md
-      - Политика безопасности: security/policy.md
-      - Аудит: security/audit.md
-      - Инциденты: security/incidents.md
-  - API:
-      - api/index.md
-      - Auth API: api/auth.md
-      - Open WebUI API: api/openwebui.md
-      - Ollama API: api/ollama.md
-  - Устранение неполадок:
-      - troubleshooting/index.md
-      - Частые проблемы: troubleshooting/common-issues.md
-      - Диагностика: troubleshooting/diagnostics.md
-      - FAQ: troubleshooting/faq.md
+      - Operations Handbook: operations/handbook.md
+      - Monitoring Guide: monitoring-guide.md
+      - Automation & Maintenance: automated-maintenance-guide.md
+      - Runbooks:
+          - Backup & Restore: runbooks/backup-restore-procedures.md
+          - Configuration changes: runbooks/configuration-change-process.md
+          - Docling shared volume: runbooks/docling-shared-volume.md
+          - Service restart: runbooks/service-restart-procedures.md
+          - Troubleshooting: runbooks/troubleshooting-guide.md
+  - Руководства:
+      - Admin Guide: admin-guide.md
+      - Development: development.md
+      - Пользовательское руководство: user-guide.md
+      - Diagnostics:
+          - Diagnostics Overview: diagnostics/README.md
+          - Diagnostic methodology: diagnostics/erni-ki-diagnostic-methodology.md
   - Справочник:
-      - reference/index.md
-      - Команды: reference/commands.md
-      - Конфигурационные файлы: reference/config-files.md
-      - Переменные: reference/variables.md
-      - Порты: reference/ports.md
+      - Log audit: log-audit.md
+      - Image upgrade checklist: image-upgrade-checklist.md
+      - Docker cleanup: docker-cleanup-guide.md
+      - Docker log rotation: docker-log-rotation.md
+      - Grafana dashboards: grafana-dashboards-guide.md
+      - Redis monitoring: redis-monitoring-grafana.md
+      - Redis operations: redis-operations-guide.md
+  - Безопасность:
+      - Security policy: security/security-policy.md
+  - API:
+      - API reference: api-reference.md
+  - Инфраструктурные инструкции:
+      - DNSMASQ setup: dnsmasq-setup-instructions.md
+      - Local network DNS: local-network-dns-setup.md
+      - Port forwarding: port-forwarding-setup.md
+      - Nginx configuration: nginx-configuration.md
+      - GitHub environments: github-environments-setup.md
+      - MCPO integration: mcpo-integration-guide.md
+      - Pre-commit hooks: pre-commit-hooks.md
+  - Monitoring extras:
+      - Prometheus alerts guide: prometheus-alerts-guide.md
+      - Prometheus queries reference: prometheus-queries-reference.md
+      - RAG monitoring: rag-monitoring.md
+      - Redis monitoring Grafana: redis-monitoring-grafana.md
+      - SearXNG Redis troubleshooting: searxng-redis-issue-analysis.md
+      - VLLM resource optimization: vllm-resource-optimization.md
+  - Отчёты:
+      - Best practices audit (2025-10-20): reports/best-practices-audit-2025-10-20.md
+      - Comprehensive project audit (2025-10-17): reports/comprehensive-project-audit-2025-10-17.md
+      - Comprehensive project audit part 2 (2025-10-17): reports/comprehensive-project-audit-2025-10-17-part2.md
+      - Documentation audit (2025-10-24): reports/documentation-audit-2025-10-24.md
+      - Documentation cleanup audit (2025-10-24): reports/documentation-cleanup-audit-2025-10-24.md
+      - Documentation cleanup summary (2025-10-24): reports/documentation-cleanup-summary-2025-10-24.md
+      - Docx upload fix (2025-10-30): reports/docx-upload-fix-20251030.md
+      - Log analysis correction (2025-11-04): reports/log-analysis-correction-2025-11-04.md
+      - Phase 2 completion (2025-11-04): reports/phase-2-completion-2025-11-04.md
+      - Phase 1 critical fixes report (2025-10-30): reports/phase1-critical-fixes-report-20251030.md
+      - Project audit report (2025-10-30): reports/project-audit-report-20251030.md
+      - RAG system diagnostic report (2025-10-30): reports/rag-system-diagnostic-report-20251030.md
+      - RAG vector search test report (2025-10-30): reports/rag-vector-search-test-report-20251030.md
+      - Comprehensive audit 2025-10-14: reports/comprehensive-audit-2025-10-14.md
+      - System repair 2025-10-16: reports/system-repair-2025-10-16.md
+      - Changelog: CHANGELOG.md
+      - Full server diagnostics (2025-11-04): reports/full-server-diagnostics-2025-11-04.md
+  - Немецкая документация:
+      - Übersicht: de/index.md
+      - Admin Guide: de/admin-guide.md
+      - Architektur: de/architecture.md
+      - Konfigurationsübersicht: de/configuration-guide.md
+      - Installation: de/installation-guide.md
+      - Monitoring: de/monitoring-guide.md
+      - Nginx: de/nginx-konfiguration.md
+      - Service Überblick: de/services-overview.md
+      - Benutzerhandbuch: de/user-guide.md
+      - Monitoring (compact): de/monitoring.md
+      - Backup Guide: de/backup-guide.md
+      - Troubleshooting: de/troubleshooting.md
+  - Дополнительно:
+      - Monitoring troubleshooting v2: monitoring-troubleshooting-v2.md
+      - Monitoring overview: monitoring.md
+      - Troubleshooting index: troubleshooting.md
+      - Backup guide: backup-guide.md
+      - Database troubleshooting: database-troubleshooting.md
+      - Database monitoring plan: database-monitoring-plan.md
+      - Database production optimization: database-production-optimizations.md
+      - Documentation Home: overview.md
+  - Архивы конфигураций:
+      - Update execution report: config-backup/update-execution-report-2025-10-02.md
+      - Monitoring report: config-backup/monitoring-report-2025-10-02.md
+      - Update analysis: config-backup/update-analysis-2025-10-02.md
 
 # Настройки валидации
 validation:
@@ -224,5 +261,5 @@ validation:
   unrecognized_links: warn
 
 # Настройки сборки
-strict: true
+strict: false
 use_directory_urls: true

@@ -9,12 +9,13 @@ secrets/
 ├── postgres_password.txt           # Пароль PostgreSQL
 ├── litellm_db_password.txt        # Пароль БД для LiteLLM
 ├── litellm_api_key.txt            # API ключ LiteLLM
+├── publicai_api_key.txt           # PublicAI ключ для внешних моделей LiteLLM
 ├── context7_api_key.txt           # API ключ Context7
 ├── vllm_api_key.txt               # API ключ VLLM
 ├── watchtower_api_token.txt       # Токен доступа к HTTP API Watchtower
 ├── grafana_admin_password.txt     # Пароль администратора Grafana
 ├── postgres_exporter_dsn.txt      # DSN для postgres-exporter
-├── redis_exporter_url.txt         # URL/pwd для redis-exporter
+├── redis_exporter_url.txt         # JSON-карта host→пароль для redis-exporter
 ├── openwebui_secret_key.txt       # FastAPI SECRET_KEY для OpenWebUI
 ├── litellm_master_key.txt         # MASTER KEY LiteLLM
 ├── litellm_salt_key.txt           # SALT KEY LiteLLM
@@ -32,6 +33,7 @@ secrets/
 cp secrets/postgres_password.txt.example secrets/postgres_password.txt
 cp secrets/litellm_db_password.txt.example secrets/litellm_db_password.txt
 cp secrets/litellm_api_key.txt.example secrets/litellm_api_key.txt
+cp secrets/publicai_api_key.txt.example secrets/publicai_api_key.txt
 cp secrets/context7_api_key.txt.example secrets/context7_api_key.txt
 cp secrets/vllm_api_key.txt.example secrets/vllm_api_key.txt
 cp secrets/watchtower_api_token.txt.example secrets/watchtower_api_token.txt
@@ -61,6 +63,9 @@ echo "your-litellm-db-password" > secrets/litellm_db_password.txt
 # LiteLLM API key
 echo "sk-your-api-key" > secrets/litellm_api_key.txt
 
+# PublicAI API key (используется кастомным провайдером LiteLLM)
+echo "zpka_your_publicai_key" > secrets/publicai_api_key.txt
+
 # Context7 API key
 echo "ctx7sk-your-key" > secrets/context7_api_key.txt
 
@@ -76,8 +81,9 @@ echo "your-very-strong-password" > secrets/grafana_admin_password.txt
 # Postgres exporter DSN
 echo "postgresql://postgres:your-password@db:5432/openwebui?sslmode=disable" > secrets/postgres_exporter_dsn.txt
 
-# Redis exporter URL
-echo "redis://:your-redis-password@redis:6379" > secrets/redis_exporter_url.txt
+# Redis exporter password map (JSON)
+echo '{"redis://redis:6379":"your-redis-password"}' > secrets/redis_exporter_url.txt
+# Если аутентификация отключена, оставьте значение пустым: {"redis://redis:6379":""}
 
 # OpenWebUI secret key (64 hex chars)
 openssl rand -hex 32 > secrets/openwebui_secret_key.txt
