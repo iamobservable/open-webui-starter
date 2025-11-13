@@ -57,7 +57,7 @@ jobs:
         if: matrix.language == 'go'
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24.0"
+          go-version: "1.24.10"
 
       # Настройка окружения для JavaScript/TypeScript
       - name: 🟢 Setup Node.js
@@ -95,7 +95,7 @@ jobs:
       - name: 🐹 Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24.0"
+          go-version: "1.24.10"
 
       - name: 🔍 Run Go vulnerability check
         working-directory: ./auth

@@ -88,9 +88,10 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔍 Validate required secrets
+      - name: 🔍 Validate required config
+        # pragma: allowlist secret
         run: |
-          echo "Validating secrets for environment: ${{ needs.determine-environment.outputs.environment }}"
+          echo "Validating environment config for: ${{ needs.determine-environment.outputs.environment }}"
 
           # Определяем суффикс для окружения
           ENV_SUFFIX=""
@@ -100,8 +101,8 @@ jobs:
             "production") ENV_SUFFIX="_PROD" ;;
           esac
 
-          # Проверяем наличие обязательных секретов
-          required_secrets=(
+          # Проверяем наличие обязательных ключей среды
+          required_env_keys=(
             "TUNNEL_TOKEN${ENV_SUFFIX}"
             "OPENAI_API_KEY${ENV_SUFFIX}"
             "CONTEXT7_API_KEY${ENV_SUFFIX}"
@@ -109,29 +110,29 @@ jobs:
             "GOOGLE_API_KEY${ENV_SUFFIX}"
           )
 
-          missing_secrets=()
-          for secret in "${required_secrets[@]}"; do
-            # Проверяем, что секрет не пустой и не содержит placeholder
-            secret_value="${!keyword:-}"
-            if [ -z "$secret_value" ] || [[ "$secret_value" == *"REPLACE_WITH_REAL"* ]]; then
-              missing_secrets+=("$secret")
+          missing_env_keys=()
+          for env_key in "${required_env_keys[@]}"; do
+            # Проверяем, что ключ не пустой и не содержит placeholder
+            env_value="${!env_key:-}"
+            if [ -z "$env_value" ] || [[ "$env_value" == *"REPLACE_WITH_REAL"* ]]; then
+              missing_env_keys+=("$env_key")
             else
-              echo "✅ $keyword: configured"
+              echo "✅ $env_key: configured"
             fi
           done
 
-          if [ ${#missing_secrets[@]} -gt 0 ]; then
-            echo "❌ Missing or invalid secrets:"
-            printf '%s\n' "${missing_secrets[@]}"
+          if [ ${#missing_env_keys[@]} -gt 0 ]; then
+            echo "❌ Missing or invalid environment keys:"
+            printf '%s\n' "${missing_env_keys[@]}"
 
             if [ "${{ needs.determine-environment.outputs.environment }}" = "production" ]; then
-              echo "🔴 CRITICAL: Production secrets must be real values!"
+              echo "🔴 CRITICAL: Production environment keys must be real values!"
               exit 1
             else
-              echo "⚠️ WARNING: Some secrets are missing, but continuing for non-production environment"
+              echo "⚠️ WARNING: Some environment keys are missing, but continuing for non-production environment"
             fi
           else
-            echo "✅ All required secrets are configured"
+            echo "✅ All required environment keys are configured"
           fi
         env:
           TUNNEL_TOKEN_DEV: ${{ secrets.TUNNEL_TOKEN_DEV }}

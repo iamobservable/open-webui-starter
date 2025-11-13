@@ -2,6 +2,8 @@ module github.com/DIZ-admin/erni-ki/auth
 
 go 1.24.0
 
+toolchain go1.24.10
+
 require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/stretchr/testify v1.11.1
