@@ -314,7 +314,7 @@ graph TB
 
 #### Auth Service (JWT)
 
-- **Technologie**: Go 1.23+
+- **Technologie**: Go 1.24+
 - **Port**: 9090
 - **Funktionen**:
   - JWT-Token-Generierung und -Validierung
