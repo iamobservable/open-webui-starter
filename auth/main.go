@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 func main() {
@@ -16,14 +18,14 @@ func main() {
 		return
 	}
 
-	r := gin.Default()
+	r := gin.New()
 
-	// Добавляем middleware для логирования и восстановления после паники
-	r.Use(gin.Logger())
+	r.Use(requestIDMiddleware())
+	r.Use(gin.LoggerWithFormatter(requestLogger))
 	r.Use(gin.Recovery())
 
 	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
+		respondJSON(c, http.StatusOK, gin.H{
 			"message": "auth-service is running",
 			"version": "1.0.0",
 			"status":  "healthy",
@@ -32,7 +34,7 @@ func main() {
 
 	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
+		respondJSON(c, http.StatusOK, gin.H{
 			"status":  "healthy",
 			"service": "auth-service",
 		})
@@ -41,7 +43,7 @@ func main() {
 	r.GET("/validate", func(c *gin.Context) {
 		cookieToken, err := c.Cookie("token")
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
+			respondJSON(c, http.StatusUnauthorized, gin.H{
 				"message": "unauthorized",
 				"error":   "token missing",
 			})
@@ -50,7 +52,7 @@ func main() {
 
 		valid, err := verifyToken(cookieToken)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
+			respondJSON(c, http.StatusUnauthorized, gin.H{
 				"message": "unauthorized",
 				"error":   err,
 			})
@@ -58,7 +60,7 @@ func main() {
 		}
 
 		if valid {
-			c.JSON(http.StatusOK, gin.H{
+			respondJSON(c, http.StatusOK, gin.H{
 				"message": "authorized",
 			})
 		}
@@ -68,6 +70,42 @@ func main() {
 	if err != nil {
 		return
 	}
+}
+
+func requestIDMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reqID := c.GetHeader("X-Request-ID")
+		if reqID == "" {
+			reqID = uuid.NewString()
+		}
+		c.Set("request_id", reqID)
+		c.Writer.Header().Set("X-Request-ID", reqID)
+		c.Next()
+	}
+}
+
+func requestLogger(param gin.LogFormatterParams) string {
+	reqID, _ := param.Keys["request_id"].(string)
+	return fmt.Sprintf(
+		"{\"time\":\"%s\",\"status\":%d,\"latency_ms\":%.2f,\"client\":\"%s\",\"method\":\"%s\",\"path\":\"%s\",\"request_id\":\"%s\"}\n",
+		param.TimeStamp.Format(time.RFC3339Nano),
+		param.StatusCode,
+		float64(param.Latency)/float64(time.Millisecond),
+		param.ClientIP,
+		param.Method,
+		param.Path,
+		reqID,
+	)
+}
+
+func respondJSON(c *gin.Context, status int, payload gin.H) {
+	if payload == nil {
+		payload = gin.H{}
+	}
+	if _, exists := payload["request_id"]; !exists {
+		payload["request_id"] = c.GetString("request_id")
+	}
+	c.JSON(status, payload)
 }
 
 // healthCheck выполняет проверку здоровья сервиса для Docker

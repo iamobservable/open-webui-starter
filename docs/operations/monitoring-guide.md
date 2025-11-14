@@ -34,6 +34,16 @@ ERNI-KI monitoring system includes:
   `alertmanager_cluster_messages_queued` с порогами, пишет историю в
   `logs/alertmanager-queue.log` и при превышении лимита переводит cron в
   error-состояние с ссылкой на runbook (никаких auto-restart).
+- **Fluent Bit Phase 0-2** — tail-инпут читает `json-file` логи как резерв,
+  `filters-optimized.conf` теперь подключен и маскирует токены, а каждый
+  контейнер в `compose.yml` использует Fluentd драйвер (`fluent-bit:24224`).
+- **Loki object storage + retention** — сервис пишет чанки в MinIO/S3
+  (`loki-object-store`), включает boltdb-shipper и 30-дневный retention, а
+  конфигурация использует `-config.expand-env` для безопасного подтягивания
+  cred’ов из `env/loki.env`.
+- **Correlation IDs everywhere** — nginx возвращает `X-Request-ID`, auth сервис
+  продвигает его до ответов и пишет структурированные логи, а OpenWebUI получает
+  `REQUEST_ID_HEADER=X-Request-ID` для будущего использования внутри приложения.
 - **Мультиканальное уведомление** — Alertmanager отправляет критические алерты
   одновременно в Slack (`/run/secrets/slack_alert_webhook`) и PagerDuty
   (`/run/secrets/pagerduty_routing_key`), маршруты содержат ссылки на runbook и
