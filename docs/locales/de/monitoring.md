@@ -20,3 +20,19 @@ Weitere Details:
   on-call, cron-Aufgaben.
 - **Archive Diagnostics:** `docs/archive/diagnostics/README.md` – detaillierte
   Server/RAG-Berichte.
+
+### Beispielchecks
+
+```bash
+# Prometheus Health
+curl -s http://localhost:9091/-/ready
+
+# LiteLLM Gateway
+curl -s http://localhost:4000/health/liveliness
+
+# Alertmanager Queue Watchdog Log
+tail -n 50 logs/alertmanager-queue.log
+```
+
+> Diese Abläufe spiegeln den englischen Monitoring Guide wider – Ergebnisse
+> bitte im jeweiligen Archon-Task dokumentieren.

@@ -201,6 +201,7 @@ nav:
           - Diagnostic methodology: operations/diagnostics/erni-ki-diagnostic-methodology.md
       - Troubleshooting guide: operations/troubleshooting.md
   - Data & Storage:
+      - Обзор: data/README.md
       - Database monitoring plan: data/database-monitoring-plan.md
       - Database optimizations: data/database-production-optimizations.md
       - Database troubleshooting: data/database-troubleshooting.md

@@ -1,7 +1,7 @@
 # 📚 ERNI-KI Dokumentation (Deutsch)
 
-> **Willkommen zur deutschen Dokumentation von ERNI-KI** **Version:** 2.0
-> **Aktualisiert:** 2025-07-04
+> **Willkommen zur deutschen Dokumentation von ERNI-KI**  
+> **Version:** 12.1 (Wave 3) · **Aktualisiert:** 2025-11-14
 
 ## 🎯 Über ERNI-KI
 
@@ -177,6 +177,16 @@ docker compose exec ollama ollama pull llama3.2:3b
 - **Community**: Austausch mit anderen Benutzern
 
 ### 🔍 **Diagnose-Tools**
+
+## 📌 Pflegehinweis
+
+- Status-Blöcke (oben auf dieser Seite und in anderen deutschen Dateien) werden
+  aus `docs/reference/status.yml` generiert. Bei Änderungen bitte
+  `scripts/docs/update_status_snippet.py` ausführen, damit deutsche und
+  russische Fassungen synchron bleiben.
+- Für detaillierte Runbooks und Monitoring-Schritte nutzen Sie die englischen
+  Originale unter `docs/operations/runbooks/` und
+  `docs/operations/monitoring-guide.md`.
 
 ```bash
 # System-Gesundheit prüfen

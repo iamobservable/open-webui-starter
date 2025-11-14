@@ -153,6 +153,8 @@ repos:
             node_modules/.*|
             dist/.*|
             build/.*
+            |docs/reference/status-snippet\.md
+            |docs/locales/de/status-snippet\.md
           )$
         additional_dependencies:
           - prettier@3.6.2
@@ -263,3 +265,26 @@ repos:
         language: system
         files: \.go$
         args: [-w]
+
+      # Проверка актуальности статусного сниппета
+      - id: status-snippet-check
+        name: "Docs: validate status snippets"
+        entry: python3 scripts/docs/update_status_snippet.py --check
+        language: system
+        pass_filenames: false
+        files: |
+          (?x)^(
+            docs/reference/status\.yml|
+            docs/reference/status-snippet\.md|
+            docs/locales/de/status-snippet\.md|
+            docs/locales/de/index\.md|
+            docs/(index|overview)\.md|
+            README\.md
+          )$
+
+      # Проверка README архивов/данных
+      - id: archive-readme-check
+        name: "Docs: archive/data README coverage"
+        entry: python3 scripts/docs/check_archive_readmes.py
+        language: system
+        pass_filenames: false

@@ -14,3 +14,20 @@ Zusammenfassung der wichtigsten Runbooks (englische Originale in
 > Für laufende Vorfälle siehe auch `docs/archive/incidents/README.md` und die
 > entsprechenden Berichte (Phase 1/2 usw.). Archon Tasks sollten alle Schritte
 > spiegeln.
+
+### Beispielbefehle
+
+```bash
+# Container neu starten (aus dem Service-Runbook)
+docker compose restart openwebui
+
+# Log-Analyse (Troubleshooting)
+docker compose logs -f litellm | tail -n 100
+
+# Backrest Restore ausführen (Backup-Runbook)
+curl -X POST http://localhost:9898/v1.Backrest/Restore -d '{"name":"daily"}'
+```
+
+> Nach jedem Schritt bitte die Checks aus dem englischen Runbook ausführen
+> (Health-Endpoint, `docker compose ps`) und Ergebnisse im Archon-Ticket
+> dokumentieren.
