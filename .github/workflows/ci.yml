@@ -175,12 +175,12 @@ jobs:
 
       - name: 🔒 Run Gosec Security Scanner
         run: |
-          go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
           gosec -fmt sarif -out gosec-results.sarif ./auth/...
         continue-on-error: true
 
       - name: 📤 Upload Gosec results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always() && hashFiles('gosec-results.sarif') != ''
         with:
           sarif_file: gosec-results.sarif
@@ -196,7 +196,7 @@ jobs:
         continue-on-error: true
 
       - name: 📤 Upload Trivy results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: "trivy-results.sarif"
@@ -257,7 +257,7 @@ jobs:
           output: "docker-trivy-results.sarif"
 
       - name: 📤 Upload Docker Trivy results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always() && hashFiles('docker-trivy-results.sarif') != ''
         with:
           sarif_file: "docker-trivy-results.sarif"
