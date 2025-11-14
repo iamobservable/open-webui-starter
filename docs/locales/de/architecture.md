@@ -554,7 +554,7 @@ graph TB
 - Prometheus: 9091 (`/-/ready`, `/api/v1/targets`)
 - Grafana: 3000 (`/api/health`)
 - Alertmanager: 9093–9094 (`/-/healthy`, `/api/v2/status`)
-- Loki: 3100 (`/ready`)
+- Loki: 3100 (`/ready`, Header `X-Scope-OrgID: erni-ki`)
 - Fluent Bit Service: 2020 (`/api/v1/metrics`, Prometheus:
   `/api/v1/metrics/prometheus`)
 - RAG Exporter: 9808 (`/metrics`)

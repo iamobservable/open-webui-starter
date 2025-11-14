@@ -480,7 +480,8 @@ curl -s "http://localhost:8080/api/searxng/search?q=test&format=json" | jq '.res
 - ✅ **EdgeTTS:** <http://localhost:5050/>
 - ✅ **MCP Server:** <http://localhost:8000/>
 - ✅ **LiteLLM:** <http://localhost:4000/>
-- ✅ **Loki:** <http://localhost:3100/>
+- ✅ **Loki:** <http://localhost:3100/> (используйте заголовок
+  `X-Scope-OrgID: erni-ki`)
 - ✅ **Fluent Bit:** <http://localhost:2020/>
   - Prometheus: <http://localhost:2020/api/v1/metrics/prometheus>
 - ✅ **Webhook Receiver:** <http://localhost:9095/>

@@ -41,6 +41,10 @@ ERNI-KI monitoring system includes:
   фиксируются в `docs/archive/config-backup/*.md` (monitoring report, update
   analysis, execution report); обновляйте их при изменениях скриптов или
   расписаний.
+- **Loki + Fluent Bit hardening** — Loki теперь требует заголовок
+  `X-Scope-OrgID: erni-ki`, Grafana datasource и скрипты обновлены. Fluent Bit
+  использует SSD-том `erni-ki-fluent-db` с дисковым буфером 15 ГБ для
+  переживания длительных сбоев сети.
 
 ## 📋 Аудит и соответствие
 

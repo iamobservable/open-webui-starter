@@ -219,7 +219,8 @@ timeout 5 sh -c '</dev/tcp/localhost/9113' && echo "Nginx Exporter доступ�
 ### 📝 Centralized Logging (Fluent-bit + Loki)
 
 - **Fluent-bit метрики:** http://localhost:2020/api/v1/metrics/prometheus
-- **Loki:** http://localhost:3100
+- **Loki:** http://localhost:3100 (добавляйте заголовок
+  `X-Scope-OrgID: erni-ki`)
 - **Функции:**
   - Сбор логов всех 29 сервисов ERNI-KI
   - Парсинг и фильтрация логов
@@ -234,10 +235,10 @@ timeout 5 sh -c '</dev/tcp/localhost/9113' && echo "Nginx Exporter доступ�
 curl http://localhost:2020/api/v1/metrics/prometheus | grep fluentbit
 
 # Проверка Loki
-curl http://localhost:3100/ready
+curl -H "X-Scope-OrgID: erni-ki" http://localhost:3100/ready
 
 # Просмотр метрик Loki
-curl http://localhost:3100/metrics
+curl -H "X-Scope-OrgID: erni-ki" http://localhost:3100/metrics
 curl http://localhost:9200/_cat/indices
 ```
 

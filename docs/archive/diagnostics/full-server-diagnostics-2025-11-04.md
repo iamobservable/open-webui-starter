@@ -373,7 +373,7 @@ docker logs erni-ki-fluent-bit --since 1h 2>&1 | grep -iE "error" | head -20
 cat conf/fluent-bit/fluent-bit.conf
 
 # Проверить подключение к Loki
-curl -s http://localhost:3100/ready
+curl -s -H "X-Scope-OrgID: erni-ki" http://localhost:3100/ready
 
 # Перезапустить Fluent Bit
 docker restart erni-ki-fluent-bit

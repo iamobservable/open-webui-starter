@@ -1,5 +1,5 @@
 # Loki конфигурация для ERNI-KI (упрощенная для v3.4.1)
-auth_enabled: false
+auth_enabled: true
 
 server:
   http_listen_port: 3100

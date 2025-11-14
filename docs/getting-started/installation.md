@@ -233,7 +233,8 @@ curl -s http://localhost:9095/health
 - **Grafana:** <http://localhost:3000> (admin/admin)
 - **Prometheus:** <http://localhost:9091>
 - **AlertManager:** <http://localhost:9093>
-- **Loki:** <http://localhost:3100>
+- **Loki:** <http://localhost:3100> (используйте заголовок
+  `X-Scope-OrgID: erni-ki`)
 
 **8 Exporters (стандартизированы и оптимизированы):**
 

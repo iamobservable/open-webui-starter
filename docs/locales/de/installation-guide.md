@@ -308,7 +308,8 @@ curl -s "http://localhost:8080/api/searxng/search?q=test&format=json" | head -5
 - Prometheus: http://localhost:9091
 - Grafana: http://localhost:3000
 - Alertmanager: http://localhost:9093
-- Loki: http://localhost:3100
+- Loki: http://localhost:3100 (verwenden Sie den Header
+  `X-Scope-OrgID: erni-ki`)
 - Fluent Bit (Prometheus): http://localhost:2020/api/v1/metrics/prometheus
 - RAG Exporter: http://localhost:9808/metrics
 

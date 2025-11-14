@@ -40,14 +40,14 @@
 
 ## 📊 Monitoring Layer (Metrics & Observability)
 
-| Service                 | Status              | Ports                    | Konfiguration                | Umgebungsvariablen     | Konfigurationstyp | Anmerkungen                                          |
-| ----------------------- | ------------------- | ------------------------ | ---------------------------- | ---------------------- | ----------------- | ---------------------------------------------------- |
-| **📈 prometheus**       | ✅ Up 1h (healthy)  | `9091:9090`              | `conf/prometheus/*.yml`      | `env/prometheus.env`   | YAML              | Metriken-Sammlung • 35 Targets                       |
-| **📊 grafana**          | ✅ Up 37m (healthy) | `3000:3000`              | `conf/grafana/**/*.yml`      | `env/grafana.env`      | YAML/JSON         | Dashboards • Visualisierung                          |
-| **🚨 alertmanager**     | ✅ Up 24h (healthy) | `9093-9094:9093-9094`    | ❌ Keine                     | `env/alertmanager.env` | ENV               | Alert-Management                                     |
-| **📡 loki**             | ✅ Up 22h (healthy) | `3100:3100`              | `conf/loki/loki-config.yaml` | ❌ Keine               | YAML              | Zentralisierte Protokollierung                       |
-| **📝 fluent-bit**       | ✅ Up 4m            | `2020:2020, 24224:24224` | `conf/fluent-bit/*.conf`     | `env/fluent-bit.env`   | CONF              | **⚠️ Healthcheck deaktiviert** • Log-Sammlung → Loki |
-| **📞 webhook-receiver** | ✅ Up 24h (healthy) | `9095:9093`              | ❌ Keine                     | ❌ Keine               | ENV               | Alert-Verarbeitung                                   |
+| Service                 | Status              | Ports                                | Konfiguration                | Umgebungsvariablen     | Konfigurationstyp | Anmerkungen                                          |
+| ----------------------- | ------------------- | ------------------------------------ | ---------------------------- | ---------------------- | ----------------- | ---------------------------------------------------- |
+| **📈 prometheus**       | ✅ Up 1h (healthy)  | `9091:9090`                          | `conf/prometheus/*.yml`      | `env/prometheus.env`   | YAML              | Metriken-Sammlung • 35 Targets                       |
+| **📊 grafana**          | ✅ Up 37m (healthy) | `3000:3000`                          | `conf/grafana/**/*.yml`      | `env/grafana.env`      | YAML/JSON         | Dashboards • Visualisierung                          |
+| **🚨 alertmanager**     | ✅ Up 24h (healthy) | `9093-9094:9093-9094`                | ❌ Keine                     | `env/alertmanager.env` | ENV               | Alert-Management                                     |
+| **📡 loki**             | ✅ Up 22h (healthy) | `3100:3100` (Header `X-Scope-OrgID`) | `conf/loki/loki-config.yaml` | ❌ Keine               | YAML              | Zentralisierte Protokollierung                       |
+| **📝 fluent-bit**       | ✅ Up 4m            | `2020:2020, 24224:24224`             | `conf/fluent-bit/*.conf`     | `env/fluent-bit.env`   | CONF              | **⚠️ Healthcheck deaktiviert** • Log-Sammlung → Loki |
+| **📞 webhook-receiver** | ✅ Up 24h (healthy) | `9095:9093`                          | ❌ Keine                     | ❌ Keine               | ENV               | Alert-Verarbeitung                                   |
 
 ## 🔍 Exporters (Metrics Collection)
 
@@ -144,7 +144,7 @@ curl -s http://localhost:2020/api/v1/metrics
 curl -s http://localhost:9091/api/v1/targets
 
 # Loki Health
-curl -s http://localhost:3100/ready
+curl -s -H "X-Scope-OrgID: erni-ki" http://localhost:3100/ready
 ```
 
 ## 📚 Verwandte Dokumentation

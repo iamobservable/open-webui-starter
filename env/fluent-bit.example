@@ -22,8 +22,8 @@ FLB_HTTP_PORT=2020
 LOKI_HOST=loki
 # Порт Loki HTTP API
 LOKI_PORT=3100
-# Tenant ID (оставьте пустым, если multi-tenant не используется)
-LOKI_TENANT_ID=
+# Tenant ID (обязателен при включенном auth_enabled в Loki)
+LOKI_TENANT_ID=erni-ki
 # Набор лейблов, которые Fluent Bit будет добавлять к каждой записи
 LOKI_LABELS=job=fluent-bit,cluster=erni-ki,environment=production
 

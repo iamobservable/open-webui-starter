@@ -14,6 +14,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 FLUENT_BIT_URL="http://localhost:2020"
 LOKI_URL="http://localhost:3100"
+LOKI_TENANT_HEADER="X-Scope-OrgID: erni-ki"
 PROMETHEUS_URL="http://localhost:9090"
 
 # Пороги для circuit breaker
@@ -66,7 +67,7 @@ check_loki_health() {
 
     # Проверяем готовность Loki
     local start_time=$(date +%s)
-    if ! curl -s --max-time "$RESPONSE_TIME_THRESHOLD" "$LOKI_URL/ready" > /dev/null; then
+    if ! curl -s --max-time "$RESPONSE_TIME_THRESHOLD" -H "$LOKI_TENANT_HEADER" "$LOKI_URL/ready" > /dev/null; then
         echo "❌ Loki недоступен или медленно отвечает"
         trigger_circuit_breaker "loki_unavailable" "timeout"
         return 1

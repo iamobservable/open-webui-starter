@@ -12,6 +12,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
+LOKI_TENANT_HEADER="X-Scope-OrgID: erni-ki"
 
 # Функции логирования
 log() {
@@ -155,9 +156,9 @@ check_grafana_dashboards() {
     log "Проверка источников данных..."
     echo "  ├─ Prometheus: http://localhost:9091"
     echo "  ├─ Alertmanager: http://localhost:9093"
-    echo "  └─ Loki: http://localhost:3100"
+    echo "  └─ Loki: http://localhost:3100 (требуется заголовок X-Scope-OrgID)"
 
-    if curl -s http://localhost:3100/ready >/dev/null; then
+    if curl -s -H "$LOKI_TENANT_HEADER" http://localhost:3100/ready >/dev/null; then
         success "Loki доступен (endpoint /ready)"
     else
         warning "Loki (/ready) недоступен"
@@ -270,7 +271,7 @@ main() {
         echo "• Grafana: http://localhost:3000"
         echo "• Prometheus: http://localhost:9091"
         echo "• Alertmanager: http://localhost:9093"
-        echo "• Loki: http://localhost:3100"
+        echo "• Loki: http://localhost:3100 (используйте заголовок X-Scope-OrgID: erni-ki)"
         echo ""
         echo "🔧 Exporters:"
         echo "• Node Exporter: http://localhost:9101/metrics"

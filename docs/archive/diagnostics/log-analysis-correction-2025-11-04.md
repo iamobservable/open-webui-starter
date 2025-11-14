@@ -193,7 +193,7 @@ docker logs erni-ki-fluent-bit --since 24h 2>&1 | grep -v "^{" | grep -iE "error
 **Проверка Loki:**
 
 ```bash
-curl -s http://localhost:3100/ready
+curl -s -H "X-Scope-OrgID: erni-ki" http://localhost:3100/ready
 # Результат: ready
 ```
 

@@ -263,7 +263,11 @@ services:
         condition: service_healthy
     env_file: env/tika.env
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:9998/tika || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "timeout 5 bash -c '</dev/tcp/localhost/9998' || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -567,7 +571,10 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     healthcheck:
       test:
-        ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+        [
+          "CMD-SHELL",
+          "wget --header='X-Scope-OrgID: erni-ki' --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -778,8 +785,8 @@ services:
       ollama:
         condition: service_healthy
     build:
-      context: ./monitoring
-      dockerfile: Dockerfile.ollama-exporter
+      context: ./ops/ollama-exporter
+      dockerfile: Dockerfile
     container_name: erni-ki-ollama-exporter
     environment:
       - OLLAMA_URL=http://ollama:11434

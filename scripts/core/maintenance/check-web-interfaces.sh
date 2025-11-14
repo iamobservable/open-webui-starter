@@ -44,9 +44,14 @@ check_url() {
     local name="$1"
     local url="$2"
     local expected_codes="${3:-200,302,307}"
+    local header="${4:-}"
 
     local status_code
-    status_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout $TIMEOUT "$url" 2>/dev/null || echo "000")
+    if [[ -n "$header" ]]; then
+        status_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout $TIMEOUT -H "$header" "$url" 2>/dev/null || echo "000")
+    else
+        status_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout $TIMEOUT "$url" 2>/dev/null || echo "000")
+    fi
 
     if [[ ",$expected_codes," == *",$status_code,"* ]]; then
         success "$(printf "%-25s %-30s %s" "$name" "$url" "$status_code")"
@@ -90,7 +95,7 @@ check_monitoring() {
     check_url "Grafana" "http://localhost:3000" "200,302" || ((failed++))
     check_url "Prometheus" "http://localhost:9091" "200,302" || ((failed++))
     check_url "Alertmanager" "http://localhost:9093" "200" || ((failed++))
-    check_url "Loki" "http://localhost:3100/ready" "200,204" || ((failed++))
+    check_url "Loki" "http://localhost:3100/ready" "200,204" "X-Scope-OrgID: erni-ki" || ((failed++))
 
     echo ""
     if [ $failed -eq 0 ]; then

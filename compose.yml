@@ -291,7 +291,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    image: travisvn/openai-edge-tts@sha256:1aa9b25c71c91071ec7ff18f6b38bf817a9b19dd5a7722c2860c9cb085dbd742 # pinned 2025-11 digest (linux/amd64)
+    image: travisvn/openai-edge-tts@sha256:4e7e2773350a3296f301b5f66e361daad243bdc4b799eec32613fddcee849040 # обновлено: digest совместим с schema2
     logging: *auxiliary-logging
     ports:
       - 5050:5050
@@ -305,7 +305,7 @@ services:
   tika:
     env_file: env/tika.env
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:9998/tika || exit 1"]
+      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/9998' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -587,8 +587,6 @@ services:
       - "--storage.tsdb.retention.size=10GB"
       - "--web.console.libraries=/etc/prometheus/console_libraries"
       - "--web.console.templates=/etc/prometheus/consoles"
-      - "--web.enable-lifecycle"
-      - "--web.enable-admin-api"
       - "--web.external-url=http://prometheus.erni-ki.local"
     volumes:
       - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
@@ -669,7 +667,10 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     healthcheck:
       test:
-        ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+        [
+          "CMD-SHELL",
+          "wget --header='X-Scope-OrgID: erni-ki' --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -893,8 +894,8 @@ services:
       ollama:
         condition: service_healthy
     build:
-      context: ./monitoring
-      dockerfile: Dockerfile.ollama-exporter
+      context: ./ops/ollama-exporter
+      dockerfile: Dockerfile
     container_name: erni-ki-ollama-exporter
     environment:
       - OLLAMA_URL=http://ollama:11434

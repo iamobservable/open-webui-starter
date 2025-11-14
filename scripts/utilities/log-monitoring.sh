@@ -137,10 +137,10 @@ check_loki_api() {
     log "Проверка доступности Loki API..."
 
     # Проверка локального API
-    local local_status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3100/ready" 2>/dev/null || echo "000")
+    local local_status=$(curl -s -o /dev/null -w "%{http_code}" -H "X-Scope-OrgID: erni-ki" "http://localhost:3100/ready" 2>/dev/null || echo "000")
 
     # Проверка API через nginx
-    local nginx_status=$(curl -k -s -o /dev/null -w "%{http_code}" "https://localhost/loki/api/v1/labels" 2>/dev/null || echo "000")
+    local nginx_status=$(curl -k -s -o /dev/null -w "%{http_code}" -H "X-Scope-OrgID: erni-ki" "https://localhost/loki/api/v1/labels" 2>/dev/null || echo "000")
 
     echo "🔗 Loki API статус:"
     echo "   Локальный API: $local_status"
