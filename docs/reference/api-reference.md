@@ -1,7 +1,7 @@
 # 🔌 Справочник API ERNI-KI
 
-> **Версия документа:** 4.0 **Дата обновления:** 2025-09-19 **API Версия:** v1
-> **Статус:** ✅ Все endpoints протестированы и работают (включая LiteLLM
+> **Версия документа:** 5.0 **Дата обновления:** 2025-11-14 **API Версия:** v1
+> **Статус:** ✅ Все core endpoints, LiteLLM Context7 и RAG интеграции проверены
 
 ## 📋 Обзор API
 
@@ -23,6 +23,100 @@ ERNI-KI предоставляет RESTful API для интеграции с в
   `model`, `estimated_tokens`, `sources[]`.
 - Для быстрой проверки доступны `curl -s https://localhost:8080/api/v1/chats` и
   `curl -s https://localhost:8080/api/v1/rag/status`.
+
+## ⚙️ LiteLLM Context7 Gateway
+
+LiteLLM v1.77.3-stable выступает в роли Context Engineering слоя, объединяя
+Context7 thinking tokens, MCP инструменты и локальные модели Ollama.
+
+| Компонент           | Значение                                                    |
+| ------------------- | ----------------------------------------------------------- |
+| Базовый URL         | `http://localhost:4000` (проксируется через nginx)          |
+| Health endpoints    | `/health`, `/health/liveliness`, `/health/readiness`        |
+| Контекстные методы  | `POST /lite/api/v1/context`, `POST /lite/api/v1/think`      |
+| Совместимые клиенты | OpenWebUI, внешние агенты, cURL/MCPO                        |
+| Мониторинг          | `scripts/monitor-litellm-memory.sh`, Grafana панель LiteLLM |
+
+### 🔄 Пример запроса: LiteLLM Context API
+
+```bash
+curl -X POST http://localhost:4000/lite/api/v1/context \
+  -H "Authorization: Bearer $LITELLM_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": "Summarize the latest Alertmanager queue state",
+    "enable_thinking": true,
+    "metadata": {
+      "chat_id": "chat-uuid",
+      "source": "api-reference"
+    }
+  }'
+```
+
+**Ответ:**
+
+```json
+{
+  "model": "context7-lite-llama3",
+  "context": [
+    { "type": "history", "content": "..." },
+    { "type": "rag", "content": "Alertmanager queue stable" }
+  ],
+  "thinking_tokens_used": 128,
+  "estimated_tokens": 342
+}
+```
+
+### 🧠 Thinking API /lite/api/v1/think
+
+Этот endpoint возвращает трассировку reasoning и финальный ответ модели.
+
+```bash
+curl -X POST http://localhost:4000/lite/api/v1/think \
+  -H "Authorization: Bearer $LITELLM_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Generate a remediation plan for redis fragmentation alert",
+    "stream": true,
+    "tools": ["docling", "mcp_postgres"]
+  }'
+```
+
+Ответ поступает как Server-Sent Events со стадиями `thinking`, `action`,
+`observation`, `final`. При отключенном streaming возвращается JSON с полями
+`reasoning_trace`, `output`, `tokens_used`.
+
+> ℹ️ При деградации LiteLLM мониторится через
+> `scripts/monitor-litellm-memory.sh` и
+> `scripts/infrastructure/monitoring/test-network-performance.sh` (см.
+> Operations Handbook).
+
+## 🔍 RAG endpoints (Docling + SearXNG)
+
+- `GET /api/v1/rag/status` — health RAG pipeline (Docling, SearXNG, vector DB)
+- `POST /api/search` — federated поиск (Brave, Bing, Wikipedia)
+- `POST /api/documents` — загрузка и индексация документов через Docling
+- `POST /api/v1/chats/{chat_id}/rag` — инъекция источников в чат
+
+**Пример: загрузка документа в Docling**
+
+```bash
+curl -X POST https://ki.erni-gruppe.ch/api/documents \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@sample.pdf" \
+  -F "metadata={\"category\":\"operations\",\"tags\":[\"redis\",\"alertmanager\"]};type=application/json"
+```
+
+**Ответ:**
+
+```json
+{
+  "document_id": "doc-uuid",
+  "status": "processing",
+  "source_id": "docling-redis-alerts",
+  "estimated_tokens": 512
+}
+```
 
 ## 🚀 Обновления API (сентябрь 2025)
 

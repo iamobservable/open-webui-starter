@@ -1,7 +1,7 @@
 # 🔧 Руководство по интеграции MCP в ERNI-KI
 
-> **Версия документа:** 8.0 **Дата обновления:** 2025-08-29 **Статус:** ✅
-> Healthy (2 часа работы, порт 8000)
+> **Версия документа:** 9.0 **Дата обновления:** 2025-11-14 **Статус:** ✅
+> Healthy (порт 8000, интеграция с LiteLLM/Context7 подтверждена)
 
 ## 📋 Обзор MCP (Model Context Protocol)
 
@@ -33,6 +33,19 @@ graph TB
     H --> J[SearXNG Service]
     F --> K[File System]
 ```
+
+### 🤝 Связь с LiteLLM Context7
+
+- LiteLLM gateway (порт 4000) запрашивает MCP инструменты через nginx
+  (`/api/mcp/*`), добавляя Thinking Tokens и контекст перед отправкой в Ollama.
+- Health сценарии: `curl -s http://localhost:4000/health/liveliness` и
+  `curl -s http://localhost:8080/api/mcp/time/docs`.
+- Мониторинг: `scripts/monitor-litellm-memory.sh` и
+  `scripts/infrastructure/monitoring/test-network-performance.sh` фиксируют
+  задержки между LiteLLM ↔ MCP ↔ Ollama/PostgreSQL/Redis.
+- При диагностике используйте Archon tasks + LiteLLM логи (`logs/litellm.log`) и
+  убеждайтесь, что Context responses включают блоки `sources[]` и
+  `reasoning_trace`.
 
 ## 🚀 Текущий статус интеграции
 

@@ -5,6 +5,23 @@
 
 ## 🎯 Über ERNI-KI
 
+<!-- STATUS_SNIPPET_DE_START -->
+
+> **Systemstatus (2025-11-14) — Production Ready v12.1**
+>
+> - Container: 30/30 контейнеров healthy
+> - Grafana: 18/18 Grafana дашбордов
+> - Alerts: 27 Prometheus alert rules активны
+> - AI/GPU: Ollama 0.12.3 + OpenWebUI v0.6.34 (GPU)
+> - Context & RAG: LiteLLM v1.77.3-stable + Context7, Docling, Tika, EdgeTTS
+> - Monitoring: Prometheus v3.0.1, Grafana v11.6.6, Loki v3.5.5, Fluent Bit
+>   v3.2.0, Alertmanager v0.28.0
+> - Automatisierung: Cron: PostgreSQL VACUUM 03:00, Docker cleanup 04:00,
+>   Backrest 01:30, Watchtower selective updates
+> - Hinweis: Наблюдаемость и AI стек актуализированы в ноябре 2025
+
+<!-- STATUS_SNIPPET_DE_END -->
+
 ERNI-KI ist eine moderne, produktionsreife AI-Plattform basierend auf Open WebUI
 mit vollständiger Containerisierung, GPU-Beschleunigung und umfassendem
 Sicherheitssystem. Die Plattform bietet eine benutzerfreundliche Weboberfläche
@@ -24,6 +41,9 @@ Sprachinteraktion.
 - **[Systemarchitektur](architecture.md)** - Technische Architektur und
   Service-Details
 - **[Administrator-Handbuch](admin-guide.md)** - Systemverwaltung und Wartung
+- **[Monitoring Übersicht](monitoring.md)** - Kennzahlen, Skripte und Alerts
+- **[Runbooks](runbooks.md)** - Deutsche Zusammenfassungen der wichtigsten
+  Abläufe
 - **[API-Referenz](../reference/api-reference.md)** - API-Dokumentation
   (Englisch)
 

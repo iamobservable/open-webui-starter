@@ -1,8 +1,10 @@
 # ERNI-KI — Профессиональная сводка проекта
 
-> **Статус (ноябрь 2025):** Production Ready v12.1 • 30/30 контейнеров healthy •
-> GPU ускорение (Ollama 0.12.3 + OpenWebUI v0.6.34) • 18/18 Grafana дашбордов
-> актуальны • 27 Prometheus alert rules активны
+<!-- STATUS_SNIPPET_START -->
+
+{% include-markdown "reference/status-snippet.md" %}
+
+<!-- STATUS_SNIPPET_END -->
 
 ## 1. Назначение и ценность
 
@@ -134,6 +136,10 @@ ERNI-KI — корпоративная AI-платформа на базе OpenW
 - **Безопасность:**
   [`security/security-policy.md`](security/security-policy.md),
   [`log-audit.md`](security/log-audit.md)
+- **Data & Storage:**
+  [`data/database-monitoring-plan.md`](data/database-monitoring-plan.md),
+  [`data/redis-operations-guide.md`](data/redis-operations-guide.md),
+  [`data/vllm-resource-optimization.md`](data/vllm-resource-optimization.md)
 - **API и интеграции:** [`api-reference.md`](reference/api-reference.md),
   [`mcpo-integration-guide.md`](reference/mcpo-integration-guide.md)
 

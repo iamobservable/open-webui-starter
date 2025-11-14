@@ -225,33 +225,38 @@ nav:
           - Konfiguration: locales/de/configuration-guide.md
           - Installation: locales/de/installation-guide.md
           - Monitoring Guide: locales/de/monitoring-guide.md
+          - Monitoring Übersicht: locales/de/monitoring.md
           - Nginx: locales/de/nginx-konfiguration.md
           - Service-Überblick: locales/de/services-overview.md
           - Benutzerhandbuch: locales/de/user-guide.md
-          - Monitoring (compact): locales/de/monitoring.md
           - Backup Guide: locales/de/backup-guide.md
           - Troubleshooting: locales/de/troubleshooting.md
-  - Архив:
-      - Best practices audit (2025-10-20): archive/reports/best-practices-audit-2025-10-20.md
-      - Comprehensive project audit (2025-10-17): archive/reports/comprehensive-project-audit-2025-10-17.md
-      - Comprehensive project audit part 2 (2025-10-17): archive/reports/comprehensive-project-audit-2025-10-17-part2.md
-      - Documentation audit (2025-10-24): archive/reports/documentation-audit-2025-10-24.md
-      - Documentation cleanup audit (2025-10-24): archive/reports/documentation-cleanup-audit-2025-10-24.md
-      - Documentation cleanup summary (2025-10-24): archive/reports/documentation-cleanup-summary-2025-10-24.md
-      - Docx upload fix (2025-10-30): archive/reports/docx-upload-fix-20251030.md
-      - System repair (2025-10-16): archive/reports/system-repair-2025-10-16.md
-      - Log analysis correction (2025-11-04): archive/reports/log-analysis-correction-2025-11-04.md
-      - Phase 2 completion (2025-11-04): archive/reports/phase-2-completion-2025-11-04.md
-      - Phase 1 critical fixes (2025-10-30): archive/reports/phase1-critical-fixes-report-20251030.md
-      - Project audit report (2025-10-30): archive/reports/project-audit-report-20251030.md
-      - RAG system diagnostic report (2025-10-30): archive/reports/rag-system-diagnostic-report-20251030.md
-      - RAG vector search test report (2025-10-30): archive/reports/rag-vector-search-test-report-20251030.md
-      - Full server diagnostics (2025-11-04): archive/reports/full-server-diagnostics-2025-11-04.md
-      - Comprehensive audit (2025-10-14): archive/reports/comprehensive-audit-2025-10-14.md
-  - Архивы конфигураций:
-      - Update execution report: archive/config-backup/update-execution-report-2025-10-02.md
-      - Monitoring report: archive/config-backup/monitoring-report-2025-10-02.md
-      - Update analysis: archive/config-backup/update-analysis-2025-10-02.md
+          - Runbooks: locales/de/runbooks.md
+  - Отчёты и архив:
+      - Обзор архивов: archive/README.md
+      - Аудиты:
+          - documentation-audit (2025-10-24): archive/audits/documentation-audit-2025-10-24.md
+          - documentation-cleanup-audit (2025-10-24): archive/audits/documentation-cleanup-audit-2025-10-24.md
+          - documentation-cleanup-summary (2025-10-24): archive/audits/documentation-cleanup-summary-2025-10-24.md
+          - best-practices-audit (2025-10-20): archive/audits/best-practices-audit-2025-10-20.md
+          - comprehensive-audit (2025-10-14): archive/audits/comprehensive-audit-2025-10-14.md
+          - comprehensive-project-audit (2025-10-17): archive/audits/comprehensive-project-audit-2025-10-17.md
+          - comprehensive-project-audit part 2 (2025-10-17): archive/audits/comprehensive-project-audit-2025-10-17-part2.md
+      - Диагностика:
+          - Full server diagnostics (2025-11-04): archive/diagnostics/full-server-diagnostics-2025-11-04.md
+          - RAG system diagnostic (2025-10-30): archive/diagnostics/rag-system-diagnostic-report-20251030.md
+          - RAG vector search test (2025-10-30): archive/diagnostics/rag-vector-search-test-report-20251030.md
+          - Log analysis correction (2025-11-04): archive/diagnostics/log-analysis-correction-2025-11-04.md
+      - Инциденты и remediation:
+          - Phase 1 critical fixes (2025-10-30): archive/incidents/phase1-critical-fixes-report-20251030.md
+          - Project audit remediation (2025-10-30): archive/incidents/project-audit-report-20251030.md
+          - Docx upload fix (2025-10-30): archive/incidents/docx-upload-fix-20251030.md
+          - Phase 2 completion (2025-11-04): archive/incidents/phase-2-completion-2025-11-04.md
+          - System repair (2025-10-16): archive/incidents/system-repair-2025-10-16.md
+      - Архивы конфигураций:
+          - Update execution report: archive/config-backup/update-execution-report-2025-10-02.md
+          - Monitoring report: archive/config-backup/monitoring-report-2025-10-02.md
+          - Update analysis: archive/config-backup/update-analysis-2025-10-02.md
 
 # Настройки валидации
 validation:

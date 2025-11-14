@@ -93,6 +93,7 @@ repos:
         exclude: |
           (?x)^(
             \.env.*|
+            mkdocs\.yml|
             conf/litellm/config\.yaml|
             conf/.*\.yml|
             conf/.*\.yaml|

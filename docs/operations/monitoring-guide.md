@@ -15,6 +15,33 @@ ERNI-KI monitoring system includes:
 - **Loki v3.5.5 + Fluent Bit v3.2.0** - centralized logging
 - **AlertManager v0.28.0** - notifications and alerting
 
+### 🔄 Обновления ноября 2025
+
+- **Alertmanager queue watchdog** —
+  `scripts/monitoring/alertmanager-queue-watch.sh` сравнивает метрику
+  `alertmanager_cluster_messages_queued` с порогами, пишет историю в
+  `logs/alertmanager-queue.log` и при необходимости выполняет
+  `docker compose restart alertmanager`.
+- **Docling shared volume** — `scripts/maintenance/docling-shared-cleanup.sh`
+  гарантирует очистку `data/docling/shared/uploads` и уведомления при ошибках
+  прав.
+- **Redis fragmentation** —
+  `scripts/maintenance/redis-fragmentation-watchdog.sh` выполняет `memory purge`
+  и включает `activedefrag` при ratio >4, журнал —
+  `logs/redis-fragmentation-watchdog.log`.
+- **TLS & внешние проверки** —
+  `scripts/infrastructure/security/monitor-certificates.sh` +
+  `scripts/infrastructure/monitoring/monitor-rate-limiting.sh` собирают
+  отклонения proxy/HTTPS и обеспечивают перезапуск nginx/watchtower.
+- **LiteLLM Context7 контроль** — `scripts/monitor-litellm-memory.sh` публикует
+  alert в Slack/Webhook при росте памяти gateway, а
+  `scripts/infrastructure/monitoring/test-network-performance.sh` измеряет
+  latency для маршрута nginx → LiteLLM → Ollama/PostgreSQL/Redis.
+- **Cron & Config Backups** — результаты cron-задач и health мониторинга
+  фиксируются в `docs/archive/config-backup/*.md` (monitoring report, update
+  analysis, execution report); обновляйте их при изменениях скриптов или
+  расписаний.
+
 ## 📋 Аудит и соответствие
 
 - Счетчик несоответствий из

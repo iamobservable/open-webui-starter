@@ -7,11 +7,11 @@ MCP, окружённая полным стеком наблюдаемости, 
 
 ## Обновления
 
-- 30/30 контейнеров Healthy, GPU ускорено (Ollama 0.12.3 + OpenWebUI v0.6.34).
-- Мониторинг: Prometheus v3.0.1 + 27 алертов, Grafana v11.6.6, Loki v3.5.5,
-  Fluent Bit v3.2.0.
-- Avtomated tasks: PostgreSQL VACUUM (воскресенье 03:00), Docker cleanup
-  (воскресенье 04:00), log rotation и Backrest бэкапы.
+<!-- STATUS_SNIPPET_START -->
+
+{% include-markdown "reference/status-snippet.md" %}
+
+<!-- STATUS_SNIPPET_END -->
 
 ## Быстрые переходы
 
@@ -20,6 +20,9 @@ MCP, окружённая полным стеком наблюдаемости, 
 - **Операции** — `operations/operations-handbook.md`,
   `operations/monitoring-guide.md`, `operations/automated-maintenance-guide.md`,
   `operations/runbooks/`.
+- **Хранилище и данные** — `docs/data/database-monitoring-plan.md`,
+  `docs/data/redis-operations-guide.md`,
+  `docs/data/database-production-optimizations.md`.
 - **ML и API** — `reference/api-reference.md`, `README.md` (вне MkDocs, но
   всегда актуален в корне репозитория).
 - **Безопасность** — `security/security-policy.md` и related compliance notes.

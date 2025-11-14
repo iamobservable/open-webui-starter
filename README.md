@@ -5,15 +5,22 @@
 включает **30 микросервисов ERNI-KI** с полным мониторингом стеком, AI
 метриками, централизованным логированием и автоматизированным управлением.
 
-> **✅ Статус системы (24 октября 2025):** Система работает стабильно с **30/30
-> здоровыми контейнерами**. **18 дашбордов Grafana (100% функциональны)**, все
-> критические проблемы устранены. **LiteLLM Context Engineering
-> v1.77.3-stable**, **Docling Document Processing**, **MCP Server**, **Apache
-> Tika**, **Watchtower автообновления**. GPU ускорение активно (Ollama 0.12.3 +
-> OpenWebUI v0.6.34). Мониторинг обновлён (Prometheus v3.0.1, Loki v3.5.5,
-> Fluent Bit v3.2.0). **27 Prometheus alert rules** активны. **Автоматизация:**
-> PostgreSQL VACUUM (воскресенье 3:00), Docker cleanup (воскресенье 4:00).
-> Система готова к продакшену.
+<!-- STATUS_SNIPPET_START -->
+
+> **Статус системы (2025-11-14) — Production Ready v12.1**
+>
+> - Контейнеры: 30/30 контейнеров healthy
+> - Графана: 18/18 Grafana дашбордов
+> - Алерты: 27 Prometheus alert rules активны
+> - AI/GPU: Ollama 0.12.3 + OpenWebUI v0.6.34 (GPU)
+> - Context & RAG: LiteLLM v1.77.3-stable + Context7, Docling, Tika, EdgeTTS
+> - Мониторинг: Prometheus v3.0.1, Grafana v11.6.6, Loki v3.5.5, Fluent Bit
+>   v3.2.0, Alertmanager v0.28.0
+> - Автоматизация: Cron: PostgreSQL VACUUM 03:00, Docker cleanup 04:00, Backrest
+>   01:30, Watchtower selective updates
+> - Примечание: Наблюдаемость и AI стек актуализированы в ноябре 2025
+
+<!-- STATUS_SNIPPET_END -->
 
 [![CI](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/ci.yml)
 [![Security](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml/badge.svg)](https://github.com/DIZ-admin/erni-ki/actions/workflows/security.yml)
@@ -138,6 +145,13 @@ docker compose ps
   - 📁 Локальные бэкапы в .config-backup/
   - ✅ Статус: Healthy
 - **Persistent volumes** - надежное хранение данных
+
+> 📚 Документация по данным: `docs/data/database-monitoring-plan.md`,
+> `docs/data/database-production-optimizations.md`,
+> `docs/data/database-troubleshooting.md`,
+> `docs/data/redis-monitoring-grafana.md`,
+> `docs/data/redis-operations-guide.md`,
+> `docs/data/vllm-resource-optimization.md`
 
 ### 📈 **Monitoring & Operations**
 
