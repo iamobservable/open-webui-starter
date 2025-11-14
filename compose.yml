@@ -17,6 +17,11 @@ x-critical-logging: &critical-logging
     tag: "critical.{{.Name}}"
     labels: "service,version,environment,level=critical"
     # JSON fallback обеспечивается tail-инпутом Fluent Bit
+    fluentd-ssl: "true"
+    fluentd-ssl-verify: "true"
+    fluentd-ssl-ca-cert: "${PWD}/conf/fluent-bit/certs/logging-ca.crt"
+    fluentd-ssl-cert: "${PWD}/conf/fluent-bit/certs/logging-client.crt"
+    fluentd-ssl-key: "${PWD}/conf/fluent-bit/certs/logging-client.key"
 
 # УРОВЕНЬ 2 - Важные сервисы (SearXNG, Redis, Backrest, Auth, Cloudflared)
 # Fluentd с буферизацией, стандартная надежность
@@ -29,6 +34,11 @@ x-important-logging: &important-logging
     fluentd-max-retries: "5"
     tag: "important.{{.Name}}"
     labels: "service,version,environment,level=important"
+    fluentd-ssl: "true"
+    fluentd-ssl-verify: "true"
+    fluentd-ssl-ca-cert: "${PWD}/conf/fluent-bit/certs/logging-ca.crt"
+    fluentd-ssl-cert: "${PWD}/conf/fluent-bit/certs/logging-client.crt"
+    fluentd-ssl-key: "${PWD}/conf/fluent-bit/certs/logging-client.key"
 
 # УРОВЕНЬ 3 - Вспомогательные сервисы (Docling, EdgeTTS, Tika, MCP)
 # Fluentd с отдельными тэгами + tail fallback
@@ -41,6 +51,11 @@ x-auxiliary-logging: &auxiliary-logging
     fluentd-max-retries: "5"
     tag: "auxiliary.{{.Name}}"
     labels: "service,version,level=auxiliary"
+    fluentd-ssl: "true"
+    fluentd-ssl-verify: "true"
+    fluentd-ssl-ca-cert: "${PWD}/conf/fluent-bit/certs/logging-ca.crt"
+    fluentd-ssl-cert: "${PWD}/conf/fluent-bit/certs/logging-client.crt"
+    fluentd-ssl-key: "${PWD}/conf/fluent-bit/certs/logging-client.key"
 
 # УРОВЕНЬ 4 - Мониторинговые сервисы (Prometheus, Grafana, Exporters)
 # Минимальное Fluentd логгирование + агрессивная фильтрация
@@ -53,6 +68,11 @@ x-monitoring-logging: &monitoring-logging
     fluentd-max-retries: "3"
     tag: "monitoring.{{.Name}}"
     labels: "service,version,level=monitoring"
+    fluentd-ssl: "true"
+    fluentd-ssl-verify: "true"
+    fluentd-ssl-ca-cert: "${PWD}/conf/fluent-bit/certs/logging-ca.crt"
+    fluentd-ssl-cert: "${PWD}/conf/fluent-bit/certs/logging-client.crt"
+    fluentd-ssl-key: "${PWD}/conf/fluent-bit/certs/logging-client.key"
 
 # Обратная совместимость (deprecated, будет удалено в следующих версиях)
 x-logging: &default-logging
@@ -669,6 +689,7 @@ services:
     volumes:
       - ./conf/loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
       - ./data/loki:/loki
+      - ./conf/loki/tls:/etc/loki/tls:ro
     command:
       - -config.file=/etc/loki/local-config.yaml
       - -config.expand-env=true
@@ -676,7 +697,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "wget --header='X-Scope-OrgID: erni-ki' --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1",
+          "wget --header='X-Scope-OrgID: erni-ki' --ca-certificate=/etc/loki/tls/logging-ca.crt --no-verbose --tries=1 --spider https://localhost:3100/ready || exit 1",
         ]
       interval: 30s
       timeout: 10s
@@ -1024,6 +1045,7 @@ services:
       - ./conf/fluent-bit/scripts:/fluent-bit/scripts:ro
       - ./conf/fluent-bit/filters-log-optimization.conf:/fluent-bit/etc/filters-log-optimization.conf:ro
       - ./conf/fluent-bit/filters-optimized.conf:/fluent-bit/etc/filters-optimized.conf:ro
+      - ./conf/fluent-bit/certs:/fluent-bit/etc/certs:ro
       # Dedicated volume для логов с оптимизацией для SSD (Фаза 3)
       - erni-ki-logs:/var/log
       - erni-ki-fluent-db:/fluent-bit/db

@@ -423,9 +423,9 @@ scrape_configs:
   # Fluent Bit (Prometheus exposition via Service HTTP)
   - job_name: "fluent-bit"
     static_configs:
-      - targets: ["fluent-bit:2020"]
+      - targets: ["fluent-bit:2021"]
     scrape_interval: 30s
-    metrics_path: /api/v1/metrics/prometheus
+    metrics_path: /metrics
     scrape_timeout: 10s
 
   # Loki internal metrics for Grafana panels

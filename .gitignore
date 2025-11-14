@@ -205,8 +205,13 @@ tests/fixtures/
 *.tar.gz
 *.rar
 *.7z
-*.crt
 *.csr
+*.crt
+*.key
+conf/fluent-bit/certs/*
+!conf/fluent-bit/certs/.gitkeep
+conf/loki/tls/*
+!conf/loki/tls/.gitkeep
 .local/
 local/
 *.pid

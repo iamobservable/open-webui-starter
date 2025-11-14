@@ -4,6 +4,9 @@ auth_enabled: true
 server:
   http_listen_port: 3100
   grpc_listen_port: 9096
+  http_tls_config:
+    cert_file: /etc/loki/tls/loki.crt
+    key_file: /etc/loki/tls/loki.key
 
 common:
   path_prefix: /loki
@@ -35,8 +38,9 @@ schema_config:
         period: 24h
 
 limits_config:
-  reject_old_samples: true
+  reject_old_samples: false
   reject_old_samples_max_age: 168h
+  creation_grace_period: 10m
   max_cache_freshness_per_query: 10m
   split_queries_by_interval: 15m
   ingestion_rate_mb: 16

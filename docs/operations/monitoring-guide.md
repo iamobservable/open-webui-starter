@@ -802,6 +802,45 @@ curl -s http://localhost:9091/api/v1/rules | jq '.data.groups[] | .name'
    docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}" | grep exporter
    ```
 
+## 🔐 Secure Logging Pipeline (2025-11)
+
+### TLS / mTLS
+
+- Используйте скрипт `scripts/security/prepare-logging-tls.sh` после
+  клонирования/ротации, чтобы выпустить CA + серверные/клиентские сертификаты.
+  Скрипт заполняет `conf/fluent-bit/certs` и `conf/loki/tls` и автоматически
+  перезаписывает истёкшие материалы.
+- Все сервисы Docker используют fluentd driver с параметрами `fluentd-ssl-*`
+  (см. `compose.yml` anchors) и подключаются к Fluent Bit по TLS.
+- Fluent Bit публикует HTTPS запросы в Loki; сама Loki слушает только TLS порт
+  3100 (`conf/loki/loki-config.yaml: server.http_tls_config`). Для ручных
+  проверок используйте `curl --cacert conf/loki/tls/logging-ca.crt`.
+
+### Мониторинг доставки логов
+
+- Prometheus job `fluent-bit` читает `/metrics` на `fluent-bit:2021`, а алерт
+  `FluentBitLokiDeliveryErrors` срабатывает при росте
+  `fluentbit_output_errors_total{output="loki.0"}`.
+- Runbook (сокращённо):
+  1. Проверить `docker compose logs fluent-bit loki` на TLS ошибки.
+  2. Убедиться, что сертификаты не истекли (перезапустить скрипт подготовки).
+  3. Перезапустить Fluent Bit и Loki (`docker compose restart fluent-bit loki`).
+
+### Диагностика
+
+```bash
+# Проверка Forward TLS
+openssl s_client -connect localhost:24224 \
+  -cert conf/fluent-bit/certs/logging-client.crt \
+  -key conf/fluent-bit/certs/logging-client.key \
+  -CAfile conf/fluent-bit/certs/logging-ca.crt -brief
+
+# Проверка Loki readiness (с верификацией сертификата)
+curl -H 'X-Scope-OrgID: erni-ki' \
+     --cacert conf/loki/tls/logging-ca.crt \
+     https://localhost:3100/ready
+```
+
 ## 🎯 Success Criteria
 
 ### System Health Indicators
