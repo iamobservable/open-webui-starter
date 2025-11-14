@@ -218,9 +218,9 @@
   `.config-backup/logs/alerts.log`). `health-monitor.sh` теперь использует
   `python3`, что устраняет ошибку `python: command not found`.
 
-Отчёт нужно синхронизировать с runbook-ами (`docs/operations/monitoring-guide.md`,
-`docs/prometheus-alerts-guide.md`) и создать отдельный таск на чистку
-`data/webhook-logs`.
+Отчёт нужно синхронизировать с runbook-ами
+(`docs/operations/monitoring-guide.md`, `docs/prometheus-alerts-guide.md`) и
+создать отдельный таск на чистку `data/webhook-logs`.
 
 ## Повторный аудит (13 ноября 2025)
 

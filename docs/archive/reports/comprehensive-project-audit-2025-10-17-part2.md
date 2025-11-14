@@ -580,8 +580,10 @@ curl -k https://localhost/health
 **Документация:**
 
 - Основная: [Документация Home](../../overview.md)
-- Архитектура: [docs/architecture/architecture.md](../../architecture/architecture.md)
-- Руководство администратора: [docs/operations/admin-guide.md](../../operations/admin-guide.md)
+- Архитектура:
+  [docs/architecture/architecture.md](../../architecture/architecture.md)
+- Руководство администратора:
+  [docs/operations/admin-guide.md](../../operations/admin-guide.md)
 
 **Runbooks:**
 

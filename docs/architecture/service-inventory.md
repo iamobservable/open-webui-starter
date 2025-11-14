@@ -136,8 +136,9 @@
 
 - **LLM & Model Context**: LiteLLM v1.77.3-stable, MCP Server 8000 и RAG API
   (`/api/mcp/*`, `/api/search`) используют PostgreSQL + Redis для context
-  storage; `docs/reference/api-reference.md` и `docs/operations/operations-handbook.md` содержат
-  маршруты, SLA и список инструментов.
+  storage; `docs/reference/api-reference.md` и
+  `docs/operations/operations-handbook.md` содержат маршруты, SLA и список
+  инструментов.
 - **Docling/EdgeTTS**: работают через internal ports, используют CPU,
   обеспечивают многоязычный RAG pipeline и служат источником для
   `docs/operations/monitoring-guide.md`.
@@ -164,8 +165,8 @@
   `conf/litellm`, `conf/prometheus`.
 - Мониторинг и runbooks: `docs/operations/monitoring-guide.md`,
   `docs/operations/automated-maintenance-guide.md`, `docs/operations/runbooks/`.
-- Архитектура: `docs/architecture/architecture.md` (GPU allocation, Cloudflare tunnels, 30
-  сервисов).
+- Архитектура: `docs/architecture/architecture.md` (GPU allocation, Cloudflare
+  tunnels, 30 сервисов).
 - Безопасность: `security/security-policy.md`,
-  `docs/archive/reports/documentation-audit-2025-10-24.md` (указаны риски и необходимые
-  актуализации).
+  `docs/archive/reports/documentation-audit-2025-10-24.md` (указаны риски и
+  необходимые актуализации).

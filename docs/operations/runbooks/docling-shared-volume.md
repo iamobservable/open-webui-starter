@@ -91,8 +91,8 @@ DOC_SHARED_INPUT_RETENTION_DAYS=1 ./scripts/maintenance/docling-shared-cleanup.s
 
 ## 5. Документация
 
-- Основной справочник: `docs/architecture/service-inventory.md` (раздел «Политика Docling
-  shared volume»).
+- Основной справочник: `docs/architecture/service-inventory.md` (раздел
+  «Политика Docling shared volume»).
 - Archon документ `ERNI-KI Минимальное описание проекта` — содержит summary и
   риски.
 - Скрипт очистки: `scripts/maintenance/docling-shared-cleanup.sh`.

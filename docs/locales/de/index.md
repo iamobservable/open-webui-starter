@@ -24,12 +24,13 @@ Sprachinteraktion.
 - **[Systemarchitektur](architecture.md)** - Technische Architektur und
   Service-Details
 - **[Administrator-Handbuch](admin-guide.md)** - Systemverwaltung und Wartung
-- **[API-Referenz](../reference/api-reference.md)** - API-Dokumentation (Englisch)
+- **[API-Referenz](../reference/api-reference.md)** - API-Dokumentation
+  (Englisch)
 
 ### 💻 Entwicklung
 
-- **[Entwicklerhandbuch](../reference/development.md)** - Entwicklungsumgebung einrichten
-  (Englisch)
+- **[Entwicklerhandbuch](../reference/development.md)** - Entwicklungsumgebung
+  einrichten (Englisch)
 
 ## 🎯 Zielgruppen
 

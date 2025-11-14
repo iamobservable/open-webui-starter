@@ -48,9 +48,9 @@
 
 ### 2. Дублирующиеся файлы (2 файла)
 
-| Файл                                    | Дата       | Размер | Причина удаления                                    |
-| --------------------------------------- | ---------- | ------ | --------------------------------------------------- |
-| `docs/administration.md`                | 2025-08-29 | 16KB   | Полностью дублирует `admin-guide.md` (v8.0 vs v5.1) |
+| Файл                                               | Дата       | Размер | Причина удаления                                    |
+| -------------------------------------------------- | ---------- | ------ | --------------------------------------------------- |
+| `docs/administration.md`                           | 2025-08-29 | 16KB   | Полностью дублирует `admin-guide.md` (v8.0 vs v5.1) |
 | `docs/operations/monitoring-troubleshooting-v2.md` | 2025-09-19 | 16KB   | Информация интегрирована в `monitoring-guide.md`    |
 
 ### 3. Устаревшие версии (1 файл)
@@ -189,25 +189,28 @@
 2. ✅ `docs/documentation-update-report-2025-09-11.md` → Архивирован
 3. ✅ `docs/system-fixes-completion-report-2025-09-25.md` → Архивирован
 4. ✅ `docs/administration.md` → Архивирован (дубликат admin-guide.md)
-5. ✅ `docs/operations/monitoring-troubleshooting-v2.md` → Архивирован (интегрирован в
-   monitoring-guide.md)
+5. ✅ `docs/operations/monitoring-troubleshooting-v2.md` → Архивирован
+   (интегрирован в monitoring-guide.md)
 6. ✅ `docs/grafana-datasources.md` → Архивирован (устаревший)
 
 ### Обновленные файлы (5)
 
 1. ✅ `README.md` - Обновлен статус, добавлены alerts и automation
 2. ✅ `docs/architecture/architecture.md` - Добавлен раздел об автоматизации
-3. ✅ `docs/operations/monitoring-guide.md` - Добавлен раздел о Prometheus Alerts
-4. ✅ `docs/operations/admin-guide.md` - Добавлен раздел об автоматизированном обслуживании
+3. ✅ `docs/operations/monitoring-guide.md` - Добавлен раздел о Prometheus
+   Alerts
+4. ✅ `docs/operations/admin-guide.md` - Добавлен раздел об автоматизированном
+   обслуживании
 5. ✅ `docs/architecture/services-overview.md` - Обновлена дата и версия
 
 ### Созданные файлы (4)
 
 1. ✅ `docs/prometheus-alerts-guide.md` - НОВЫЙ (626 строк)
 2. ✅ `docs/operations/automated-maintenance-guide.md` - НОВЫЙ (442 строки)
-3. ✅ `docs/archive/reports/documentation-audit-2025-10-24.md` - НОВЫЙ (505 строк)
-4. ✅ `docs/archive/reports/documentation-cleanup-audit-2025-10-24.md` - НОВЫЙ (300
+3. ✅ `docs/archive/reports/documentation-audit-2025-10-24.md` - НОВЫЙ (505
    строк)
+4. ✅ `docs/archive/reports/documentation-cleanup-audit-2025-10-24.md` - НОВЫЙ
+   (300 строк)
 
 ---
 
@@ -279,7 +282,8 @@ done
 
 ### Следующие шаги
 
-1. **Синхронизация локализаций** (docs/locales/de/) - запланировано на следующую неделю
+1. **Синхронизация локализаций** (docs/locales/de/) - запланировано на следующую
+   неделю
 2. **Внедрение автоматизации проверки** - pre-commit hooks
 3. **Регулярные аудиты** - ежеквартально
 

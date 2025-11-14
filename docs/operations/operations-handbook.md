@@ -14,8 +14,9 @@
 ## 2. Алерты и мониторинг
 
 - Все правила задокументированы в `conf/prometheus/alerts.yml` (Critical,
-  Performance, Database, GPU, Nginx). Подробнее — `docs/operations/monitoring-guide.md`
-  (раздел «Prometheus Alerts Configuration»).
+  Performance, Database, GPU, Nginx). Подробнее —
+  `docs/operations/monitoring-guide.md` (раздел «Prometheus Alerts
+  Configuration»).
 - SLA: критические алерты — ответ <5 мин, багфиксы и triage в течение 30 мин.
 - Alertmanager v0.28.0 описывает каналы (Slack/Teams) и throttling; команды
   включают owner (SRE) и backup (Platform Lead).
@@ -37,8 +38,8 @@
 ## 4. Автоматизация обслуживания
 
 - Все скрипты VACUUM и Docker cleanup описаны в
-  `docs/operations/automated-maintenance-guide.md`. Запускаются по cron (VACUUM 03:00,
-  cleanup 04:00, log rotation daily, Backrest backups 01:30).
+  `docs/operations/automated-maintenance-guide.md`. Запускаются по cron (VACUUM
+  03:00, cleanup 04:00, log rotation daily, Backrest backups 01:30).
 - Результаты проверяются через утилиты: `pg_isready`, `docker image prune`,
   `docker builder prune`, `docker volume prune`.
 - При сбоях скриптов — см. `runbooks/backup-restore-procedures.md` для
@@ -65,8 +66,10 @@
 ## 7. Ссылки и источники
 
 - Architecture → `docs/architecture/architecture.md`.
-- Monitoring → `docs/operations/monitoring-guide.md`, `conf/prometheus`, `conf/grafana`.
-- Automation → `docs/operations/automated-maintenance-guide.md`, `scripts/maintenance`.
+- Monitoring → `docs/operations/monitoring-guide.md`, `conf/prometheus`,
+  `conf/grafana`.
+- Automation → `docs/operations/automated-maintenance-guide.md`,
+  `scripts/maintenance`.
 - Runbooks → `docs/operations/runbooks/*.md`.
 - Archon — обновлять короткие статусные заметки и чек-листы по каждому инциденту
   (см. task `a0169e05…`).
