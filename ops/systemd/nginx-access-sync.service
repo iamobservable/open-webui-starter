@@ -1,0 +1,12 @@
+[Unit]
+Description=Sync nginx access log to host
+After=nginx.service docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Documents/augment-projects/erni-ki
+EnvironmentFile=-%h/.config/nginx-access-sync.env
+ExecStart=%h/Documents/augment-projects/erni-ki/scripts/infrastructure/monitoring/sync-nginx-access.sh
+
+[Install]
+WantedBy=default.target
