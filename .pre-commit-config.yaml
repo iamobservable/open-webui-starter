@@ -133,29 +133,6 @@ repos:
       - id: prettier
         name: "Prettier: форматирование кода"
         files: \.(md|yml|yaml|json|js|jsx|ts|tsx)$
-        exclude: |
-          (?x)^(
-            \.env.*|
-            conf/litellm/config\.yaml|
-            conf/.*\.conf|
-            conf/.*\.ini|
-            conf/.*\.yml|
-            conf/.*\.yaml|
-            conf/.*\.json|
-            package-lock\.json|
-            .*\.key|
-            .*\.pem|
-            .*\.crt|
-            secrets/.*|
-            data/.*|
-            logs/.*|
-            \.config-backup/.*|
-            node_modules/.*|
-            dist/.*|
-            build/.*
-            |docs/reference/status-snippet\.md
-            |docs/locales/de/status-snippet\.md
-          )$
         additional_dependencies:
           - prettier@3.6.2
 

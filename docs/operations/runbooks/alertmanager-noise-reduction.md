@@ -55,3 +55,24 @@
    `docker compose exec redis redis-cli config set maxmemory <value>`.
 3. **Документация**: ссылаться на этот runbook при разборе инцидента, фиксируя
    сколько раз autoscale сработал.
+
+## Включение autoscale watchdog
+
+1. Создайте environ-файл (пример: `ops/systemd/redis-watchdog.env.example`) и
+   подключите его в cron/systemd unit для `redis-fragmentation-watchdog.sh`.
+2. Обновите cron/systemd: `EnvironmentFile=~/.config/redis-watchdog.env` либо
+   экспорт переменных перед запуском.
+3. Следите за `logs/redis-fragmentation-watchdog.log` — после срабатывания
+   появится `Autoscaling Redis maxmemory ...`.
+4. Добавьте Grafana панель (Redis dashboard) с `mem_fragmentation_ratio` и
+   `maxmemory` и включите alert при резком росте.
+
+## Grafana / Alertmanager наблюдение
+
+- В Grafana импортируйте Redis панель и добавьте новый graph "Blackbox Noise
+  Rate" (использует выражение из файла
+  `ops/prometheus/blackbox-noise.rules.yml`).
+- В Alertmanager UI убедитесь, что маршрут `noise_group=blackbox` группирует
+  алерты каждые 15 минут.
+- Документируйте все срабатывания в этом runbook (дата, источник, предпринятые
+  действия).
