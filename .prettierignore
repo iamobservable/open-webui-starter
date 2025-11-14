@@ -20,6 +20,8 @@ logs/
 .cache/
 .DS_Store
 Thumbs.db
+.config-backup/
+.config-backup/**
 
 # Git и Docker
 .git/

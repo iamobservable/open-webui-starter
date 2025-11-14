@@ -3,10 +3,14 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+export PROJECT_DIR
 LOG_FILE="$PROJECT_DIR/.config-backup/logs/alertmanager-queue.log"
 PROM_URL="${PROMETHEUS_URL:-http://localhost:9091}"
 THRESHOLD="${ALERTMANAGER_QUEUE_WARN:-100}"
+HARD_LIMIT="${ALERTMANAGER_QUEUE_HARD_LIMIT:-500}"
+AUTOFIX="${ALERTMANAGER_QUEUE_AUTOFIX:-true}"
 QUERY='alertmanager_cluster_messages_queued'
+export HARD_LIMIT AUTOFIX
 
 mkdir -p "$(dirname "$LOG_FILE")"
 
@@ -20,6 +24,7 @@ ALERT_RESPONSE="$response" python3 - "$LOG_FILE" "$THRESHOLD" <<'PY'
 import json
 import sys
 import os
+import subprocess
 from datetime import datetime
 
 log_path = sys.argv[1]
@@ -42,4 +47,16 @@ except (KeyError, IndexError, ValueError):
 status = 'OK' if value <= threshold else 'WARN'
 with open(log_path, 'a', encoding='utf-8') as fh:
     fh.write(f"[{ts}] queue-monitor: {value} (threshold={threshold}) status={status}\n")
+
+hard_limit = float(os.environ.get('HARD_LIMIT', '0') or 0)
+autofix = os.environ.get('AUTOFIX', 'false').lower() in ('1', 'true', 'yes')
+project_dir = os.environ.get('PROJECT_DIR', '')
+if autofix and hard_limit and value > hard_limit and project_dir:
+    with open(log_path, 'a', encoding='utf-8') as fh:
+        fh.write(f"[{ts}] queue-monitor: value {value} > hard_limit {hard_limit}, triggering alertmanager restart\n")
+    import subprocess
+    subprocess.run(
+        ["bash", "-lc", f"cd '{project_dir}' && docker compose restart alertmanager >/dev/null 2>&1 || true"],
+        check=False,
+    )
 PY

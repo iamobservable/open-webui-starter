@@ -440,6 +440,7 @@ services:
       - ./conf/nginx/includes:/etc/nginx/includes
       - ./conf/nginx/healthcheck.sh:/etc/nginx/healthcheck.sh:ro
       - ./data/nginx/webroot:/var/www/html
+      - ./data/nginx/logs:/var/log/nginx
     # Используем стандартную Docker bridge сеть
     labels:
       # КРИТИЧЕСКИ ВАЖНО: Запретить автообновление Nginx (критический прокси-сервер)

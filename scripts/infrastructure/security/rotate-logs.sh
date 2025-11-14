@@ -64,7 +64,11 @@ echo "💾 Статистика использования дискового п
 echo "   📁 Основные логи: $(du -sh "$PROJECT_ROOT/logs" 2>/dev/null | cut -f1 || echo "0B")"
 echo "   📁 Логи бэкапов: $(du -sh "$PROJECT_ROOT/.config-backup/logs" 2>/dev/null | cut -f1 || echo "0B")"
 echo "   📁 Критические логи: $(du -sh "$PROJECT_ROOT/monitoring/logs/critical" 2>/dev/null | cut -f1 || echo "0B")"
-echo "   📁 Fluent Bit DB: $(du -sh "$PROJECT_ROOT/data/fluent-bit/db" 2>/dev/null | cut -f1 || echo "0B")"
+if [ -d "$PROJECT_ROOT/data/fluent-bit/db" ]; then
+    echo "   📁 Fluent Bit DB: $(du -sh "$PROJECT_ROOT/data/fluent-bit/db" 2>/dev/null | cut -f1 || echo "0B")"
+else
+    echo "   📁 Fluent Bit DB: N/A (директория отсутствует)"
+fi
 
 # Проверка свободного места
 echo ""

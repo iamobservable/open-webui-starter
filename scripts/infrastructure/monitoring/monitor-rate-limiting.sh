@@ -8,12 +8,14 @@ set -euo pipefail
 
 # === Конфигурация ===
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 LOG_FILE="$PROJECT_ROOT/logs/rate-limiting-monitor.log"
 STATE_FILE="$PROJECT_ROOT/logs/rate-limiting-state.json"
 ALERT_THRESHOLD=10  # Алерт при >10 блокировок в минуту
 WARNING_THRESHOLD=5 # Предупреждение при >5 блокировок в минуту
 CHECK_INTERVAL=60   # Интервал проверки в секундах
+NGINX_ACCESS_LOG="${NGINX_ACCESS_LOG:-$PROJECT_ROOT/data/nginx/logs/access.log}"
+COMPOSE_BIN="${DOCKER_COMPOSE_BIN:-docker compose}"
 
 # Создание директории для логов
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -43,7 +45,11 @@ analyze_rate_limiting() {
 
     # Получение логов nginx за указанный период
     local nginx_logs
-    nginx_logs=$(docker-compose -f "$PROJECT_ROOT/compose.yml" logs nginx --since "$time_window" 2>/dev/null || echo "")
+    nginx_logs=$($COMPOSE_BIN -f "$PROJECT_ROOT/compose.yml" logs nginx --since "$time_window" 2>/dev/null || echo "")
+
+    if [[ -z "$nginx_logs" && -f "$NGINX_ACCESS_LOG" ]]; then
+        nginx_logs=$(tail -n 2000 "$NGINX_ACCESS_LOG" | grep "$(date -u +"%d/%b/%Y:%H:%M")" || true)
+    fi
 
     if [[ -z "$nginx_logs" ]]; then
         log "Нет логов nginx за указанный период"
@@ -178,7 +184,7 @@ get_statistics() {
 check_nginx_health() {
     log "Проверка здоровья nginx..."
 
-    if docker-compose -f "$PROJECT_ROOT/compose.yml" exec -T nginx nginx -t >/dev/null 2>&1; then
+    if $COMPOSE_BIN -f "$PROJECT_ROOT/compose.yml" exec -T nginx nginx -t >/dev/null 2>&1; then
         success "Конфигурация nginx корректна"
     else
         error "Ошибка в конфигурации nginx"

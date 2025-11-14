@@ -205,14 +205,39 @@ test_https_connectivity() {
     else
         warning "Локальный HTTPS недоступен"
         send_notification "Локальный HTTPS недоступен" "warning"
+        attempt_nginx_recovery "local"
     fi
 
     # Проверка доступа через домен
-    if curl -k -I "https://$DOMAIN/" --connect-timeout 5 >/dev/null 2>&1; then
+    if curl -k -I "https://$DOMAIN/health" --resolve "$DOMAIN:443:127.0.0.1" --connect-timeout 5 >/dev/null 2>&1 \
+       || curl -k -I "https://$DOMAIN/" --connect-timeout 8 >/dev/null 2>&1; then
         success "HTTPS через домен доступен"
     else
         warning "HTTPS через домен недоступен"
         send_notification "HTTPS через домен $DOMAIN недоступен" "warning"
+        attempt_nginx_recovery "domain"
+    fi
+}
+
+attempt_nginx_recovery() {
+    local scope="${1:-local}"
+    if ! command -v docker >/dev/null 2>&1; then
+        warning "Docker не доступен, пропускаю восстановление Nginx ($scope)"
+        return
+    fi
+
+    log "Попытка восстановить Nginx (${scope} scope)..."
+    if docker compose ps nginx >/dev/null 2>&1; then
+        if docker compose exec -T nginx nginx -t >/dev/null 2>&1; then
+            docker compose exec -T nginx nginx -s reload >/dev/null 2>&1 \
+              && success "Nginx перезагружен после ошибки HTTPS (${scope})" \
+              || docker compose restart nginx >/dev/null 2>&1
+        else
+            warning "nginx -t вернул ошибку, выполняю docker compose restart nginx"
+            docker compose restart nginx >/dev/null 2>&1 || warning "Не удалось перезапустить nginx автоматически"
+        fi
+    else
+        warning "Контейнер nginx не найден (docker compose ps nginx)"
     fi
 }
 

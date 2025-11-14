@@ -65,7 +65,7 @@ DOC_SHARED_INPUT_RETENTION_DAYS=1 ./scripts/maintenance/docling-shared-cleanup.s
 ### 3.2 Применение и cron
 
 ```bash
-./scripts/maintenance/docling-shared-cleanup.sh --apply \
+sudo -E ./scripts/maintenance/docling-shared-cleanup.sh --apply \
   >> logs/docling-shared-cleanup.log 2>&1
 ```
 
@@ -73,8 +73,45 @@ DOC_SHARED_INPUT_RETENTION_DAYS=1 ./scripts/maintenance/docling-shared-cleanup.s
 
 ```cron
 10 2 * * * cd /home/konstantin/Documents/augment-projects/erni-ki && \
-  ./scripts/maintenance/docling-shared-cleanup.sh --apply >> logs/docling-shared-cleanup.log 2>&1
+  sudo -E ./scripts/maintenance/docling-shared-cleanup.sh --apply >> logs/docling-shared-cleanup.log 2>&1
+
+> **Важно:** используйте `sudo -E` (с NOPASSWD в sudoers) либо запускайте cron под пользователем,
+> который владеет `data/docling`. Иначе задача снова упрётся в Permission denied.
+
+### 3.3 Systemd unit
+
+Альтернативно можно оформить systemd timer (пример для user-level сервиса):
+
+`~/.config/systemd/user/erni-ki-docling-cleanup.service`
+
 ```
+
+[Unit] Description=ERNI-KI Docling shared cleanup
+
+[Service] Type=oneshot
+WorkingDirectory=/home/konstantin/Documents/augment-projects/erni-ki
+ExecStart=/usr/bin/sudo -E ./scripts/maintenance/docling-shared-cleanup.sh
+--apply
+StandardOutput=append:/home/konstantin/Documents/augment-projects/erni-ki/logs/docling-shared-cleanup.log
+StandardError=inherit
+
+```
+
+`~/.config/systemd/user/erni-ki-docling-cleanup.timer`
+
+```
+
+[Unit] Description=Daily Docling shared cleanup
+
+[Timer] OnCalendar=_-_-\* 02:10:00 Persistent=true
+
+[Install] WantedBy=timers.target
+
+```
+
+После создания включите таймер: `systemctl --user enable --now erni-ki-docling-cleanup.timer`.
+Если сервис запускается от root/system user — задайте `User=docling-maint` (в `*.service`)
+вместо использования `sudo`.
 
 Добавьте мониторинг лога (Fluent Bit → Loki) и алерт, если в выходе появится
 `WARNING: shared volume size ... exceeds`.
@@ -96,3 +133,4 @@ DOC_SHARED_INPUT_RETENTION_DAYS=1 ./scripts/maintenance/docling-shared-cleanup.s
 - Archon документ `ERNI-KI Минимальное описание проекта` — содержит summary и
   риски.
 - Скрипт очистки: `scripts/maintenance/docling-shared-cleanup.sh`.
+```

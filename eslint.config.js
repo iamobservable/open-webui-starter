@@ -26,6 +26,7 @@ export default [
       'logs/**',
       '*.log',
       '.tmp/**',
+      'tmp/**',
       '.cache/**',
       '.venv/**', // Python virtual environment
       '**/*.go',
@@ -37,6 +38,7 @@ export default [
       '.dockerignore',
       '*.md',
       'docs/**',
+      'site/**',
       '.env*',
       '*.example',
       '.vscode/**',
