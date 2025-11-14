@@ -300,9 +300,9 @@ describe('Auth Utils', () => {
 
 ### Обновление документации
 
-- Все изменения API должны быть отражены в `docs/api-reference.md`
-- Новые функции требуют обновления `docs/user-guide.md`
-- Изменения в архитектуре - обновление `docs/architecture.md`
+- Все изменения API должны быть отражены в `docs/reference/api-reference.md`
+- Новые функции требуют обновления `docs/getting-started/user-guide.md`
+- Изменения в архитектуре - обновление `docs/architecture/architecture.md`
 
 ### Стиль документации
 

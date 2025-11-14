@@ -1,0 +1,820 @@
+# 👨‍💼 Administration Guide - ERNI-KI
+
+> **Версия:** 8.1 **Дата обновления:** 24.10.2025 **Статус:** Production Ready
+> (Система мониторинга полностью оптимизирована: 18 дашбордов Grafana (100%
+> функциональны), 27 Prometheus alert rules, автоматизированное обслуживание,
+> LiteLLM Context Engineering, Docling OCR, Context7 интеграция)
+
+## 📋 Обзор
+
+Comprehensive руководство по администрированию и мониторингу системы ERNI-KI с
+оптимизированной архитектурой 15+ сервисов, enterprise-grade производительностью
+БД и полным мониторингом стеком в production окружении.
+
+## 🚀 Критические обновления (сентябрь 2025)
+
+### 🔧 Nginx оптимизация и исправления (11 сентября 2025)
+
+#### ✅ Модульная архитектура nginx
+
+- **Дедупликация конфигурации**: Устранено 91 строка дублирующегося кода (-20%)
+- **Include файлы**: Созданы 4 переиспользуемых модуля
+  - `openwebui-common.conf` - общие настройки OpenWebUI proxy
+  - `searxng-api-common.conf` - SearXNG API конфигурация
+  - `searxng-web-common.conf` - SearXNG веб-интерфейс
+  - `websocket-common.conf` - WebSocket proxy настройки
+- **Map директивы**: Условная логика для различных портов
+- **Универсальные переменные**: `$universal_request_id` для всех include файлов
+
+#### ✅ HTTPS и CSP исправления
+
+- **Content Security Policy**: Оптимизирована для localhost и production
+- **CORS заголовки**: Расширены для разработки и production окружений
+- **SSL конфигурация**: Добавлен `ssl_verify_client off` для localhost
+- **Критические ошибки**: Устранены проблемы загрузки скриптов
+
+#### ✅ SearXNG API восстановление
+
+- **Маршрутизация исправлена**: Устранены 404 ошибки для `/api/searxng/search`
+- **RAG функциональность**: Полностью восстановлена для OpenWebUI
+- **Производительность**: Время ответа <2 секунд (соответствует SLA)
+- **Поисковые движки**: Поддержка Google, Bing, DuckDuckGo, Brave
+- **Результаты поиска**: 31+ результатов из 4500+ доступных
+
+### 🔧 Процедуры hot-reload
+
+```bash
+# Проверка конфигурации nginx
+docker exec erni-ki-nginx-1 nginx -t
+
+# Применение изменений без перезапуска системы
+docker exec erni-ki-nginx-1 nginx -s reload
+
+# Копирование обновленных include файлов
+docker cp conf/nginx/includes/ erni-ki-nginx-1:/etc/nginx/
+```
+
+## 🚀 Предыдущие оптимизации (август 2025)
+
+### 🔴 Критические оптимизации БД
+
+- ✅ **PostgreSQL 15.13**: Production конфигурация (shared_buffers: 256MB,
+  max_connections: 200)
+- ✅ **Redis 7.4.5**: Memory limits (2GB) с LRU eviction policy
+- ✅ **Cache hit ratio**: 99.76% для PostgreSQL (отличная производительность)
+- ✅ **Memory overcommit**: Исправлен warning (vm.overcommit_memory=1)
+
+#### 🛡️ Security & Performance
+
+- ✅ **Security Headers**: X-Frame-Options, X-XSS-Protection, HSTS
+- ✅ **Gzip сжатие**: 60-80% экономия трафика
+- ✅ **SearXNG кэширование**: 1000ms → 1ms (930x улучшение)
+- ✅ **PostgreSQL логирование**: Connection/disconnection/slow queries
+
+#### 📊 Enterprise мониторинг
+
+- ✅ **Database Monitoring**: PostgreSQL и Redis exporters
+- ✅ **Troubleshooting документация**: Полные процедуры диагностики
+- ✅ **Performance Tracking**: Real-time метрики производительности БД
+
+## 🔧 Ежедневное администрирование
+
+### Утренняя проверка системы
+
+```bash
+# Проверка здоровья всех сервисов
+./scripts/maintenance/health-check.sh
+
+# Быстрый аудит системы
+./scripts/maintenance/quick-audit.sh
+
+# Проверка веб-интерфейсов
+./scripts/maintenance/check-web-interfaces.sh
+```
+
+### Мониторинг ресурсов
+
+```bash
+# Мониторинг системы
+./scripts/performance/system-health-monitor.sh
+
+# Мониторинг GPU (если доступно)
+./scripts/performance/gpu-monitor.sh
+
+# Проверка использования дисков
+df -h
+```
+
+## 📊 Система мониторинга
+
+### 🔧 Healthcheck Стандартизация (19.09.2025)
+
+**Проблемы и решения:**
+
+| Exporter            | Проблема                     | Решение                                 | Статус              |
+| ------------------- | ---------------------------- | --------------------------------------- | ------------------- |
+| **Redis Exporter**  | wget недоступен в контейнере | TCP проверка `</dev/tcp/localhost/9121` | 🔧 Исправлен        |
+| **Nginx Exporter**  | wget недоступен в контейнере | TCP проверка `</dev/tcp/localhost/9113` | 🔧 Исправлен        |
+| **NVIDIA Exporter** | pgrep процесса неэффективен  | TCP проверка `</dev/tcp/localhost/9445` | ✅ Улучшен          |
+| **Ollama Exporter** | 127.0.0.1 вместо localhost   | wget localhost стандартизирован         | ✅ Стандартизирован |
+
+**Стандартные healthcheck методы:**
+
+```yaml
+# TCP проверка (для минимальных контейнеров без wget/curl)
+healthcheck:
+  test: ["CMD-SHELL", "timeout 5 sh -c '</dev/tcp/localhost/PORT' || exit 1"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 10s
+
+# HTTP проверка (для контейнеров с wget)
+healthcheck:
+  test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:PORT/metrics || exit 1"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 10s
+```
+
+### Grafana Dashboard
+
+- **URL:** https://your-domain/grafana
+- **Логин:** admin / admin (изменить при первом входе)
+
+**Основные dashboard:**
+
+- **System Overview** - общий обзор системы
+- **Docker Containers** - мониторинг контейнеров
+- **GPU Metrics** - метрики GPU (если доступно)
+- **Application Metrics** - метрики приложений
+
+### Prometheus Metrics
+
+- **URL:** https://your-domain/prometheus
+- **Основные метрики:**
+  - `container_cpu_usage_seconds_total` - использование CPU
+  - `container_memory_usage_bytes` - использование памяти
+  - `nvidia_gpu_utilization_percent` - использование GPU
+  - `ollama_models_total` - количество AI моделей
+  - `ollama_model_size_bytes` - размеры AI моделей
+  - `nginx_connections_active` - активные nginx соединения
+
+### AlertManager
+
+- **URL:** https://your-domain/alertmanager
+- **Настройка алертов:** `conf/alertmanager/alertmanager.yml`
+
+### 🤖 AI Metrics (Ollama Exporter) - ✅ Оптимизирован 19.09.2025
+
+- **URL:** http://localhost:9778/metrics
+- **Порт:** 9778
+- **Статус:** ✅ Healthy | HTTP 200
+- **Healthcheck:** wget localhost (стандартизирован с 127.0.0.1)
+- **Функции:**
+  - Мониторинг AI моделей: `ollama_models_total`
+  - Размеры моделей: `ollama_model_size_bytes{model="model_name"}`
+  - Версия Ollama: `ollama_info{version="x.x.x"}`
+  - Статус GPU использования для AI
+
+**Проверка метрик:**
+
+```bash
+# Проверка доступности ollama-exporter
+curl http://localhost:9778/metrics | grep ollama
+
+# Просмотр AI моделей (ожидается: 4 модели)
+curl -s http://localhost:9778/metrics | grep ollama_models_total
+
+# Размеры моделей
+curl -s http://localhost:9778/metrics | grep ollama_model_size_bytes
+```
+
+### 🌐 Web Analytics (Nginx Exporter) - 🔧 Исправлен 19.09.2025
+
+- **URL:** http://localhost:9113/metrics
+- **Порт:** 9113
+- **Статус:** 🔧 Running | HTTP 200
+- **Healthcheck:** TCP проверка (исправлен с wget - недоступен в контейнере)
+- **Функции:**
+  - HTTP метрики веб-сервера
+  - Активные соединения: `nginx_connections_active`
+  - Статистика запросов: `nginx_http_requests_total`
+  - Производительность upstream'ов
+
+**Проверка метрик:**
+
+```bash
+# Проверка доступности nginx-exporter
+curl http://localhost:9113/metrics | grep nginx
+
+# Активные соединения (ожидается: 70+ соединений)
+curl -s http://localhost:9113/metrics | grep nginx_connections_accepted
+
+# Проверка healthcheck (TCP)
+timeout 5 sh -c '</dev/tcp/localhost/9113' && echo "Nginx Exporter доступен"
+```
+
+### 📝 Centralized Logging (Fluent-bit + Loki)
+
+- **Fluent-bit метрики:** http://localhost:2020/api/v1/metrics/prometheus
+- **Loki:** http://localhost:3100
+- **Функции:**
+  - Сбор логов всех 29 сервисов ERNI-KI
+  - Парсинг и фильтрация логов
+  - Отправка в Loki для агрегации
+  - Интеграция с Grafana для визуализации
+  - Эффективное сжатие и retention политики
+
+**Проверка логирования:**
+
+```bash
+# Статус Fluent-bit
+curl http://localhost:2020/api/v1/metrics/prometheus | grep fluentbit
+
+# Проверка Loki
+curl http://localhost:3100/ready
+
+# Просмотр метрик Loki
+curl http://localhost:3100/metrics
+curl http://localhost:9200/_cat/indices
+```
+
+### ⏱️ RAG SLA Exporter
+
+- **URL:** http://localhost:9808/metrics
+- **Метрики:**
+  - `erni_ki_rag_response_latency_seconds` — гистограмма латентности RAG
+  - `erni_ki_rag_sources_count` — число источников в ответе
+- **Настройка:** Переменные окружения сервиса `rag-exporter` в `compose.yml`
+  (`RAG_TEST_URL`, `RAG_TEST_INTERVAL`).
+- **Grafana:** Панели на дашборде OpenWebUI (порог 2с по p95).
+
+### 📊 Database Monitoring (Production Ready)
+
+#### PostgreSQL Monitoring
+
+- **PostgreSQL Exporter**: Порт 9187
+- **Ключевые метрики**:
+  - `pg_up` - доступность PostgreSQL
+  - `pg_stat_activity_count` - активные подключения
+  - `pg_stat_database_blks_hit` / `pg_stat_database_blks_read` - cache hit ratio
+  - `pg_locks_count` - количество блокировок
+
+**Проверка метрик PostgreSQL:**
+
+```bash
+# Проверка доступности PostgreSQL exporter
+curl -s http://localhost:9187/metrics | grep pg_up
+
+# Cache hit ratio (должен быть >95%)
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "
+SELECT round(sum(heap_blks_hit) / (sum(heap_blks_hit) + sum(heap_blks_read)) * 100, 2) as cache_hit_ratio_percent
+FROM pg_statio_user_tables;"
+
+# Активные подключения
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "SELECT count(*) FROM pg_stat_activity;"
+
+# Размер БД
+docker exec erni-ki-db-1 psql -U postgres -d openwebui -c "SELECT pg_size_pretty(pg_database_size('openwebui'));"
+```
+
+#### Redis Monitoring - 🔧 Исправлен 19.09.2025
+
+- **Redis Exporter**: Порт 9121
+- **Статус:** 🔧 Running | HTTP 200
+- **Healthcheck:** TCP проверка (исправлен с wget - недоступен в контейнере)
+- **Проблема:** Redis аутентификация (не критично для HTTP метрик)
+- **Ключевые метрики**:
+  - `redis_up` - доступность Redis (показывает 0 из-за аутентификации)
+  - `redis_memory_used_bytes` - использование памяти
+  - `redis_connected_clients` - подключенные клиенты
+  - `redis_keyspace_hits_total` / `redis_keyspace_misses_total` - hit ratio
+
+**Проверка метрик Redis:**
+
+```bash
+# Проверка доступности Redis exporter (HTTP эндпоинт работает)
+curl -s http://localhost:9121/metrics | head -5
+
+# Проверка healthcheck (TCP)
+timeout 5 sh -c '</dev/tcp/localhost/9121' && echo "Redis Exporter доступен"
+
+# Прямая проверка Redis (с паролем)
+docker exec erni-ki-redis-1 redis-cli -a ErniKiRedisSecurePassword2024 INFO memory | grep used_memory_human
+
+# Hit ratio (должен быть >90%)
+docker exec erni-ki-redis-1 redis-cli -a ErniKiRedisSecurePassword2024 INFO stats | grep keyspace
+
+# Количество ключей
+docker exec erni-ki-redis-1 redis-cli -a ErniKiRedisSecurePassword2024 DBSIZE
+```
+
+#### Database Performance Alerts
+
+**Критические алерты (требуют немедленного внимания):**
+
+- PostgreSQL недоступен более 30 секунд
+- Cache hit ratio PostgreSQL < 95%
+- Redis недоступен более 30 секунд
+- Использование памяти Redis > 80% от лимита
+
+**Предупреждающие алерты:**
+
+- Активные подключения PostgreSQL > 80% от max_connections
+- Медленные запросы PostgreSQL > 100ms
+- Redis evicted keys > 0
+
+## 💾 Управление backup
+
+### ✅ Новые возможности (август 2025)
+
+**Backrest API endpoints настроены и протестированы:**
+
+- `/v1.Backrest/Backup` - создание резервной копии
+- `/v1.Backrest/GetOperations` - получение истории операций
+
+### Ежедневные backup
+
+```bash
+# Проверка статуса backup
+./scripts/backup/check-local-backup.sh
+
+# Ручной запуск backup через API
+curl -X POST "http://localhost:9898/v1.Backrest/Backup" \
+  -H "Content-Type: application/json" \
+  -d '{"value": "daily"}'
+
+# Проверка истории операций
+curl -X POST "http://localhost:9898/v1.Backrest/GetOperations" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+
+# Традиционный способ через скрипт
+./scripts/backup/backrest-management.sh backup
+```
+
+### Восстановление из backup
+
+```bash
+# Список доступных backup
+./scripts/backup/backrest-management.sh list
+
+# Восстановление конкретного backup
+./scripts/backup/backrest-management.sh restore --date=2025-08-22
+
+# Тестовое восстановление
+./scripts/backup/backrest-management.sh test-restore
+```
+
+### Snapshot конфигураций
+
+```bash
+# Создание snapshot перед обновлениями
+BACKUP_DIR=".config-backup/pre-update-$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$BACKUP_DIR"
+cp -r env/ conf/ compose.yml "$BACKUP_DIR/"
+```
+
+## 🔄 Управление сервисами
+
+### Основные команды Docker Compose
+
+```bash
+# Просмотр статуса всех сервисов
+docker compose ps
+
+# Просмотр логов
+docker compose logs -f [service-name]
+
+# Перезапуск сервиса
+docker compose restart [service-name]
+
+# Обновление сервиса
+docker compose pull [service-name]
+docker compose up -d [service-name]
+```
+
+### Управление Ollama
+
+```bash
+# Просмотр доступных моделей
+docker compose exec ollama ollama list
+
+# Загрузка новой модели
+docker compose exec ollama ollama pull llama2
+
+# Удаление модели
+docker compose exec ollama ollama rm model-name
+```
+
+### Управление PostgreSQL
+
+```bash
+# Подключение к базе данных
+docker compose exec db psql -U postgres -d openwebui
+
+# Создание backup базы данных
+docker compose exec db pg_dump -U postgres openwebui > backup.sql
+
+# Восстановление базы данных
+docker compose exec -T postgres psql -U postgres openwebui < backup.sql
+```
+
+## 📝 Управление логами
+
+### Просмотр логов
+
+```bash
+# Логи всех сервисов
+docker compose logs -f
+
+# Логи конкретного сервиса
+docker compose logs -f openwebui
+
+# Логи с фильтрацией по времени
+docker compose logs --since="1h" --until="30m"
+```
+
+### Ротация логов
+
+```bash
+# Автоматическая ротация логов
+./scripts/maintenance/log-rotation-manager.sh
+
+# Настройка ротации логов
+./scripts/setup/setup-log-rotation.sh
+
+# Очистка старых логов
+./scripts/security/rotate-logs.sh
+```
+
+## 🔒 Управление безопасностью
+
+### Мониторинг безопасности
+
+```bash
+# Проверка безопасности системы
+./scripts/security/security-monitor.sh
+
+# Аудит конфигураций безопасности
+./scripts/security/security-hardening.sh --audit
+
+# Ротация секретов
+./scripts/security/rotate-secrets.sh
+```
+
+### Управление SSL сертификатами
+
+```bash
+# Проверка срока действия сертификатов
+openssl x509 -in conf/ssl/cert.pem -text -noout | grep "Not After"
+
+# Обновление сертификатов
+./conf/ssl/generate-ssl-certs.sh
+
+# Перезагрузка nginx после обновления
+docker compose restart nginx
+```
+
+## ⚡ Оптимизация производительности
+
+### Мониторинг производительности
+
+```bash
+# Быстрый тест производительности
+./scripts/performance/quick-performance-test.sh
+
+# Тест производительности GPU
+./scripts/performance/gpu-performance-test.sh
+
+# Нагрузочное тестирование
+./scripts/performance/load-testing.sh
+```
+
+### Оптимизация ресурсов
+
+```bash
+# Оптимизация сети
+./scripts/maintenance/optimize-network.sh
+
+# Оптимизация SearXNG
+./scripts/maintenance/optimize-searxng.sh
+
+# Анализ использования ресурсов
+./scripts/performance/hardware-analysis.sh
+```
+
+## 🔧 Обслуживание системы
+
+### 🤖 Автоматизированное обслуживание (добавлено 24.10.2025)
+
+ERNI-KI использует полностью автоматизированное обслуживание для поддержания
+оптимальной производительности:
+
+#### PostgreSQL VACUUM
+
+- **Расписание:** Каждое воскресенье в 3:00
+- **Скрипт:** `/tmp/pg_vacuum.sh`
+- **Лог:** `/tmp/pg_vacuum.log`
+- **Назначение:** Оптимизация БД, освобождение дискового пространства
+
+```bash
+# Проверка последнего выполнения
+grep "completed successfully" /tmp/pg_vacuum.log | tail -n 1
+
+# Ручной запуск
+/tmp/pg_vacuum.sh
+```
+
+#### Docker Cleanup
+
+- **Расписание:** Каждое воскресенье в 4:00
+- **Скрипт:** `/tmp/docker-cleanup.sh`
+- **Лог:** `/tmp/docker-cleanup.log`
+- **Назначение:** Очистка неиспользуемых образов (>7 дней), volumes, build cache
+
+```bash
+# Проверка последнего выполнения
+grep "cleanup completed" /tmp/docker-cleanup.log | tail -n 1
+
+# Ручной запуск
+/tmp/docker-cleanup.sh
+```
+
+#### Log Rotation
+
+- **Конфигурация:** `compose.yml` (x-critical-logging)
+- **Параметры:** max-size=10m, max-file=3, compress=true
+- **Назначение:** Автоматическая ротация логов контейнеров
+
+#### Мониторинг автоматизации
+
+```bash
+# Проверка cron jobs
+crontab -l | grep -i erni-ki
+
+# Проверка статуса автоматизации
+systemctl status cron
+journalctl -u cron --since "1 day ago"
+```
+
+**📚 Подробная документация:**
+[Automated Maintenance Guide](automated-maintenance-guide.md)
+
+### Еженедельные задачи
+
+```bash
+# Полный аудит системы
+./scripts/maintenance/comprehensive-audit.sh
+
+# Очистка неиспользуемых Docker образов (автоматизировано)
+docker system prune -f
+
+# Проверка обновлений
+docker compose pull
+```
+
+### Ежемесячные задачи
+
+```bash
+# Обновление системы
+sudo apt update && sudo apt upgrade
+
+# Проверка дискового пространства
+./scripts/performance/hardware-analysis.sh
+
+# Архивирование старых логов
+./scripts/maintenance/log-rotation-manager.sh --archive
+```
+
+## 🚨 Аварийное восстановление
+
+### Автоматическое восстановление
+
+```bash
+# Запуск автоматического восстановления
+./scripts/troubleshooting/automated-recovery.sh
+
+# Исправление критических проблем
+./scripts/troubleshooting/fix-critical-issues.sh
+
+# Исправление нездоровых сервисов
+./scripts/troubleshooting/fix-unhealthy-services.sh
+```
+
+### Ручное восстановление
+
+```bash
+# Корректный перезапуск системы
+./scripts/maintenance/graceful-restart.sh
+
+# Восстановление из backup
+./scripts/backup/backrest-management.sh restore
+
+# Проверка целостности данных
+./scripts/troubleshooting/test-healthcheck.sh
+```
+
+## 📈 Масштабирование
+
+### Горизонтальное масштабирование
+
+```bash
+# Добавление дополнительных worker'ов
+docker compose up -d --scale openwebui=3
+
+# Настройка load balancer
+nano conf/nginx/nginx.conf
+```
+
+### Вертикальное масштабирование
+
+```bash
+# Увеличение ресурсов для сервисов
+nano compose.yml
+# Изменить memory и cpu limits
+
+# Применение изменений
+docker compose up -d
+```
+
+## 🔍 Диагностика проблем
+
+### Общая диагностика
+
+```bash
+# Проверка статуса всех сервисов
+docker compose ps
+
+# Проверка использования ресурсов
+docker stats
+
+# Проверка сетевых подключений
+docker network ls
+```
+
+### Специфичная диагностика
+
+```bash
+# Диагностика Ollama
+./scripts/troubleshooting/test-healthcheck.sh
+
+# Диагностика SearXNG
+./scripts/troubleshooting/test-searxng-integration.sh
+
+# Диагностика сети
+./scripts/troubleshooting/test-network-simple.sh
+```
+
+### 🌐 Nginx и API диагностика (обновлено v7.0)
+
+#### Проверка nginx конфигурации
+
+```bash
+# Проверка синтаксиса конфигурации
+docker exec erni-ki-nginx-1 nginx -t
+
+# Просмотр полной конфигурации
+docker exec erni-ki-nginx-1 nginx -T
+
+# Проверка include файлов
+docker exec erni-ki-nginx-1 ls -la /etc/nginx/includes/
+docker exec erni-ki-nginx-1 cat /etc/nginx/includes/searxng-api-common.conf
+```
+
+#### Тестирование API эндпоинтов
+
+```bash
+# Проверка health endpoint
+curl -v http://localhost:8080/health
+# Ожидаемый ответ: {"status":true}
+
+# Тестирование SearXNG API (исправлено)
+curl -v "http://localhost:8080/api/searxng/search?q=test&format=json"
+# Ожидаемый ответ: JSON с результатами поиска
+
+# Проверка конфигурации системы
+curl -v http://localhost:8080/api/config
+# Ожидаемый ответ: JSON с настройками OpenWebUI
+```
+
+#### Диагностика WebSocket соединений
+
+```bash
+# Проверка WebSocket заголовков в логах nginx
+docker logs --tail=20 erni-ki-nginx-1 | grep -i upgrade
+
+# Тестирование WebSocket соединения
+wscat -c ws://localhost:8080/ws
+```
+
+#### Решение частых проблем
+
+**1. 404 ошибки на API эндпоинтах:**
+
+```bash
+# Проверить include файлы в контейнере
+docker exec erni-ki-nginx-1 ls -la /etc/nginx/includes/
+
+# Скопировать обновленные include файлы
+docker cp conf/nginx/includes/ erni-ki-nginx-1:/etc/nginx/
+
+# Применить изменения
+docker exec erni-ki-nginx-1 nginx -s reload
+```
+
+**2. SSL/HTTPS проблемы:**
+
+```bash
+# Проверить SSL сертификаты
+docker exec erni-ki-nginx-1 openssl x509 -in /etc/nginx/ssl/nginx-fullchain.crt -text -noout
+
+# Проверить CSP заголовки
+curl -I https://localhost:443/ | grep -i content-security
+```
+
+**3. SearXNG API не работает:**
+
+```bash
+# Проверить upstream статус через публичный API маршрут
+docker exec erni-ki-nginx-1 curl -s http://localhost/api/searxng/search?q=test&format=json
+
+# Проверить переменную $universal_request_id
+docker exec erni-ki-nginx-1 grep "universal_request_id" /etc/nginx/nginx.conf
+```
+
+## 📞 Контакты и поддержка
+
+### Внутренние ресурсы
+
+- **Мониторинг:** https://your-domain/grafana
+- **Логи:** https://your-domain/grafana (Explore → Loki)
+- **Метрики:** https://your-domain/prometheus
+
+### Внешние ресурсы
+
+- **📖 Документация:** [docs/operations/troubleshooting.md](troubleshooting.md)
+- **🔧 Database Troubleshooting:**
+  [docs/data/database-troubleshooting.md](database-troubleshooting.md)
+- **📊 Database Monitoring:**
+  [docs/data/database-monitoring-plan.md](database-monitoring-plan.md)
+- **⚡ Production Optimizations:**
+  [docs/data/database-production-optimizations.md](database-production-optimizations.md)
+- **🐛 Issues:** [GitHub Issues](https://github.com/DIZ-admin/erni-ki/issues)
+- **💬 Discussions:**
+  [GitHub Discussions](https://github.com/DIZ-admin/erni-ki/discussions)
+
+## ✅ Процедуры валидации системы
+
+### Критерии успеха после обновлений
+
+```bash
+# 1. Проверка статуса всех сервисов
+docker ps --format "table {{.Names}}\t{{.Status}}" | grep -E "(healthy|Up)" | wc -l
+# Ожидаемый результат: 29+ сервисов
+
+# 2. Проверка Cloudflare туннеля (отсутствие DNS ошибок)
+docker logs --since=5m erni-ki-cloudflared-1 2>&1 | grep -E "(ERROR|ERR)" | wc -l
+# Ожидаемый результат: 0
+
+# 3. Проверка SearXNG API производительности
+time curl -s "http://localhost:8080/api/searxng/search?q=test&format=json" | jq '.results | length'
+# Ожидаемый результат: <2s, 40+ результатов
+
+# 4. Проверка Backrest API
+curl -X POST "http://localhost:9898/v1.Backrest/GetOperations" -H "Content-Type: application/json" -d '{}' -s | jq 'has("operations")'
+# Ожидаемый результат: true или false (API отвечает)
+
+# 5. Проверка GPU Ollama
+docker exec erni-ki-ollama-1 nvidia-smi -L | grep -c "GPU"
+# Ожидаемый результат: 1
+
+# 6. Проверка OpenWebUI доступности
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health
+# Ожидаемый результат: 200
+```
+
+### Rollback процедуры
+
+```bash
+# 1. Остановка сервисов
+docker compose down
+
+# 2. Восстановление конфигураций из snapshot
+cp -r .config-backup/pre-update-YYYYMMDD-HHMMSS/* .
+
+# 3. Запуск предыдущей версии
+docker compose up -d
+
+# 4. Проверка критических сервисов
+./scripts/maintenance/health-check.sh
+
+# Время выполнения: 5-10 минут
+```
+
+---
+
+**📝 Примечание:** Данное руководство актуализировано для архитектуры 29
+сервисов ERNI-KI версии 5.1 (август 2025).

@@ -90,9 +90,9 @@ docker compose ps
   - ✅ Статус: Healthy
 - **Model Context & API** — документированное взаимодействие между LiteLLM
   (Context Engineering), MCP и REST API:
-  - `docs/api-reference.md` описывает JWT, chatchats, модели и
+  - `docs/reference/api-reference.md` описывает JWT, chatchats, модели и
     streaming-эндпоинты
-  - `docs/operations/handbook.md` и `docs/service-inventory.md` содержат SLA по
+  - `docs/operations/operations-handbook.md` и `docs/architecture/service-inventory.md` содержат SLA по
     RAG и Model Context Protocol
   - Поддерживается `LiteLLM v1.77.3-stable` и `MCP Server` для расширенного
     routing контекста
@@ -228,7 +228,7 @@ ERNI-KI состоит из **30 микросервисов**, организо�
     ↓ ✅ Автообновления, GPU поддержка, селективные обновления
 ```
 
-**Подробная архитектура:** [docs/architecture.md](docs/architecture.md)
+**Подробная архитектура:** [docs/architecture/architecture.md](docs/architecture/architecture.md)
 
 ## 📋 Системные требования
 
@@ -255,18 +255,17 @@ ERNI-KI состоит из **30 микросервисов**, организо�
 
 | Документ                                                                 | Описание                                  |
 | ------------------------------------------------------------------------ | ----------------------------------------- |
-| [📦 Installation Guide](docs/installation.md)                            | Детальная установка и настройка           |
-| [🏗️ Architecture](docs/architecture.md)                                  | Архитектура системы с диаграммами         |
-| [👨‍💼 Admin Guide](docs/admin-guide.md)                                    | Администрирование и мониторинг            |
-| [👤 User Guide](docs/user-guide.md)                                      | Руководство пользователя                  |
-| [🔧 Database Troubleshooting](docs/database-troubleshooting.md)          | **🆕** Решение проблем PostgreSQL и Redis |
-| [📊 Database Monitoring](docs/database-monitoring-plan.md)               | **🆕** План мониторинга БД                |
-| [⚡ Production Optimizations](docs/database-production-optimizations.md) | **🆕** Оптимизации для production         |
+| [📦 Installation Guide](docs/getting-started/installation.md)                            | Детальная установка и настройка           |
+| [🏗️ Architecture](docs/architecture/architecture.md)                                  | Архитектура системы с диаграммами         |
+| [👨‍💼 Admin Guide](docs/operations/admin-guide.md)                                    | Администрирование и мониторинг            |
+| [👤 User Guide](docs/getting-started/user-guide.md)                                      | Руководство пользователя                  |
+| [🔧 Database Troubleshooting](docs/data/database-troubleshooting.md)          | **🆕** Решение проблем PostgreSQL и Redis |
+| [📊 Database Monitoring](docs/data/database-monitoring-plan.md)               | **🆕** План мониторинга БД                |
+| [⚡ Production Optimizations](docs/data/database-production-optimizations.md) | **🆕** Оптимизации для production         |
 
 ### Языковые версии
 
-- 🇷🇺 **Русский:** [docs/ru/](docs/ru/)
-- 🇩🇪 **Deutsch:** [docs/de/](docs/de/)
+- 🇩🇪 **Deutsch:** [docs/locales/de/](docs/locales/de/)
 
 ## 🚀 Production Deployment
 
@@ -303,7 +302,7 @@ docker compose up -d
 - 🔧 **Скрипт установки:**
   `scripts/infrastructure/security/setup-letsencrypt-dns01-production.sh`
 
-**Подробное руководство:** [docs/installation.md](docs/installation.md)
+**Подробное руководство:** [docs/getting-started/installation.md](docs/getting-started/installation.md)
 
 ## 🔧 Основные команды
 
@@ -436,7 +435,7 @@ curl -s http://localhost:11434/api/tags | jq '.models[].name'
 curl -s "http://localhost:8080/api/searxng/search?q=test&format=json" | jq '.results | length'
 ```
 
-**Подробное руководство:** [docs/troubleshooting.md](docs/troubleshooting.md)
+**Подробное руководство:** [docs/operations/troubleshooting.md](docs/operations/troubleshooting.md)
 
 ## 📄 Лицензия
 
@@ -449,7 +448,7 @@ curl -s "http://localhost:8080/api/searxng/search?q=test&format=json" | jq '.res
 - **🐛 Issues:** [GitHub Issues](https://github.com/DIZ-admin/erni-ki/issues)
 - **💬 Discussions:**
   [GitHub Discussions](https://github.com/DIZ-admin/erni-ki/discussions)
-- **🔧 Troubleshooting:** [docs/troubleshooting.md](docs/troubleshooting.md)
+- **🔧 Troubleshooting:** [docs/operations/troubleshooting.md](docs/operations/troubleshooting.md)
 
 ---
 

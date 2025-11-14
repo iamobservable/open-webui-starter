@@ -23,7 +23,7 @@ ERNI-KI — корпоративная AI-платформа на базе OpenW
 
 | Область                     | Показатель                                                                                                   |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Здоровье сервисов**       | 30/30 контейнеров healthy (см. [`README.md`](../README.md) и [`services-overview.md`](services-overview.md)) |
+| **Здоровье сервисов**       | 30/30 контейнеров healthy (см. [`README.md`](../README.md) и [`services-overview.md`](architecture/services-overview.md)) |
 | **Мониторинг**              | Prometheus v3.0.1, Grafana v11.6.6, Alertmanager v0.28.0, Loki v3.5.5, Fluent Bit v3.2.0                     |
 | **GPU & AI стэк**           | OpenWebUI v0.6.34, Ollama 0.12.3, LiteLLM v1.77.3-stable, MCP Server, RAG через SearXNG                      |
 | **Автоматизация**           | Cron: PostgreSQL VACUUM (вс. 03:00), Docker cleanup (вс. 04:00), Backrest бэкапы (ежедневно 01:30)           |
@@ -32,8 +32,8 @@ ERNI-KI — корпоративная AI-платформа на базе OpenW
 
 ## 3. Архитектура и ключевые компоненты
 
-> Детализация: [`architecture.md`](architecture.md),
-> [`service-inventory.md`](service-inventory.md)
+> Детализация: [`architecture.md`](architecture/architecture.md),
+> [`service-inventory.md`](architecture/service-inventory.md)
 
 ### 3.1 AI & ML слой
 
@@ -65,15 +65,16 @@ ERNI-KI — корпоративная AI-платформа на базе OpenW
 - **Grafana** — 18 дашбордов (GPU, LLM, DB, Security).
 - **Loki + Fluent Bit** — централизованные логи.
 - **Automation scripts** — см.
-  [`automated-maintenance-guide.md`](automated-maintenance-guide.md).
+  [`automated-maintenance-guide.md`](operations/automated-maintenance-guide.md).
 
 ## 4. Среды и деплоймент
 
 - **Production** — Docker Compose v2, актуальные конфигурации в `compose.yml` и
   `env/*.env`. Доступ: Cloudflare Zero Trust + Nginx (443/8080).
   Инфраструктурные детали —
-  [`external-access-setup.md`](external-access-setup.md).
-- **Локальная среда** — инструкция в [`installation.md`](installation.md):
+  [`external-access-setup.md`](getting-started/external-access-setup.md).
+- **Локальная среда** — инструкция в
+  [`installation.md`](getting-started/installation.md):
   копирование `env/*.example`, запуск `docker compose up -d`, проверка
   `docker compose ps`.
 - **Automation & CI** — GitHub Actions (CI, security), Watchtower selective
@@ -82,13 +83,13 @@ ERNI-KI — корпоративная AI-платформа на базе OpenW
 ## 5. Операции и наблюдаемость
 
 - **Operations Handbook**: роли, SLA, реакция на алерты —
-  [`operations/handbook.md`](operations/handbook.md).
+  [`operations-handbook.md`](operations/operations-handbook.md).
 - **Monitoring Guide**: Prometheus targets, health-checks, экспортёры —
-  [`monitoring-guide.md`](monitoring-guide.md).
+  [`monitoring-guide.md`](operations/monitoring-guide.md).
 - **Runbooks**: рестарты, бэкапы, Docling cleanup, troubleshooting (директория
-  [`runbooks/`](runbooks/)).
+  [`runbooks/`](operations/runbooks/)).
 - **Diagnostics**: методология и чеклисты —
-  [`diagnostics/`](diagnostics/README.md).
+  [`diagnostics/`](operations/diagnostics/README.md).
 
 Процесс реагирования:
 `docker compose ps → docker compose logs → curl /metrics → Grafana dashboards`,
@@ -117,22 +118,22 @@ ERNI-KI — корпоративная AI-платформа на базе OpenW
 
 ## 8. Навигатор по документации
 
-- **Архитектура:** [`architecture.md`](architecture.md)
-- **Каталог сервисов:** [`service-inventory.md`](service-inventory.md),
-  [`services-overview.md`](services-overview.md)
-- **Быстрый старт и конфигурация:** [`installation.md`](installation.md),
-  [`configuration-guide.md`](configuration-guide.md),
-  [`external-access-setup.md`](external-access-setup.md)
-- **Операции и мониторинг:** [`operations/handbook.md`](operations/handbook.md),
-  [`monitoring-guide.md`](monitoring-guide.md),
-  [`automated-maintenance-guide.md`](automated-maintenance-guide.md)
-- **Runbooks и troubleshooting:** [`runbooks/`](runbooks/),
-  [`troubleshooting.md`](troubleshooting.md)
+- **Архитектура:** [`architecture.md`](architecture/architecture.md)
+- **Каталог сервисов:** [`service-inventory.md`](architecture/service-inventory.md),
+  [`services-overview.md`](architecture/services-overview.md)
+- **Быстрый старт и конфигурация:** [`installation.md`](getting-started/installation.md),
+  [`configuration-guide.md`](getting-started/configuration-guide.md),
+  [`external-access-setup.md`](getting-started/external-access-setup.md)
+- **Операции и мониторинг:** [`operations-handbook.md`](operations/operations-handbook.md),
+  [`monitoring-guide.md`](operations/monitoring-guide.md),
+  [`automated-maintenance-guide.md`](operations/automated-maintenance-guide.md)
+- **Runbooks и troubleshooting:** [`runbooks/`](operations/runbooks/),
+  [`troubleshooting.md`](operations/troubleshooting.md)
 - **Безопасность:**
   [`security/security-policy.md`](security/security-policy.md),
-  [`log-audit.md`](log-audit.md)
-- **API и интеграции:** [`api-reference.md`](api-reference.md),
-  [`mcpo-integration-guide.md`](mcpo-integration-guide.md)
+  [`log-audit.md`](security/log-audit.md)
+- **API и интеграции:** [`api-reference.md`](reference/api-reference.md),
+  [`mcpo-integration-guide.md`](reference/mcpo-integration-guide.md)
 
 > Держите Archon tasks синхронизированными с этими материалами: статусные
 > заметки, runbook-результаты и обновления документации должны фиксироваться в

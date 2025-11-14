@@ -264,7 +264,7 @@ gh secret set SECRET_NAME --env production --body "value"
 
 Для вопросов и проблем:
 
-1. Проверьте [полную документацию](../../../docs/github-environments-setup.md)
+1. Проверьте [полную документацию](../../../docs/reference/github-environments-setup.md)
 2. Создайте issue в репозитории
 3. Обратитесь к Tech Lead команды
 

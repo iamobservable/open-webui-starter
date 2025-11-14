@@ -15,11 +15,11 @@ MCP, окружённая полным стеком наблюдаемости, 
 
 ## Быстрые переходы
 
-- **Архитектура и сервисы** — `architecture.md`, `service-inventory.md`,
-  `services-overview.md`.
-- **Операции** — `operations/handbook.md`, `monitoring-guide.md`,
-  `automated-maintenance-guide.md`, `docs/runbooks/`.
-- **ML и API** — `api-reference.md`, `README.md` (вне MkDocs, но всегда актуален
+- **Архитектура и сервисы** — `architecture/architecture.md`,
+  `architecture/service-inventory.md`, `architecture/services-overview.md`.
+- **Операции** — `operations/operations-handbook.md`, `operations/monitoring-guide.md`,
+  `operations/automated-maintenance-guide.md`, `operations/runbooks/`.
+- **ML и API** — `reference/api-reference.md`, `README.md` (вне MkDocs, но всегда актуален
   в корне репозитория).
 - **Безопасность** — `security/security-policy.md` и related compliance notes.
 

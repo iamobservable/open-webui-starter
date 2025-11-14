@@ -199,7 +199,7 @@ fi
 
 echo -e "\n${BLUE}📚 Documentation${NC}"
 echo "=================="
-echo "📖 Full integration guide: docs/mcpo-integration-guide.md"
+echo "📖 Full integration guide: docs/reference/mcpo-integration-guide.md"
 echo "🌐 MCPO Swagger UI: http://localhost:8000/docs"
 echo "🔧 Test individual tools: http://localhost:8000/{server}/docs"
 

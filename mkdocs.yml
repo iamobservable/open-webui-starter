@@ -157,102 +157,101 @@ extra:
 # Структура навигации
 nav:
   - Главная: index.md
+  - Сводка: overview.md
   - Быстрый старт:
-      - Установка: installation.md
-      - Конфигурация: configuration-guide.md
-      - Внешний доступ: external-access-setup.md
+      - Установка: getting-started/installation.md
+      - Конфигурация: getting-started/configuration-guide.md
+      - Пользовательское руководство: getting-started/user-guide.md
+      - Внешний доступ: getting-started/external-access-setup.md
+      - Local network DNS: getting-started/local-network-dns-setup.md
+      - DNSMASQ setup: getting-started/dnsmasq-setup-instructions.md
+      - Port forwarding: getting-started/port-forwarding-setup.md
   - Архитектура:
-      - Архитектура системы: architecture.md
-      - Сервисный каталог: service-inventory.md
-      - Статус сервисов: services-overview.md
+      - Архитектура системы: architecture/architecture.md
+      - Сервисный каталог: architecture/service-inventory.md
+      - Статус сервисов: architecture/services-overview.md
+      - Nginx configuration: architecture/nginx-configuration.md
   - Операции:
-      - Operations Handbook: operations/handbook.md
-      - Monitoring Guide: monitoring-guide.md
-      - Automation & Maintenance: automated-maintenance-guide.md
+      - Operations Handbook: operations/operations-handbook.md
+      - Admin Guide: operations/admin-guide.md
+      - Monitoring:
+          - Monitoring Guide: operations/monitoring-guide.md
+          - Monitoring Playbook: operations/monitoring.md
+          - Monitoring Troubleshooting: operations/monitoring-troubleshooting-v2.md
+          - Grafana dashboards: operations/grafana-dashboards-guide.md
+          - Prometheus alerts guide: operations/prometheus-alerts-guide.md
+          - Prometheus queries reference: operations/prometheus-queries-reference.md
+      - Automation:
+          - Automated maintenance: operations/automated-maintenance-guide.md
+          - Backup Guide: operations/backup-guide.md
+          - Docker cleanup: operations/docker-cleanup-guide.md
+          - Docker log rotation: operations/docker-log-rotation.md
+          - Image upgrade checklist: operations/image-upgrade-checklist.md
+      - RAG & Search:
+          - RAG monitoring: operations/rag-monitoring.md
+          - SearXNG Redis troubleshooting: operations/searxng-redis-issue-analysis.md
       - Runbooks:
-          - Backup & Restore: runbooks/backup-restore-procedures.md
-          - Configuration changes: runbooks/configuration-change-process.md
-          - Docling shared volume: runbooks/docling-shared-volume.md
-          - Service restart: runbooks/service-restart-procedures.md
-          - Troubleshooting: runbooks/troubleshooting-guide.md
-  - Руководства:
-      - Admin Guide: admin-guide.md
-      - Development: development.md
-      - Пользовательское руководство: user-guide.md
+          - Backup & Restore: operations/runbooks/backup-restore-procedures.md
+          - Configuration changes: operations/runbooks/configuration-change-process.md
+          - Docling shared volume: operations/runbooks/docling-shared-volume.md
+          - Service restart: operations/runbooks/service-restart-procedures.md
+          - Troubleshooting: operations/runbooks/troubleshooting-guide.md
       - Diagnostics:
-          - Diagnostics Overview: diagnostics/README.md
-          - Diagnostic methodology: diagnostics/erni-ki-diagnostic-methodology.md
-  - Справочник:
-      - Log audit: log-audit.md
-      - Image upgrade checklist: image-upgrade-checklist.md
-      - Docker cleanup: docker-cleanup-guide.md
-      - Docker log rotation: docker-log-rotation.md
-      - Grafana dashboards: grafana-dashboards-guide.md
-      - Redis monitoring: redis-monitoring-grafana.md
-      - Redis operations: redis-operations-guide.md
+          - Diagnostics Overview: operations/diagnostics/README.md
+          - Diagnostic methodology: operations/diagnostics/erni-ki-diagnostic-methodology.md
+      - Troubleshooting guide: operations/troubleshooting.md
+  - Data & Storage:
+      - Database monitoring plan: data/database-monitoring-plan.md
+      - Database optimizations: data/database-production-optimizations.md
+      - Database troubleshooting: data/database-troubleshooting.md
+      - Redis monitoring: data/redis-monitoring-grafana.md
+      - Redis operations: data/redis-operations-guide.md
+      - VLLM resource optimization: data/vllm-resource-optimization.md
   - Безопасность:
       - Security policy: security/security-policy.md
-  - API:
-      - API reference: api-reference.md
-  - Инфраструктурные инструкции:
-      - DNSMASQ setup: dnsmasq-setup-instructions.md
-      - Local network DNS: local-network-dns-setup.md
-      - Port forwarding: port-forwarding-setup.md
-      - Nginx configuration: nginx-configuration.md
-      - GitHub environments: github-environments-setup.md
-      - MCPO integration: mcpo-integration-guide.md
-      - Pre-commit hooks: pre-commit-hooks.md
-  - Monitoring extras:
-      - Prometheus alerts guide: prometheus-alerts-guide.md
-      - Prometheus queries reference: prometheus-queries-reference.md
-      - RAG monitoring: rag-monitoring.md
-      - Redis monitoring Grafana: redis-monitoring-grafana.md
-      - SearXNG Redis troubleshooting: searxng-redis-issue-analysis.md
-      - VLLM resource optimization: vllm-resource-optimization.md
-  - Отчёты:
-      - Best practices audit (2025-10-20): reports/best-practices-audit-2025-10-20.md
-      - Comprehensive project audit (2025-10-17): reports/comprehensive-project-audit-2025-10-17.md
-      - Comprehensive project audit part 2 (2025-10-17): reports/comprehensive-project-audit-2025-10-17-part2.md
-      - Documentation audit (2025-10-24): reports/documentation-audit-2025-10-24.md
-      - Documentation cleanup audit (2025-10-24): reports/documentation-cleanup-audit-2025-10-24.md
-      - Documentation cleanup summary (2025-10-24): reports/documentation-cleanup-summary-2025-10-24.md
-      - Docx upload fix (2025-10-30): reports/docx-upload-fix-20251030.md
-      - Log analysis correction (2025-11-04): reports/log-analysis-correction-2025-11-04.md
-      - Phase 2 completion (2025-11-04): reports/phase-2-completion-2025-11-04.md
-      - Phase 1 critical fixes report (2025-10-30): reports/phase1-critical-fixes-report-20251030.md
-      - Project audit report (2025-10-30): reports/project-audit-report-20251030.md
-      - RAG system diagnostic report (2025-10-30): reports/rag-system-diagnostic-report-20251030.md
-      - RAG vector search test report (2025-10-30): reports/rag-vector-search-test-report-20251030.md
-      - Comprehensive audit 2025-10-14: reports/comprehensive-audit-2025-10-14.md
-      - System repair 2025-10-16: reports/system-repair-2025-10-16.md
-      - Changelog: CHANGELOG.md
-      - Full server diagnostics (2025-11-04): reports/full-server-diagnostics-2025-11-04.md
-  - Немецкая документация:
-      - Übersicht: de/index.md
-      - Admin Guide: de/admin-guide.md
-      - Architektur: de/architecture.md
-      - Konfigurationsübersicht: de/configuration-guide.md
-      - Installation: de/installation-guide.md
-      - Monitoring: de/monitoring-guide.md
-      - Nginx: de/nginx-konfiguration.md
-      - Service Überblick: de/services-overview.md
-      - Benutzerhandbuch: de/user-guide.md
-      - Monitoring (compact): de/monitoring.md
-      - Backup Guide: de/backup-guide.md
-      - Troubleshooting: de/troubleshooting.md
-  - Дополнительно:
-      - Monitoring troubleshooting v2: monitoring-troubleshooting-v2.md
-      - Monitoring overview: monitoring.md
-      - Troubleshooting index: troubleshooting.md
-      - Backup guide: backup-guide.md
-      - Database troubleshooting: database-troubleshooting.md
-      - Database monitoring plan: database-monitoring-plan.md
-      - Database production optimization: database-production-optimizations.md
-      - Documentation Home: overview.md
+      - Log audit: security/log-audit.md
+  - Справочник:
+      - API reference: reference/api-reference.md
+      - Development: reference/development.md
+      - GitHub environments: reference/github-environments-setup.md
+      - MCPO integration: reference/mcpo-integration-guide.md
+      - Pre-commit hooks: reference/pre-commit-hooks.md
+      - CHANGELOG: reference/CHANGELOG.md
+  - Locales:
+      - Deutsch:
+          - Übersicht: locales/de/index.md
+          - Admin Guide: locales/de/admin-guide.md
+          - Architektur: locales/de/architecture.md
+          - Konfiguration: locales/de/configuration-guide.md
+          - Installation: locales/de/installation-guide.md
+          - Monitoring Guide: locales/de/monitoring-guide.md
+          - Nginx: locales/de/nginx-konfiguration.md
+          - Service-Überblick: locales/de/services-overview.md
+          - Benutzerhandbuch: locales/de/user-guide.md
+          - Monitoring (compact): locales/de/monitoring.md
+          - Backup Guide: locales/de/backup-guide.md
+          - Troubleshooting: locales/de/troubleshooting.md
+  - Архив:
+      - Best practices audit (2025-10-20): archive/reports/best-practices-audit-2025-10-20.md
+      - Comprehensive project audit (2025-10-17): archive/reports/comprehensive-project-audit-2025-10-17.md
+      - Comprehensive project audit part 2 (2025-10-17): archive/reports/comprehensive-project-audit-2025-10-17-part2.md
+      - Documentation audit (2025-10-24): archive/reports/documentation-audit-2025-10-24.md
+      - Documentation cleanup audit (2025-10-24): archive/reports/documentation-cleanup-audit-2025-10-24.md
+      - Documentation cleanup summary (2025-10-24): archive/reports/documentation-cleanup-summary-2025-10-24.md
+      - Docx upload fix (2025-10-30): archive/reports/docx-upload-fix-20251030.md
+      - System repair (2025-10-16): archive/reports/system-repair-2025-10-16.md
+      - Log analysis correction (2025-11-04): archive/reports/log-analysis-correction-2025-11-04.md
+      - Phase 2 completion (2025-11-04): archive/reports/phase-2-completion-2025-11-04.md
+      - Phase 1 critical fixes (2025-10-30): archive/reports/phase1-critical-fixes-report-20251030.md
+      - Project audit report (2025-10-30): archive/reports/project-audit-report-20251030.md
+      - RAG system diagnostic report (2025-10-30): archive/reports/rag-system-diagnostic-report-20251030.md
+      - RAG vector search test report (2025-10-30): archive/reports/rag-vector-search-test-report-20251030.md
+      - Full server diagnostics (2025-11-04): archive/reports/full-server-diagnostics-2025-11-04.md
+      - Comprehensive audit (2025-10-14): archive/reports/comprehensive-audit-2025-10-14.md
   - Архивы конфигураций:
-      - Update execution report: config-backup/update-execution-report-2025-10-02.md
-      - Monitoring report: config-backup/monitoring-report-2025-10-02.md
-      - Update analysis: config-backup/update-analysis-2025-10-02.md
+      - Update execution report: archive/config-backup/update-execution-report-2025-10-02.md
+      - Monitoring report: archive/config-backup/monitoring-report-2025-10-02.md
+      - Update analysis: archive/config-backup/update-analysis-2025-10-02.md
 
 # Настройки валидации
 validation:
