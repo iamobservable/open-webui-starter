@@ -25,3 +25,6 @@ PROJECT_ROOT=/home/konstantin/Documents/augment-projects/erni-ki
 
 # Мониторинг очереди Alertmanager (логирование значения)
 */5 * * * * cd $PROJECT_ROOT && ./scripts/monitoring/alertmanager-queue-watch.sh >> /var/log/erni-ki-alertmanager-queue.log 2>&1
+
+# Экспорт метрик свежести cron/watchdog скриптов
+*/5 * * * * cd $PROJECT_ROOT && ./scripts/monitoring/update-cron-metrics.sh >> /var/log/erni-ki-cron-metrics.log 2>&1

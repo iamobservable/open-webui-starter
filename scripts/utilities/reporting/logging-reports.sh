@@ -13,12 +13,24 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 REPORTS_DIR="$PROJECT_ROOT/.config-backup/reports"
+CRON_STATUS_HELPER="$PROJECT_ROOT/scripts/monitoring/record-cron-status.sh"
 PROMETHEUS_URL="http://localhost:9090"
 GRAFANA_URL="http://localhost:3000"
 FLUENT_BIT_URL="http://localhost:2020"
 
 # Создаем директорию для отчетов
 mkdir -p "$REPORTS_DIR"
+
+cron_status() {
+    [[ -x "$CRON_STATUS_HELPER" ]] || return 0
+    local job="$1"
+    local state="$2"
+    local msg="$3"
+    "$CRON_STATUS_HELPER" "$job" "$state" "$msg" || true
+}
+
+CURRENT_JOB="logging_reports"
+trap 'cron_status "$CURRENT_JOB" failure "logging reports script failed"' ERR
 
 # ============================================================================
 # ФУНКЦИИ СБОРА МЕТРИК
@@ -116,6 +128,7 @@ EOF
     add_recommendations "$report_file"
 
     echo "✅ Ежедневный отчет создан: $report_file"
+    cron_status "logging_reports_daily" success "Report $report_file"
 }
 
 generate_weekly_report() {
@@ -146,6 +159,7 @@ EOF
     add_weekly_recommendations "$report_file"
 
     echo "✅ Еженедельный отчет создан: $report_file"
+    cron_status "logging_reports_weekly" success "Report $report_file"
 }
 
 add_recommendations() {
@@ -206,13 +220,17 @@ main() {
 
     case "${1:-daily}" in
         "daily")
+            CURRENT_JOB="logging_reports_daily"
             generate_daily_report
             ;;
         "weekly")
+            CURRENT_JOB="logging_reports_weekly"
             generate_weekly_report
             ;;
         "both")
+            CURRENT_JOB="logging_reports_daily"
             generate_daily_report
+            CURRENT_JOB="logging_reports_weekly"
             generate_weekly_report
             ;;
         *)

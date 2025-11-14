@@ -737,12 +737,14 @@ services:
       - "--log.level=error"
       - "--collector.processes"
       - "--web.disable-exporter-metrics" # Отключаем метрики самого экспортера для уменьшения нагрузки
+      - "--collector.textfile.directory=/var/lib/node_exporter/textfile_collector"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
       - /run/udev/data:/host/run/udev/data:ro # Монтируем udev данные для diskstats
       - /run/systemd/private:/run/systemd/private:ro
+      - ./data/node-exporter-textfile:/var/lib/node_exporter/textfile_collector:ro
     ports:
       - "127.0.0.1:9101:9100"
     pid: host

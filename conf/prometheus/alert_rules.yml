@@ -884,3 +884,31 @@ groups:
         annotations:
           summary: "Critical service logs missing"
           description: "No logs received from critical services (OpenWebUI, Ollama, Nginx) for more than 10 minutes. Check logging pipeline."
+
+  - name: cron-watchdog.rules
+    rules:
+      - alert: CronJobStale
+        expr: erni_cron_job_age_seconds > on(job) erni_cron_job_sla_seconds
+        for: 10m
+        labels:
+          severity: warning
+          service: cron-watchdog
+          owner: ops
+          escalation: slack
+        annotations:
+          summary: "Cron job {{ $labels.job }} stale"
+          description: "Job {{ $labels.job }} has not reported success within its SLA (age={{ $value }}s)."
+          runbook: "docs/operations/monitoring-guide.md#cron-evidence"
+
+      - alert: CronJobFailures
+        expr: erni_cron_job_success == 0
+        for: 15m
+        labels:
+          severity: warning
+          service: cron-watchdog
+          owner: ops
+          escalation: slack
+        annotations:
+          summary: "Cron job {{ $labels.job }} reporting failures"
+          description: "Job {{ $labels.job }} most recent execution ended in failure. Investigate logs and rerun."
+          runbook: "docs/operations/monitoring-guide.md#cron-evidence"

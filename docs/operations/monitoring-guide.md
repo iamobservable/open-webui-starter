@@ -48,6 +48,11 @@ ERNI-KI monitoring system includes:
 - **Smoke-тест уведомлений** — скрипт
   `scripts/monitoring/test-alert-delivery.sh` отправляет synthetic alert в
   Alertmanager и позволяет проверить доставку Slack/PagerDuty перед релизом.
+- **Cron evidence metrics** — каждый watchdog/cron обновляет состояние через
+  `scripts/monitoring/record-cron-status.sh`, а
+  `scripts/monitoring/update-cron-metrics.sh` публикует показатели в
+  `data/node-exporter-textfile/cron_watchdogs.prom` (подхватывается
+  node_exporter textfile collector).
 
 ## 🚨 Alert Delivery & Runbooks
 
@@ -86,6 +91,46 @@ ERNI-KI monitoring system includes:
 - Сервисы безопасности (`auth`) маркируются `owner=security` и routed в
   PagerDuty + Slack.
 - Контейнерные предупреждения остаются в Slack, критические — в PagerDuty.
+
+## Cron Evidence Pipeline {#cron-evidence}
+
+- **Как это работает**: каждый cron/watchdog (ежедневный/еженедельный отчёт,
+  redis fragmentation watchdog, монитор очереди Alertmanager) вызывает
+  `scripts/monitoring/record-cron-status.sh <job> <success|failure> <msg>`.
+  Состояния сохраняются в `data/cron-status`. Отдельный cron
+  (`update-cron-metrics`) каждые 5 минут преобразует их в Prometheus метрики
+  `erni_cron_job_*` (через node_exporter textfile collector).
+- **Метрики**:
+  - `erni_cron_job_success{job}` — 1 при последнем успешном выполнении.
+  - `erni_cron_job_age_seconds{job}` — сколько секунд прошло с последнего
+    запуска (используется для SLA).
+  - `erni_cron_job_sla_seconds{job}` — допустимый интервал между запуском.
+  - `erni_cron_job_last_run_timestamp{job}` — UNIX time последнего запуска.
+- **Алерты**: в `conf/prometheus/alert_rules.yml` добавлены правила
+  `CronJobStale` и `CronJobFailures`, отправляющие оповещения при нарушении SLA
+  или статусе failure. По умолчанию владельцы — команда Ops.
+- **Добавить новый cron**:
+  1. В cron-скрипте перед exit вызвать
+     `scripts/monitoring/record-cron-status.sh <job> success "комментарий"`. В
+     trap on ERR записывать failure.
+  2. Прописать SLA в `scripts/monitoring/update-cron-metrics.sh` (массив `SLA`).
+  3. Выполнить bootstrap:
+     `./scripts/monitoring/record-cron-status.sh <job> success "bootstrap"`.
+  4. Перезапустить `update-cron-metrics` (или дождаться cron).
+- **Проверка**:
+
+```bash
+# ручной прогон для проверки
+./scripts/monitoring/update-cron-metrics.sh
+cat data/node-exporter-textfile/cron_watchdogs.prom
+
+# smoke-test фальшивого сбоя
+./scripts/monitoring/record-cron-status.sh logging_reports_daily failure "manual test"
+./scripts/monitoring/update-cron-metrics.sh
+```
+
+- **Grafana**: добавьте панель `erni_cron_job_age_seconds` (group by job) и
+  отображайте линии SLA (`erni_cron_job_sla_seconds`) для быстрого обзора.
 - **Loki + Fluent Bit hardening** — Loki теперь требует заголовок
   `X-Scope-OrgID: erni-ki`, Grafana datasource и скрипты обновлены. Fluent Bit
   использует SSD-том `erni-ki-fluent-db` с дисковым буфером 15 ГБ для

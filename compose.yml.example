@@ -642,10 +642,12 @@ services:
       - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
       - "--collector.systemd"
       - "--collector.processes"
+      - "--collector.textfile.directory=/var/lib/node_exporter/textfile_collector"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
+      - ./data/node-exporter-textfile:/var/lib/node_exporter/textfile_collector:ro
       - /run/systemd/private:/run/systemd/private:ro
     ports:
       - "9101:9100"

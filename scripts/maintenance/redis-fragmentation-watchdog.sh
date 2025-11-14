@@ -11,6 +11,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_DIR"
 
+CRON_STATUS_HELPER="$PROJECT_DIR/scripts/monitoring/record-cron-status.sh"
+JOB_NAME="redis_fragmentation_watchdog"
+record_status() {
+  [[ -x "$CRON_STATUS_HELPER" ]] || return 0
+  "$CRON_STATUS_HELPER" "$JOB_NAME" "$1" "$2" || true
+}
+trap 'record_status failure "Redis watchdog failed"' ERR
+
 DRY_RUN=false
 THRESHOLD="${REDIS_FRAGMENTATION_THRESHOLD:-4.0}"
 LOG_FILE="${PROJECT_DIR}/logs/redis-fragmentation-watchdog.log"
@@ -149,3 +157,5 @@ else
   log "Fragmentation ratio ${ratio} is within threshold ${THRESHOLD}"
   reset_state
 fi
+
+record_status success "Fragmentation ratio ${ratio}"
