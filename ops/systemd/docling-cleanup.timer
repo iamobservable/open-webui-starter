@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Docling shared cleanup timer
+
+[Timer]
+OnCalendar=*-*-* 02:10:00
+Persistent=true
+RandomizedDelaySec=300
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

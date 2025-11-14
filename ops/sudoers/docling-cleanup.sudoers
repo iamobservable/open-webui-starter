@@ -1,0 +1,5 @@
+# Allow the cleanup operator to run the docling cleanup script via sudo without a password.
+# Replace <user> and <repo_path> with actual values (e.g. konstantin /home/konstantin/Documents/augment-projects/erni-ki).
+
+# /etc/sudoers.d/docling-cleanup
+<user> ALL=(root) NOPASSWD: <repo_path>/scripts/maintenance/docling-shared-cleanup.sh --apply

@@ -80,38 +80,20 @@ sudo -E ./scripts/maintenance/docling-shared-cleanup.sh --apply \
 
 ### 3.3 Systemd unit
 
-Альтернативно можно оформить systemd timer (пример для user-level сервиса):
+В репозитории уже есть unit-файлы и сценарий установки:
 
-`~/.config/systemd/user/erni-ki-docling-cleanup.service`
+- `ops/systemd/docling-cleanup.service`
+- `ops/systemd/docling-cleanup.timer`
+- `ops/systemd/docling-cleanup.env.example`
+- `ops/sudoers/docling-cleanup.sudoers`
+- `scripts/maintenance/install-docling-cleanup-unit.sh`
 
-```
+**Порядок включения**
+1. Скопируйте `ops/sudoers/docling-cleanup.sudoers` в `/etc/sudoers.d/docling-cleanup`, подставив реального пользователя и путь к репозиторию (NOPASSWD).
+2. Выполните `./scripts/maintenance/install-docling-cleanup-unit.sh` — unit-файлы попадут в `~/.config/systemd/user`, создастся `~/.config/docling-cleanup.env`, таймер `docling-cleanup.timer` включится автоматически.
+3. Отредактируйте `~/.config/docling-cleanup.env` (пример прилагается), чтобы задать владельца/группу и путь к shared volume. По умолчанию запуск в 02:10 CET, `RandomizedDelaySec=300`.
 
-[Unit] Description=ERNI-KI Docling shared cleanup
-
-[Service] Type=oneshot
-WorkingDirectory=/home/konstantin/Documents/augment-projects/erni-ki
-ExecStart=/usr/bin/sudo -E ./scripts/maintenance/docling-shared-cleanup.sh
---apply
-StandardOutput=append:/home/konstantin/Documents/augment-projects/erni-ki/logs/docling-shared-cleanup.log
-StandardError=inherit
-
-```
-
-`~/.config/systemd/user/erni-ki-docling-cleanup.timer`
-
-```
-
-[Unit] Description=Daily Docling shared cleanup
-
-[Timer] OnCalendar=_-_-\* 02:10:00 Persistent=true
-
-[Install] WantedBy=timers.target
-
-```
-
-После создания включите таймер: `systemctl --user enable --now erni-ki-docling-cleanup.timer`.
-Если сервис запускается от root/system user — задайте `User=docling-maint` (в `*.service`)
-вместо использования `sudo`.
+> Для system-level установки перенесите unit-файлы в `/etc/systemd/system`, добавьте `User=docling-maint` в `.service` и включите таймер через `systemctl enable --now docling-cleanup.timer`.
 
 Добавьте мониторинг лога (Fluent Bit → Loki) и алерт, если в выходе появится
 `WARNING: shared volume size ... exceeds`.

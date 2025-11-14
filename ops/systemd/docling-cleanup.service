@@ -1,0 +1,16 @@
+[Unit]
+Description=ERNI-KI Docling Shared Cleanup
+Documentation=file:%h/Documents/augment-projects/erni-ki/docs/operations/runbooks/docling-shared-volume.md
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Documents/augment-projects/erni-ki
+EnvironmentFile=-%h/.config/docling-cleanup.env
+ExecStart=/usr/bin/sudo -E %h/Documents/augment-projects/erni-ki/scripts/maintenance/docling-shared-cleanup.sh --apply
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=600
+
+[Install]
+WantedBy=default.target
