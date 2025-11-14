@@ -20,8 +20,12 @@ ERNI-KI monitoring system includes:
 - **Alertmanager queue watchdog** —
   `scripts/monitoring/alertmanager-queue-watch.sh` сравнивает метрику
   `alertmanager_cluster_messages_queued` с порогами, пишет историю в
-  `logs/alertmanager-queue.log` и при необходимости выполняет
-  `docker compose restart alertmanager`.
+  `logs/alertmanager-queue.log` и при превышении лимита переводит cron в
+  error-состояние с ссылкой на runbook (никаких auto-restart).
+- **Мультиканальное уведомление** — Alertmanager отправляет критические алерты
+  одновременно в Slack (`/run/secrets/slack_alert_webhook`) и PagerDuty
+  (`/run/secrets/pagerduty_routing_key`), маршруты содержат ссылки на runbook и
+  владельца.
 - **Docling shared volume** — `scripts/maintenance/docling-shared-cleanup.sh`
   гарантирует очистку `data/docling/shared/uploads` и уведомления при ошибках
   прав.
@@ -41,6 +45,47 @@ ERNI-KI monitoring system includes:
   фиксируются в `docs/archive/config-backup/*.md` (monitoring report, update
   analysis, execution report); обновляйте их при изменениях скриптов или
   расписаний.
+- **Smoke-тест уведомлений** — скрипт
+  `scripts/monitoring/test-alert-delivery.sh` отправляет synthetic alert в
+  Alertmanager и позволяет проверить доставку Slack/PagerDuty перед релизом.
+
+## 🚨 Alert Delivery & Runbooks
+
+- Секреты для каналов хранятся в Docker secrets:
+  - `./secrets/slack_alert_webhook.txt` — Slack Incoming Webhook URL.
+  - `./secrets/pagerduty_routing_key.txt` — Events API v2 routing key.
+    Скопируйте `.example` файлы и заполните перед деплоем.
+- `conf/alertmanager/alertmanager.yml` содержит Slack и PagerDuty конфиги для
+  критических и warning алертов. Сервисные маршруты (`gpu`, `ai`, `database`,
+  `logging`) помечены `continue: true`, чтобы алерты всегда попадали в
+  severity-политику.
+- Для проверки доставки используйте:
+
+```bash
+./scripts/monitoring/test-alert-delivery.sh critical ops
+```
+
+Алерт появится в Slack и PagerDuty с пометкой `SmokeTestAlert`. Не забудьте
+закрыть его вручную.
+
+### Alertmanager Queue Runbook {#alertmanagerQueue}
+
+1. Проверить Slack/PagerDuty — скрипт `alertmanager-queue-watch.sh`
+   автоматически логирует превышение лимита и завершает cron с кодом 2.
+2. Изучить метрику `alertmanager_cluster_messages_queued` в Grafana и посмотреть
+   состояние `alertmanager` пода (`docker compose logs alertmanager`).
+3. Разгрузить очередь: временно снизить шумные алерты, проверить состояние
+   webhook receiver.
+4. Только после согласования с on-call выполнить
+   `docker compose restart alertmanager`.
+
+### Alert Response Cheat Sheet {#alert-response}
+
+- Все инфраструктурные алерты имеют `owner=ops` и указывают runbook в
+  аннотациях; критические автоматически эскалируют через PagerDuty.
+- Сервисы безопасности (`auth`) маркируются `owner=security` и routed в
+  PagerDuty + Slack.
+- Контейнерные предупреждения остаются в Slack, критические — в PagerDuty.
 - **Loki + Fluent Bit hardening** — Loki теперь требует заголовок
   `X-Scope-OrgID: erni-ki`, Grafana datasource и скрипты обновлены. Fluent Bit
   использует SSD-том `erni-ki-fluent-db` с дисковым буфером 15 ГБ для

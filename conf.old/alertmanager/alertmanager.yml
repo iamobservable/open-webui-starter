@@ -1,0 +1,192 @@
+# Alertmanager Configuration для ERNI-KI
+# Конфигурация обработки алертов и уведомлений
+
+global:
+  # SMTP настройки для email уведомлений (опционально)
+  smtp_smarthost: "localhost:587"
+  smtp_from: "alerts@erni-ki.local"
+  smtp_auth_username: ""
+  smtp_auth_password: ""
+  smtp_require_tls: false
+
+  # Глобальные настройки (оптимизированы для снижения нагрузки)
+  resolve_timeout: 10m # Увеличено с 5m для снижения частоты обновлений
+  http_config:
+    follow_redirects: true
+
+# Шаблоны для уведомлений
+templates:
+  - "/etc/alertmanager/templates/*.tmpl"
+
+# Маршрутизация алертов
+route:
+  # Группировка алертов
+  group_by: ["alertname", "cluster", "service"]
+  # Чуть больше ожидание для агрегации всплесков
+  group_wait: 15s
+  # Увеличено для снижения болтливости
+  group_interval: 2m
+  repeat_interval: 1h
+
+  # Получатель по умолчанию
+  receiver: "erni-ki-webhook"
+
+  # Маршруты для разных типов алертов
+  routes:
+    - match:
+        noise_group: blackbox
+      receiver: "erni-ki-warning"
+      group_wait: 1m
+      group_interval: 15m
+      repeat_interval: 3h
+
+    - match:
+        service: gpu
+      receiver: "erni-ki-gpu"
+      group_wait: 10s
+      group_interval: 2m
+      repeat_interval: 30m
+      continue: true
+
+    - match_re:
+        service: "(ollama|openwebui|searxng|litellm)"
+      receiver: "erni-ki-ai"
+      group_wait: 15s
+      group_interval: 3m
+      repeat_interval: 45m
+      continue: true
+
+    - match_re:
+        service: "(postgresql|redis)"
+      receiver: "erni-ki-database"
+      group_wait: 20s
+      group_interval: 5m
+      repeat_interval: 1h
+      continue: true
+
+    - match:
+        category: logging
+      receiver: "erni-ki-logging"
+      group_wait: 5s
+      group_interval: 1m
+      repeat_interval: 30m
+      continue: true
+
+    - match:
+        severity: critical
+      receiver: "erni-ki-critical"
+      group_wait: 0s
+      group_interval: 30s
+      repeat_interval: 15m
+
+    - match:
+        severity: warning
+      receiver: "erni-ki-warning"
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1h
+
+# Получатели уведомлений
+receivers:
+  # Webhook получатель по умолчанию
+  - name: "erni-ki-webhook"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook"
+        send_resolved: true
+        http_config:
+          follow_redirects: true
+
+  # Критические алерты - множественные каналы
+  - name: "erni-ki-critical"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/critical"
+        send_resolved: true
+    slack_configs:
+      - api_url_file: /run/secrets/slack_alert_webhook
+        channel: "#erni-ki-alerts"
+        username: "erni-ki-alertmanager"
+        title: "{{ .CommonAnnotations.summary }}"
+        text: |
+          *Severity:* {{ .CommonLabels.severity }}
+          *Service:* {{ .CommonLabels.service }}
+          *Owner:* {{ .CommonLabels.owner | default "ops" }}
+          *Runbook:* {{ .CommonAnnotations.runbook | default "docs/operations/monitoring-guide.md#alert-response" }}
+          {{ .CommonAnnotations.description }}
+        send_resolved: true
+        http_config:
+          follow_redirects: true
+          tls_config:
+            insecure_skip_verify: false
+    pagerduty_configs:
+      - routing_key_file: /run/secrets/pagerduty_routing_key
+        description: "{{ .CommonAnnotations.summary }}"
+        severity: '{{ .CommonLabels.severity | default "critical" }}'
+        send_resolved: true
+        details:
+          service: '{{ .CommonLabels.service }}'
+          runbook: '{{ .CommonAnnotations.runbook | default "docs/operations/monitoring-guide.md#alert-response" }}'
+          owner: '{{ .CommonLabels.owner | default "ops" }}'
+
+  # Предупреждения
+  - name: "erni-ki-warning"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/warning"
+        send_resolved: true
+    slack_configs:
+      - api_url_file: /run/secrets/slack_alert_webhook
+        channel: "#erni-ki-alerts"
+        username: "erni-ki-alertmanager"
+        title: "{{ .CommonAnnotations.summary }}"
+        text: |
+          *Severity:* {{ .CommonLabels.severity }}
+          *Service:* {{ .CommonLabels.service }}
+          *Owner:* {{ .CommonLabels.owner | default "ops" }}
+          *Runbook:* {{ .CommonAnnotations.runbook | default "docs/operations/monitoring-guide.md#alert-response" }}
+          {{ .CommonAnnotations.description }}
+        send_resolved: true
+        http_config:
+          follow_redirects: true
+          tls_config:
+            insecure_skip_verify: false
+
+  # GPU специфичные алерты
+  - name: "erni-ki-gpu"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/gpu"
+        send_resolved: true
+
+  # AI сервисы алерты
+  - name: "erni-ki-ai"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/ai"
+        send_resolved: true
+
+  # База данных алерты
+  - name: "erni-ki-database"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/database"
+        send_resolved: true
+
+  # Система логгирования алерты (Фаза 3)
+  - name: "erni-ki-logging"
+    webhook_configs:
+      - url: "http://webhook-receiver:9093/webhook/logging"
+        send_resolved: true
+        http_config:
+          follow_redirects: true
+
+# Подавление алертов (inhibit rules)
+inhibit_rules:
+  # Подавлять предупреждения если есть критические алерты для того же сервиса
+  - source_match:
+      severity: "critical"
+    target_match:
+      severity: "warning"
+    equal: ["service", "component"]
+
+  # Подавлять алерты о недоступности если сервис уже помечен как down
+  - source_match:
+      alertname: "CriticalServiceDown"
+    target_match_re:
+      alertname: ".*ServiceDown"
+    equal: ["service"]

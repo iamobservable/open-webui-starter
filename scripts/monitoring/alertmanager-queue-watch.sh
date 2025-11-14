@@ -8,9 +8,9 @@ LOG_FILE="$PROJECT_DIR/.config-backup/logs/alertmanager-queue.log"
 PROM_URL="${PROMETHEUS_URL:-http://localhost:9091}"
 THRESHOLD="${ALERTMANAGER_QUEUE_WARN:-100}"
 HARD_LIMIT="${ALERTMANAGER_QUEUE_HARD_LIMIT:-500}"
-AUTOFIX="${ALERTMANAGER_QUEUE_AUTOFIX:-true}"
+RUNBOOK_URL="docs/operations/monitoring-guide.md#alertmanagerQueue"
 QUERY='alertmanager_cluster_messages_queued'
-export HARD_LIMIT AUTOFIX
+export HARD_LIMIT RUNBOOK_URL
 
 mkdir -p "$(dirname "$LOG_FILE")"
 
@@ -49,14 +49,12 @@ with open(log_path, 'a', encoding='utf-8') as fh:
     fh.write(f"[{ts}] queue-monitor: {value} (threshold={threshold}) status={status}\n")
 
 hard_limit = float(os.environ.get('HARD_LIMIT', '0') or 0)
-autofix = os.environ.get('AUTOFIX', 'false').lower() in ('1', 'true', 'yes')
 project_dir = os.environ.get('PROJECT_DIR', '')
-if autofix and hard_limit and value > hard_limit and project_dir:
+runbook_url = os.environ.get('RUNBOOK_URL', 'docs/operations/monitoring-guide.md#alertmanagerQueue')
+if hard_limit and value > hard_limit:
     with open(log_path, 'a', encoding='utf-8') as fh:
-        fh.write(f"[{ts}] queue-monitor: value {value} > hard_limit {hard_limit}, triggering alertmanager restart\n")
-    import subprocess
-    subprocess.run(
-        ["bash", "-lc", f"cd '{project_dir}' && docker compose restart alertmanager >/dev/null 2>&1 || true"],
-        check=False,
-    )
+        fh.write(
+            f"[{ts}] queue-monitor: value {value} > hard_limit {hard_limit}. Escalate via Alertmanager runbook: {runbook_url}\n"
+        )
+    sys.exit(2)
 PY

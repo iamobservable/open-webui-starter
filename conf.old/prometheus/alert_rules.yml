@@ -1,0 +1,886 @@
+# Prometheus Alert Rules для проекта erni-ki
+# Правила алертинга для AI сервисов и инфраструктуры
+
+groups:
+  # Общие правила инфраструктуры
+  - name: infrastructure.rules
+    rules:
+      # Сервис недоступен
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: infrastructure
+          # Используем job как service name для общих правил
+          service: "{{ $labels.job }}"
+          owner: ops
+          escalation: pagerduty
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} on {{ $labels.instance }} has been down for more than 1 minute."
+          runbook: "docs/operations/monitoring-guide.md#alert-response"
+
+      # Высокое использование CPU
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+          service: "system"
+          owner: ops
+          escalation: slack
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for more than 5 minutes on {{ $labels.instance }}."
+          runbook: "docs/operations/monitoring-guide.md#infrastructure"
+
+      # Высокое использование памяти
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+          service: "system"
+          owner: ops
+          escalation: slack
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85% for more than 5 minutes on {{ $labels.instance }}."
+          runbook: "docs/operations/monitoring-guide.md#infrastructure"
+
+      # Мало свободного места на диске (ОПТИМИЗИРОВАНО: порог снижен с 90% до 80%)
+      - alert: LowDiskSpace
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: infrastructure
+          service: "system"
+          owner: ops
+          escalation: slack
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk usage is above 80% on {{ $labels.instance }} ({{ $labels.mountpoint }}). Current usage: {{ $value | humanizePercentage }}."
+          runbook: "docs/operations/monitoring-guide.md#low-disk"
+
+      # Критически мало свободного места на диске
+      - alert: CriticalLowDiskSpace
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          category: infrastructure
+          service: "system"
+          owner: ops
+          escalation: pagerduty
+        annotations:
+          summary: "Critical low disk space on {{ $labels.instance }}"
+          description: "Disk usage is above 90% on {{ $labels.instance }} ({{ $labels.mountpoint }}). Current usage: {{ $value | humanizePercentage }}. Immediate action required!"
+          runbook: "docs/operations/monitoring-guide.md#low-disk"
+
+  # Правила для контейнеров Docker
+  - name: container.rules
+    rules:
+      # Критическое использование памяти контейнером
+      - alert: ContainerHighMemoryUsage
+        expr: ((container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 90)
+          and on(name) (container_spec_memory_limit_bytes > 0)
+        for: 5m
+        labels:
+          severity: critical
+          category: container
+          # Динамическое определение service из имени контейнера (erni-ki-{service}-{number})
+          service: '{{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}'
+          owner: ops
+          escalation: pagerduty
+        annotations:
+          summary: "Container {{ $labels.name }} high memory usage"
+          description: 'Container {{ $labels.name }} (service: {{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}) is using {{ $value | humanizePercentage }} of its memory limit for more than 2 minutes.'
+          runbook: "docs/operations/monitoring-guide.md#container-alerts"
+
+      # Предупреждение о высоком использовании памяти контейнером
+      - alert: ContainerWarningMemoryUsage
+        expr: ((container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 85)
+          and on(name) (container_spec_memory_limit_bytes > 0)
+        for: 10m
+        labels:
+          severity: warning
+          category: container
+          # Динамическое определение service из имени контейнера (erni-ki-{service}-{number})
+          service: '{{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}'
+          owner: ops
+          escalation: slack
+        annotations:
+          summary: "Container {{ $labels.name }} warning memory usage"
+          description: 'Container {{ $labels.name }} (service: {{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}) is using {{ $value | humanizePercentage }} of its memory limit for more than 5 minutes.'
+          runbook: "docs/operations/monitoring-guide.md#container-alerts"
+
+      # Специфичные алерты для критических сервисов
+      - alert: ElasticsearchCriticalMemory
+        expr: (container_memory_usage_bytes{name=~".*elasticsearch.*"} / container_spec_memory_limit_bytes{name=~".*elasticsearch.*"}) * 100 > 95
+        for: 1m
+        labels:
+          severity: critical
+          category: elasticsearch
+          service: elasticsearch
+          owner: ops
+          escalation: pagerduty
+        annotations:
+          summary: "Elasticsearch critical memory usage"
+          description: "Elasticsearch container is using {{ $value | humanizePercentage }} of memory limit. Risk of OOM kill!"
+          runbook: "docs/operations/monitoring-guide.md#elasticsearch"
+
+      - alert: LiteLLMCriticalMemory
+        expr: (container_memory_usage_bytes{name=~".*litellm.*"} / container_spec_memory_limit_bytes{name=~".*litellm.*"}) * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          category: litellm
+          service: litellm
+          owner: ml-ops
+          escalation: pagerduty
+        annotations:
+          summary: "LiteLLM critical memory usage"
+          description: "LiteLLM container is using {{ $value | humanizePercentage }} of memory limit. Risk of OOM kill!"
+          runbook: "docs/operations/monitoring-guide.md#litellm"
+
+      # Контейнер перезапускается слишком часто
+      - alert: ContainerRestartingTooOften
+        expr: increase(container_start_time_seconds[1h]) > 3
+        for: 0m
+        labels:
+          severity: warning
+          category: container
+          # Динамическое определение service из имени контейнера (erni-ki-{service}-{number})
+          service: '{{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}'
+          owner: ops
+          escalation: slack
+        annotations:
+          summary: "Container {{ $labels.name }} restarting too often"
+          description: 'Container {{ $labels.name }} (service: {{ reReplaceAll "^erni-ki-([^-]+).*" "$1" $labels.name }}) has restarted {{ $value }} times in the last hour.'
+          runbook: "docs/operations/monitoring-guide.md#container-alerts"
+
+  # Правила для Auth сервиса
+  - name: auth-service.rules
+    rules:
+      # Auth сервис недоступен
+      - alert: AuthServiceDown
+        expr: up{job="auth-service"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          service: auth
+          category: security
+          owner: security
+          escalation: pagerduty
+        annotations:
+          summary: "Auth service is down"
+          description: "Authentication service has been down for more than 30 seconds. This affects all protected endpoints."
+          runbook: "docs/operations/monitoring-guide.md#auth-service"
+
+      # Высокий процент ошибок аутентификации
+      - alert: HighAuthErrorRate
+        expr: rate(auth_requests_total{status=~"4.."}[5m]) / rate(auth_requests_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: auth
+          category: security
+          owner: security
+          escalation: slack
+        annotations:
+          summary: "High authentication error rate"
+          description: "Authentication error rate is above 10% for more than 2 minutes."
+          runbook: "docs/operations/monitoring-guide.md#auth-service"
+
+      # Подозрительная активность (много неудачных попыток)
+      - alert: SuspiciousAuthActivity
+        expr: rate(auth_requests_total{status="401"}[1m]) > 10
+        for: 1m
+        labels:
+          severity: critical
+          service: auth
+          category: security
+          owner: security
+          escalation: pagerduty
+        annotations:
+          summary: "Suspicious authentication activity detected"
+          description: "High rate of failed authentication attempts detected. Possible brute force attack."
+          runbook: "docs/operations/monitoring-guide.md#auth-service"
+
+  # Правила для Ollama (AI сервис)
+  - name: ollama.rules
+    rules:
+      # Ollama недоступен
+      - alert: OllamaDown
+        expr: up{job="ollama"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: ollama
+          category: ai
+        annotations:
+          summary: "Ollama service is down"
+          description: "Ollama LLM service has been down for more than 1 minute."
+
+      # Высокое использование GPU
+      - alert: HighGPUUsage
+        expr: nvidia_gpu_utilization_gpu > 95
+        for: 10m
+        labels:
+          severity: warning
+          service: ollama
+          category: ai
+        annotations:
+          summary: "High GPU usage"
+          description: "GPU utilization is above 95% for more than 10 minutes."
+
+      # Высокая температура GPU
+      - alert: GPUHighTemperature
+        expr: nvidia_gpu_temperature_celsius > 85
+        for: 3m
+        labels:
+          severity: critical
+          service: ollama
+          category: hardware
+        annotations:
+          summary: "🔥 GPU temperature is critical"
+          description: "GPU temperature is {{ $value }}°C, which is above the safe threshold."
+
+      # Высокое использование памяти GPU
+      - alert: GPUHighMemoryUsage
+        expr: (nvidia_gpu_memory_used_bytes / nvidia_gpu_memory_total_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: ollama
+          category: hardware
+        annotations:
+          summary: "💾 GPU memory usage is high"
+          description: "GPU memory usage is {{ $value }}%."
+
+      # Высокая температура GPU
+      - alert: HighGPUTemperature
+        expr: nvidia_gpu_temperature > 85
+        for: 5m
+        labels:
+          severity: critical
+          service: ollama
+          category: ai
+        annotations:
+          summary: "High GPU temperature"
+          description: "GPU temperature is above 85°C for more than 5 minutes."
+
+  # Правила для Open WebUI
+  - name: openwebui.rules
+    rules:
+      # Open WebUI недоступен
+      - alert: OpenWebUIDown
+        expr: up{job="openwebui"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: openwebui
+          category: ai
+        annotations:
+          summary: "Open WebUI is down"
+          description: "Open WebUI service has been down for more than 1 minute."
+
+      # Высокая задержка ответов
+      - alert: HighResponseLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="openwebui"}[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: openwebui
+          category: performance
+        annotations:
+          summary: "High response latency in Open WebUI"
+          description: "95th percentile latency is above 5 seconds for more than 5 minutes."
+
+  # Правила для PostgreSQL
+  - name: postgres.rules
+    rules:
+      # PostgreSQL недоступен
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          service: postgres
+          category: database
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database has been down for more than 30 seconds."
+
+      # Много активных соединений
+      - alert: PostgreSQLTooManyConnections
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: postgres
+          category: database
+        annotations:
+          summary: "Too many PostgreSQL connections"
+          description: "PostgreSQL has more than 80 active connections for more than 5 minutes."
+
+      # Медленные запросы
+      - alert: PostgreSQLSlowQueries
+        expr: pg_stat_activity_max_tx_duration > 300
+        for: 2m
+        labels:
+          severity: warning
+          service: postgres
+          category: database
+        annotations:
+          summary: "PostgreSQL slow queries detected"
+          description: "PostgreSQL has queries running for more than 5 minutes."
+
+  # Правила для Redis
+  - name: redis.rules
+    rules:
+      # Redis недоступен
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          service: redis
+          category: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache service has been down for more than 30 seconds."
+
+      # Высокое использование памяти Redis (исправлено для maxmemory лимита)
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes > (512 * 1024 * 1024 * 0.9)
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+          category: cache
+        annotations:
+          summary: "Redis high memory usage"
+          description: "Redis memory usage is above 90% of 512MB limit ({{ $value | humanize1024 }}B used)."
+
+      # Критическое использование памяти Redis
+      - alert: RedisCriticalMemoryUsage
+        expr: redis_memory_used_bytes > (512 * 1024 * 1024 * 0.95)
+        for: 2m
+        labels:
+          severity: critical
+          service: redis
+          category: cache
+        annotations:
+          summary: "Redis critical memory usage"
+          description: "Redis memory usage is above 95% of 512MB limit ({{ $value | humanize1024 }}B used). Eviction may occur."
+
+      # Высокое количество подключений Redis
+      - alert: RedisHighConnections
+        expr: redis_connected_clients > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+          category: cache
+        annotations:
+          summary: "Redis high connection count"
+          description: "Redis has {{ $value }} connected clients (>80% of typical load)."
+
+      # Низкий hit ratio Redis
+      - alert: RedisLowHitRatio
+        expr: (rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: redis
+          category: cache
+        annotations:
+          summary: "Redis low cache hit ratio"
+          description: "Redis cache hit ratio is {{ $value | humanizePercentage }} (below 80%) for more than 10 minutes."
+
+      # Медленные операции Redis
+      - alert: RedisSlowOperations
+        expr: increase(redis_slowlog_length[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+          service: redis
+          category: cache
+        annotations:
+          summary: "Redis slow operations detected"
+          description: "Redis has {{ $value }} slow operations in the last 5 minutes."
+
+  # Правила для резервного копирования Redis
+  - name: redis-backup.rules
+    rules:
+      # Неудачное резервное копирование Redis
+      - alert: RedisBackupFailed
+        expr: redis_backup_last_success == 0
+        for: 1h
+        labels:
+          severity: critical
+          service: redis-backup
+          category: backup
+        annotations:
+          summary: "Redis backup failed"
+          description: "Redis backup has not been successful for more than 1 hour."
+
+      # Устаревшая резервная копия Redis
+      - alert: RedisBackupStale
+        expr: (time() - redis_backup_last_timestamp) > 86400
+        for: 30m
+        labels:
+          severity: warning
+          service: redis-backup
+          category: backup
+        annotations:
+          summary: "Redis backup is stale"
+          description: "Redis backup is older than 24 hours ({{ $value | humanizeDuration }} ago)."
+
+      # Проблемы с целостностью резервной копии Redis
+      - alert: RedisBackupIntegrityFailed
+        expr: redis_backup_integrity_ok == 0
+        for: 15m
+        labels:
+          severity: critical
+          service: redis-backup
+          category: backup
+        annotations:
+          summary: "Redis backup integrity check failed"
+          description: "Redis backup integrity check has been failing for more than 15 minutes."
+
+      # Backrest недоступен для Redis
+      - alert: RedisBackupServiceDown
+        expr: redis_backup_backrest_up == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: redis-backup
+          category: backup
+        annotations:
+          summary: "Redis backup service is down"
+          description: "Backrest service for Redis backup is not responding for more than 5 minutes."
+
+      # Устаревший RDB файл Redis
+      - alert: RedisRDBFileStale
+        expr: redis_backup_rdb_age_seconds > 172800
+        for: 1h
+        labels:
+          severity: warning
+          service: redis-backup
+          category: backup
+        annotations:
+          summary: "Redis RDB file is stale"
+          description: "Redis RDB file is older than 48 hours ({{ $value | humanizeDuration }} old)."
+
+  # Правила для Nginx
+  - name: nginx.rules
+    rules:
+      # Nginx недоступен
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          service: nginx
+          category: proxy
+        annotations:
+          summary: "Nginx is down"
+          description: "Nginx reverse proxy has been down for more than 30 seconds."
+
+      # Высокий процент ошибок 5xx
+      - alert: NginxHighErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) / rate(nginx_http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: nginx
+          category: proxy
+        annotations:
+          summary: "High Nginx error rate"
+          description: "Nginx 5xx error rate is above 5% for more than 5 minutes."
+
+  # Правила безопасности
+  - name: security.rules
+    rules:
+      # Подозрительный трафик
+      - alert: SuspiciousTraffic
+        expr: rate(nginx_http_requests_total[1m]) > 1000
+        for: 1m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "Suspicious traffic detected"
+          description: "High request rate detected. Possible DDoS attack."
+
+      # Много 403 ошибок (возможная атака)
+      - alert: HighForbiddenRate
+        expr: rate(nginx_http_requests_total{status="403"}[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "High rate of forbidden requests"
+          description: "High rate of 403 errors detected. Possible scanning or attack attempt."
+
+  # Правила для мониторинга доступности через Cloudflare
+  - name: cloudflare.rules
+    rules:
+      # Cloudflared туннель недоступен
+      - alert: CloudflaredTunnelDown
+        expr: up{job="cloudflared"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: cloudflared
+          category: network
+        annotations:
+          summary: "Cloudflare tunnel is down"
+          description: "Cloudflare tunnel has been down for more than 2 minutes. External access may be unavailable."
+
+      # Высокая задержка через Cloudflare туннель
+      - alert: CloudflareHighLatency
+        expr: probe_duration_seconds{job="blackbox-cloudflare"} > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: cloudflared
+          category: network
+        annotations:
+          summary: "High latency through Cloudflare tunnel"
+          description: "Cloudflare tunnel latency is above 5 seconds for more than 5 minutes."
+
+  # Правила для GPU мониторинга (расширенные)
+  - name: gpu-monitoring.rules
+    rules:
+      # GPU недоступен
+      - alert: GPUUnavailable
+        expr: up{job="nvidia-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: nvidia
+          category: ai
+        annotations:
+          summary: "GPU monitoring unavailable"
+          description: "NVIDIA GPU exporter has been down for more than 1 minute."
+
+      # Критически высокое использование GPU
+      - alert: CriticalGPUUsage
+        expr: nvidia_gpu_utilization > 98
+        for: 15m
+        labels:
+          severity: critical
+          service: ollama
+          category: ai
+        annotations:
+          summary: "Critical GPU usage"
+          description: "GPU utilization is above 98% for more than 15 minutes. Performance may be severely degraded."
+
+      # Высокое использование GPU памяти
+      - alert: HighGPUMemoryUsage
+        expr: (nvidia_gpu_memory_used_bytes / nvidia_gpu_memory_total_bytes) * 100 > 90
+        for: 10m
+        labels:
+          severity: warning
+          service: ollama
+          category: ai
+        annotations:
+          summary: "High GPU memory usage"
+          description: "GPU memory usage is above 90% for more than 10 minutes."
+
+      # Критическая температура GPU
+      - alert: CriticalGPUTemperature
+        expr: nvidia_gpu_temperature > 90
+        for: 2m
+        labels:
+          severity: critical
+          service: ollama
+          category: ai
+        annotations:
+          summary: "Critical GPU temperature"
+          description: "GPU temperature is above 90°C for more than 2 minutes. Risk of hardware damage."
+
+      # Низкая производительность GPU
+      - alert: LowGPUPerformance
+        expr: nvidia_gpu_power_draw < 50
+        for: 30m
+        labels:
+          severity: warning
+          service: ollama
+          category: ai
+        annotations:
+          summary: "Low GPU performance"
+          description: "GPU power draw is below 50W for more than 30 minutes. GPU may be throttling."
+
+  # Правила для мониторинга производительности RAG
+  - name: rag-performance.rules
+    rules:
+      # Медленные RAG запросы
+      - alert: SlowRAGQueries
+        expr: histogram_quantile(0.95, rate(openwebui_rag_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: openwebui
+          category: performance
+        annotations:
+          summary: "Slow RAG queries detected"
+          description: "95th percentile RAG query time is above 2 seconds for more than 5 minutes."
+
+      # Критически медленные RAG запросы
+      - alert: CriticalSlowRAGQueries
+        expr: histogram_quantile(0.95, rate(openwebui_rag_duration_seconds_bucket[5m])) > 10
+        for: 2m
+        labels:
+          severity: critical
+          service: openwebui
+          category: performance
+        annotations:
+          summary: "Critical slow RAG queries"
+          description: "95th percentile RAG query time is above 10 seconds for more than 2 minutes."
+
+      # Высокий процент неудачных RAG запросов
+      - alert: HighRAGFailureRate
+        expr: rate(openwebui_rag_requests_total{status="error"}[5m]) / rate(openwebui_rag_requests_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          service: openwebui
+          category: performance
+        annotations:
+          summary: "High RAG failure rate"
+          description: "RAG failure rate is above 10% for more than 3 minutes."
+
+  # Правила для мониторинга SearXNG
+  - name: searxng-performance.rules
+    rules:
+      # SearXNG недоступен
+      - alert: SearXNGDown
+        expr: up{job="searxng"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: searxng
+          category: search
+        annotations:
+          summary: "SearXNG is down"
+          description: "SearXNG search service has been down for more than 1 minute."
+
+      # Медленные поисковые запросы SearXNG (>2s)
+      - alert: SearXNGSlowResponse
+        expr: histogram_quantile(0.95, rate(searxng_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
+        labels:
+          severity: warning
+          service: searxng
+          category: performance
+        annotations:
+          summary: "SearXNG response time above 2 seconds"
+          description: "95th percentile SearXNG query time is above 2 seconds for more than 2 minutes. Current value: {{ $value }}s"
+
+      # Критически медленные поисковые запросы SearXNG (>5s)
+      - alert: SearXNGCriticallySlowQueries
+        expr: histogram_quantile(0.95, rate(searxng_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: critical
+          service: searxng
+          category: performance
+        annotations:
+          summary: "SearXNG critically slow queries"
+          description: "95th percentile SearXNG query time is above 5 seconds for more than 5 minutes. Current value: {{ $value }}s"
+
+      # Высокий процент неудачных поисковых запросов
+      - alert: HighSearXNGFailureRate
+        expr: rate(searxng_requests_total{status=~"4..|5.."}[5m]) / rate(searxng_requests_total[5m]) > 0.2
+        for: 3m
+        labels:
+          severity: warning
+          service: searxng
+          category: search
+        annotations:
+          summary: "High SearXNG failure rate"
+          description: "SearXNG failure rate is above 20% for more than 3 minutes."
+
+      # Медленный API endpoint /api/searxng/search
+      - alert: SearXNGAPISlowResponse
+        expr: probe_duration_seconds{job="blackbox-searxng-api"} > 2
+        for: 1m
+        labels:
+          severity: warning
+          service: searxng
+          category: api-performance
+          endpoint: "/api/searxng/search"
+        annotations:
+          summary: "SearXNG API endpoint slow response"
+          description: "SearXNG API endpoint /api/searxng/search response time is above 2 seconds for more than 1 minute. Current value: {{ $value }}s"
+
+  # Alertmanager Cluster и LiteLLM оптимизации (добавлено после аудита v6.3)
+  - name: optimization.rules
+    rules:
+      # LiteLLM Memory Usage - Warning при 80%
+      - alert: LiteLLMHighMemoryUsage
+        expr: (container_memory_usage_bytes{name="erni-ki-litellm"} / container_spec_memory_limit_bytes{name="erni-ki-litellm"}) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+          service: litellm
+          category: resource-optimization
+        annotations:
+          summary: "LiteLLM high memory usage"
+          description: "LiteLLM memory usage is above 80% for more than 2 minutes. Current value: {{ $value | humanizePercentage }}. Consider scaling or optimizing."
+
+      # LiteLLM Memory Usage - Critical при 90%
+      - alert: LiteLLMCriticalMemoryUsage
+        expr: (container_memory_usage_bytes{name="erni-ki-litellm"} / container_spec_memory_limit_bytes{name="erni-ki-litellm"}) * 100 > 90
+        for: 1m
+        labels:
+          severity: critical
+          service: litellm
+          category: resource-optimization
+        annotations:
+          summary: "LiteLLM critical memory usage"
+          description: "LiteLLM memory usage is above 90% for more than 1 minute. Current value: {{ $value | humanizePercentage }}. Immediate action required!"
+
+      # Alertmanager Queue Size - Warning при 3500
+      - alert: AlertmanagerQueueHigh
+        expr: alertmanager_cluster_messages_queued > 3500
+        for: 2m
+        labels:
+          severity: warning
+          service: alertmanager
+          category: cluster-optimization
+        annotations:
+          summary: "Alertmanager queue size high"
+          description: "Alertmanager cluster queue size is above 3500 messages for more than 2 minutes. Current value: {{ $value }}. Queue overflow risk."
+
+      # Alertmanager Queue Size - Critical при 4000
+      - alert: AlertmanagerQueueCritical
+        expr: alertmanager_cluster_messages_queued > 4000
+        for: 1m
+        labels:
+          severity: critical
+          service: alertmanager
+          category: cluster-optimization
+        annotations:
+          summary: "Alertmanager queue size critical"
+          description: "Alertmanager cluster queue size is above 4000 messages for more than 1 minute. Current value: {{ $value }}. Queue overflow imminent!"
+
+      # Alertmanager Cluster Gossip Failures
+      - alert: AlertmanagerClusterGossipFailures
+        expr: rate(alertmanager_cluster_messages_dropped_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          service: alertmanager
+          category: cluster-optimization
+        annotations:
+          summary: "Alertmanager cluster gossip failures"
+          description: "Alertmanager cluster is dropping messages at rate {{ $value | humanize }} messages/sec for more than 3 minutes. Cluster communication issues."
+
+      # Alertmanager Cluster Health Score Low
+      - alert: AlertmanagerClusterHealthLow
+        expr: alertmanager_cluster_health_score < 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: alertmanager
+          category: cluster-optimization
+        annotations:
+          summary: "Alertmanager cluster health score low"
+          description: "Alertmanager cluster health score is below 0.8 for more than 5 minutes. Current value: {{ $value | humanizePercentage }}. Cluster degraded."
+
+  # Logging Stack Monitoring (добавлено после аудита системы логирования)
+  - name: logging.rules
+    rules:
+      # Elasticsearch Disk Usage - Warning при 80%
+      - alert: ElasticsearchDiskUsageHigh
+        expr: (elasticsearch_filesystem_data_used_bytes / elasticsearch_filesystem_data_size_bytes) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: elasticsearch
+          category: logging-optimization
+        annotations:
+          summary: "Elasticsearch disk usage high"
+          description: "Elasticsearch disk usage is above 80% for more than 5 minutes. Current value: {{ $value | humanizePercentage }}. Consider log cleanup or storage expansion."
+
+      # Elasticsearch Disk Usage - Critical при 90%
+      - alert: ElasticsearchDiskUsageCritical
+        expr: (elasticsearch_filesystem_data_used_bytes / elasticsearch_filesystem_data_size_bytes) * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          service: elasticsearch
+          category: logging-optimization
+        annotations:
+          summary: "Elasticsearch disk usage critical"
+          description: "Elasticsearch disk usage is above 90% for more than 2 minutes. Current value: {{ $value | humanizePercentage }}. Immediate action required!"
+
+      # Elasticsearch Cluster Status не Green
+      - alert: ElasticsearchClusterNotGreen
+        expr: elasticsearch_cluster_health_status < 2
+        for: 3m
+        labels:
+          severity: warning
+          service: elasticsearch
+          category: logging-optimization
+        annotations:
+          summary: "Elasticsearch cluster status not green"
+          description: "Elasticsearch cluster status is not green for more than 3 minutes. Current status: {{ if eq $value 0.0 }}Red{{ else if eq $value 1.0 }}Yellow{{ else }}Unknown{{ end }}. Check cluster health."
+
+      # Fluent Bit Buffer Overflow
+      - alert: FluentBitBufferUsageHigh
+        expr: (fluentbit_input_buffer_usage_bytes / fluentbit_input_buffer_limit_bytes) * 100 > 80
+        for: 3m
+        labels:
+          severity: warning
+          service: fluent-bit
+          category: logging-optimization
+        annotations:
+          summary: "Fluent Bit buffer usage high"
+          description: "Fluent Bit buffer usage is above 80% for more than 3 minutes. Current value: {{ $value | humanizePercentage }}. Risk of log loss."
+
+      # Fluent Bit Output Errors
+      - alert: FluentBitOutputErrors
+        expr: rate(fluentbit_output_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          service: fluent-bit
+          category: logging-optimization
+        annotations:
+          summary: "Fluent Bit output errors detected"
+          description: "Fluent Bit is experiencing output errors at rate {{ $value | humanize }} errors/sec for more than 2 minutes. Check Elasticsearch connectivity."
+
+      # Log Ingestion Rate Anomaly (слишком высокая)
+      - alert: LogIngestionRateHigh
+        expr: rate(fluentbit_input_records_total[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: fluent-bit
+          category: logging-optimization
+        annotations:
+          summary: "Log ingestion rate unusually high"
+          description: "Log ingestion rate is above 1000 logs/sec for more than 5 minutes. Current rate: {{ $value | humanize }} logs/sec. Possible log flood."
+
+      # Missing Logs от критических сервисов
+      - alert: CriticalServiceLogsMissing
+        expr: absent_over_time(fluentbit_input_records_total{tag=~"docker.openwebui|docker.ollama|docker.nginx"}[10m])
+        for: 5m
+        labels:
+          severity: critical
+          service: logging
+          category: logging-optimization
+        annotations:
+          summary: "Critical service logs missing"
+          description: "No logs received from critical services (OpenWebUI, Ollama, Nginx) for more than 10 minutes. Check logging pipeline."

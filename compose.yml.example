@@ -623,6 +623,9 @@ services:
       # Разрешить автообновление для Alertmanager
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=monitoring-stack"
+    secrets:
+      - slack_alert_webhook
+      - pagerduty_routing_key
     # Используем стандартную Docker bridge сеть
 
   # Node Exporter - системные метрики
@@ -957,4 +960,11 @@ services:
       # Разрешить автообновление для Webhook Receiver
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=monitoring-stack"
+# Используем стандартную Docker bridge сеть (docker0)
+
+secrets:
+  slack_alert_webhook:
+    file: ./secrets/slack_alert_webhook.txt
+  pagerduty_routing_key:
+    file: ./secrets/pagerduty_routing_key.txt
 # Используем стандартную Docker bridge сеть (docker0)

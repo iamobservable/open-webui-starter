@@ -716,6 +716,9 @@ services:
       # Разрешить автообновление для Alertmanager
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=monitoring-stack"
+    secrets:
+      - slack_alert_webhook
+      - pagerduty_routing_key
     # Используем стандартную Docker bridge сеть
 
   # Node Exporter - системные метрики
@@ -1183,6 +1186,10 @@ secrets:
     file: ./secrets/litellm_ui_password.txt
   openai_api_key:
     file: ./secrets/openai_api_key.txt
+  slack_alert_webhook:
+    file: ./secrets/slack_alert_webhook.txt
+  pagerduty_routing_key:
+    file: ./secrets/pagerduty_routing_key.txt
   # PublicAI API ключ для внешних моделей
   publicai_api_key:
     file: ./secrets/publicai_api_key.txt
