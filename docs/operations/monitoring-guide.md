@@ -15,6 +15,18 @@ ERNI-KI monitoring system includes:
 - **Loki v3.5.5 + Fluent Bit v3.2.0** - centralized logging
 - **AlertManager v0.28.0** - notifications and alerting
 
+### 🗺️ Architecture Snapshot
+
+- Основная схема мониторинга обновлена после Phase 0 и доступна в
+  `docs/architecture/architecture.md` (раздел _Monitoring Stack_). Диаграмма
+  показывает Prometheus ↔ exporters, Loki ↔ Fluent Bit, Alertmanager ↔ Slack
+  / PagerDuty и каналы cron evidence → node_exporter textfile → Grafana.
+- Быстрая инвентаризация сервисов и портов:
+  `docs/architecture/services-overview.md` и
+  `docs/architecture/service-inventory.md`. Перед изменениями конфигурации
+  сверяйтесь с этими файлами, чтобы не нарушить связи между мониторинговыми
+  контейнерами.
+
 ### 🔄 Обновления ноября 2025
 
 - **Alertmanager queue watchdog** —
@@ -55,6 +67,26 @@ ERNI-KI monitoring system includes:
   node_exporter textfile collector).
 
 ## 🚨 Alert Delivery & Runbooks
+
+## 📐 SLO Dashboards
+
+- **Grafana: `ERNI-KI System SLOs`** — главный борд в
+  `conf/grafana/dashboards/system-slos.json` с метриками:
+  - Availability SLO:
+    `100 - (sum(rate(erni_http_errors_total[5m])) / sum(rate(erni_http_requests_total[5m])))`
+    с budget burn bar и аннотациями Alertmanager.
+  - Latency SLO: p95 для `ollama_request_duration_seconds` и
+    `openwebui_request_latency_seconds` с порогами 3s/5s.
+  - Error budget ленты для Redis/Prometheus exporters, чтобы видеть, когда
+    budget исчерпан >40%.
+- **Cron Evidence Panel** — добавьте на любой борд:
+  - Time-series для `erni_cron_job_age_seconds{job=~".*"}`.
+  - Столбцы для `erni_cron_job_success` (0/1) с thresholds + аннотации.
+- **Alertmanager Coverage** — панель `alerts/alertmanager-dashboard.json` уже
+  содержит переменные `owner` и `escalation`, чтобы фильтровать SLO breach
+  alerts по командам Ops / Security / ML.
+- При изменении SLO формул обновляйте подписи в этом разделе и сохраняйте
+  экспорт dashboard JSON в `conf/grafana/dashboards/`.
 
 - Секреты для каналов хранятся в Docker secrets:
   - `./secrets/slack_alert_webhook.txt` — Slack Incoming Webhook URL.
