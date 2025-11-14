@@ -105,9 +105,6 @@ jobs:
           required_env_keys=(
             "TUNNEL_TOKEN${ENV_SUFFIX}"
             "OPENAI_API_KEY${ENV_SUFFIX}"
-            "CONTEXT7_API_KEY${ENV_SUFFIX}"
-            "ANTHROPIC_API_KEY${ENV_SUFFIX}"
-            "GOOGLE_API_KEY${ENV_SUFFIX}"
           )
 
           missing_env_keys=()

@@ -154,12 +154,9 @@ BACKREST_PASSWORD     # Пароль Backrest
 ```
 TUNNEL_TOKEN_DEV/STAGING/PROD          # Cloudflare tunnel токены
 OPENAI_API_KEY_DEV/STAGING/PROD        # OpenAI API ключи
-CONTEXT7_API_KEY_DEV/STAGING/PROD      # Context7 API ключи
-ANTHROPIC_API_KEY_DEV/STAGING/PROD     # Anthropic API ключи
-GOOGLE_API_KEY_DEV/STAGING/PROD        # Google API ключи
 ```
 
-**Всего: 24 секрета**
+**Всего: 18 секретов**
 
 ## 🔍 Проверка и мониторинг
 

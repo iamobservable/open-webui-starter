@@ -137,9 +137,6 @@ validate_environment_secrets() {
     local required_secrets=(
         "TUNNEL_TOKEN${env_suffix}"
         "OPENAI_API_KEY${env_suffix}"
-        "CONTEXT7_API_KEY${env_suffix}"
-        "ANTHROPIC_API_KEY${env_suffix}"
-        "GOOGLE_API_KEY${env_suffix}"
     )
 
     # Проверяем каждый секрет

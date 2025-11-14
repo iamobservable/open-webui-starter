@@ -92,15 +92,12 @@ setup_development_secrets() {
 
     # Context7 API Key для development
     local context7_key_dev=$(generate_secure_secret "context7_key")
-    add_environment_secret "development" "CONTEXT7_API_KEY_DEV" "$context7_key_dev" "Context7 API key for development"
 
     # Anthropic API Key для development
     local anthropic_key_dev=$(generate_secure_secret "anthropic_key")
-    add_environment_secret "development" "ANTHROPIC_API_KEY_DEV" "$anthropic_key_dev" "Anthropic Claude API key for development"
 
     # Google API Key для development
     local google_key_dev=$(generate_secure_secret "google_key")
-    add_environment_secret "development" "GOOGLE_API_KEY_DEV" "$google_key_dev" "Google Gemini API key for development"
 
     success "Development секреты настроены"
 }
@@ -119,15 +116,12 @@ setup_staging_secrets() {
 
     # Context7 API Key для staging
     local context7_key_staging=$(generate_secure_secret "context7_key")
-    add_environment_secret "staging" "CONTEXT7_API_KEY_STAGING" "$context7_key_staging" "Context7 API key for staging"
 
     # Anthropic API Key для staging
     local anthropic_key_staging=$(generate_secure_secret "anthropic_key")
-    add_environment_secret "staging" "ANTHROPIC_API_KEY_STAGING" "$anthropic_key_staging" "Anthropic Claude API key for staging"
 
     # Google API Key для staging
     local google_key_staging=$(generate_secure_secret "google_key")
-    add_environment_secret "staging" "GOOGLE_API_KEY_STAGING" "$google_key_staging" "Google Gemini API key for staging"
 
     success "Staging секреты настроены"
 }
@@ -145,18 +139,6 @@ setup_production_secrets() {
     # OpenAI API Key для production (ЗАМЕНИТЬ НА РЕАЛЬНЫЙ!)
     local openai_key_prod="REPLACE_WITH_REAL_OPENAI_API_KEY"
     add_environment_secret "production" "OPENAI_API_KEY_PROD" "$openai_key_prod" "OpenAI API key for production"
-
-    # Context7 API Key для production (ЗАМЕНИТЬ НА РЕАЛЬНЫЙ!)
-    local context7_key_prod="REPLACE_WITH_REAL_CONTEXT7_API_KEY"
-    add_environment_secret "production" "CONTEXT7_API_KEY_PROD" "$context7_key_prod" "Context7 API key for production"
-
-    # Anthropic API Key для production (ЗАМЕНИТЬ НА РЕАЛЬНЫЙ!)
-    local anthropic_key_prod="REPLACE_WITH_REAL_ANTHROPIC_API_KEY"
-    add_environment_secret "production" "ANTHROPIC_API_KEY_PROD" "$anthropic_key_prod" "Anthropic Claude API key for production"
-
-    # Google API Key для production (ЗАМЕНИТЬ НА РЕАЛЬНЫЙ!)
-    local google_key_prod="REPLACE_WITH_REAL_GOOGLE_API_KEY"
-    add_environment_secret "production" "GOOGLE_API_KEY_PROD" "$google_key_prod" "Google Gemini API key for production"
 
     warning "🔴 КРИТИЧНО: Замените все production секреты на реальные значения!"
     success "Production секреты настроены (требуют замены на реальные)"
