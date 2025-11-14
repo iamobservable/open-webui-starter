@@ -1,0 +1,8 @@
+# Example snippet for alertmanager.yml routes block
+# Place near the top of `route.routes` to override severity-based routing.
+- match:
+    noise_group: blackbox
+  receiver: "erni-ki-warning"
+  group_wait: 1m
+  group_interval: 15m
+  repeat_interval: 3h

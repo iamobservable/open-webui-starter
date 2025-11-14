@@ -17,6 +17,9 @@ LOG_FILE="${PROJECT_DIR}/logs/redis-fragmentation-watchdog.log"
 STATE_FILE="${PROJECT_DIR}/logs/redis-fragmentation-watchdog.state"
 COOLDOWN="${REDIS_FRAGMENTATION_COOLDOWN_SECONDS:-600}"
 MAX_PURGES="${REDIS_FRAGMENTATION_MAX_PURGES:-6}"
+AUTOSCALE_ENABLED="${REDIS_AUTOSCALE_ENABLED:-true}"
+AUTOSCALE_STEP_MB="${REDIS_AUTOSCALE_STEP_MB:-256}"
+AUTOSCALE_MAX_GB="${REDIS_AUTOSCALE_MAX_GB:-4}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -42,6 +45,37 @@ timestamp() {
 log() {
   mkdir -p "$(dirname "$LOG_FILE")"
   printf "[%s] %s\n" "$(timestamp)" "$1" | tee -a "$LOG_FILE"
+}
+
+maybe_autoscale_maxmemory() {
+  [[ "$AUTOSCALE_ENABLED" =~ ^(true|1|yes)$ ]] || return
+  local current
+  current=$(docker compose exec -T redis redis-cli CONFIG GET maxmemory | awk 'NR==2 {print $1}' | tr -d '\r')
+  if [[ -z "$current" ]]; then
+    log "Unable to read current maxmemory value; skipping autoscale"
+    return
+  fi
+  if (( current == 0 )); then
+    log "Redis maxmemory is unlimited, autoscale not required"
+    return
+  fi
+  local step_bytes=$((AUTOSCALE_STEP_MB * 1024 * 1024))
+  local max_bytes=$((AUTOSCALE_MAX_GB * 1024 * 1024 * 1024))
+  if (( current >= max_bytes )); then
+    log "Redis maxmemory already at configured cap ${AUTOSCALE_MAX_GB}GB"
+    return
+  fi
+  local proposed=$((current + step_bytes))
+  if (( proposed > max_bytes )); then
+    proposed=$max_bytes
+  fi
+  log "Autoscaling Redis maxmemory from $((current / 1024 / 1024))MB to $((proposed / 1024 / 1024))MB"
+  if docker compose exec -T redis redis-cli CONFIG SET maxmemory "$proposed" >/dev/null 2>&1; then
+    docker compose exec -T redis redis-cli CONFIG REWRITE >/dev/null 2>&1 || true
+    log "Redis maxmemory successfully bumped to $((proposed / 1024 / 1024))MB"
+  else
+    log "Failed to bump Redis maxmemory"
+  fi
 }
 
 info="$(docker compose exec -T redis redis-cli info memory || true)"
@@ -107,6 +141,7 @@ if awk "BEGIN {exit !($ratio > $THRESHOLD)}"; then
         docker compose restart redis >/dev/null 2>&1 || log "WARN: redis restart failed"
         RUNS=0
         persist_state "$now" "$RUNS"
+        maybe_autoscale_maxmemory
       fi
     fi
   fi

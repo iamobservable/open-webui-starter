@@ -1,0 +1,29 @@
+# Example Prometheus rules for aggregating noisy blackbox alerts.
+# Include this file in Prometheus rule_files to replace legacy HTTPErrors spam.
+
+groups:
+  - name: blackbox-noise.rules
+    rules:
+      - alert: BlackboxHTTPErrorBurst
+        expr: sum by (instance, job) (increase(probe_http_status_code_info{status!~"2.."}[5m])) > 30
+        for: 10m
+        labels:
+          severity: warning
+          service: blackbox
+          category: network
+          noise_group: blackbox
+        annotations:
+          summary: "Sustained HTTP errors for {{ $labels.job }}"
+          description: "{{ $labels.job }} on {{ $labels.instance }} returned >30 non-2xx responses within 5m for more than 10m. Investigate the upstream target before re-enabling verbose HTTPErrors."
+
+      - alert: BlackboxSustainedLatency
+        expr: avg_over_time(probe_duration_seconds{job=~"blackbox-.*"}[5m]) > 6
+        for: 15m
+        labels:
+          severity: warning
+          service: blackbox
+          category: network
+          noise_group: blackbox
+        annotations:
+          summary: "Blackbox latency above 6s ({{ $labels.job }})"
+          description: "Average probe latency for {{ $labels.job }} exceeded 6 seconds for 15 minutes. Treat as aggregated warning instead of per-probe spam."
