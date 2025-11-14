@@ -9,6 +9,7 @@ Run without arguments to update snippets, or with --check to validate.
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 from pathlib import Path
 from typing import Dict
@@ -74,6 +75,37 @@ def write_snippet(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def run_prettier(paths: list[str]) -> None:
+    try:
+        subprocess.run(
+            ["npx", "prettier", "--write", *paths],
+            cwd=REPO_ROOT,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except FileNotFoundError:
+        print("[WARN] npx not found; skipping prettier formatting.")
+    except subprocess.CalledProcessError as exc:
+        print("[WARN] prettier failed:", exc.stderr.decode("utf-8"), file=sys.stderr)
+
+
+def prettier_format(text: str, filepath: Path) -> str:
+    rel = filepath.relative_to(REPO_ROOT).as_posix()
+    try:
+        proc = subprocess.run(
+            ["npx", "prettier", "--parser", "markdown", "--stdin-filepath", rel],
+            cwd=REPO_ROOT,
+            input=text.encode("utf-8"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
+        return proc.stdout.decode("utf-8").strip()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return text.strip()
+
+
 def inject_snippet(target: Path, start_marker: str, end_marker: str, content: str) -> None:
     text = target.read_text(encoding="utf-8")
     start = text.find(start_marker)
@@ -114,13 +146,23 @@ def run_update() -> None:
     inject_snippet(DOC_INDEX_FILE, MARKER_START, MARKER_END, snippet_ru)
     inject_snippet(DOC_OVERVIEW_FILE, MARKER_START, MARKER_END, snippet_ru)
     inject_snippet(DE_INDEX_FILE, DE_MARKER_START, DE_MARKER_END, snippet_de)
+    run_prettier(
+        [
+            SNIPPET_MD.relative_to(REPO_ROOT).as_posix(),
+            SNIPPET_DE_MD.relative_to(REPO_ROOT).as_posix(),
+            README_FILE.relative_to(REPO_ROOT).as_posix(),
+            DOC_INDEX_FILE.relative_to(REPO_ROOT).as_posix(),
+            DOC_OVERVIEW_FILE.relative_to(REPO_ROOT).as_posix(),
+            DE_INDEX_FILE.relative_to(REPO_ROOT).as_posix(),
+        ]
+    )
     print("Status snippets updated from docs/reference/status.yml")
 
 
 def run_check() -> None:
     data = parse_simple_yaml(STATUS_YAML)
-    snippet_ru = render_snippet(data, "ru").strip()
-    snippet_de = render_snippet(data, "de").strip()
+    snippet_ru = prettier_format(render_snippet(data, "ru"), SNIPPET_MD)
+    snippet_de = prettier_format(render_snippet(data, "de"), SNIPPET_DE_MD)
 
     errors = []
     if SNIPPET_MD.read_text(encoding="utf-8").strip() != snippet_ru:
