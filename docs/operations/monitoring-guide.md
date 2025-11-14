@@ -78,6 +78,33 @@ ERNI-KI monitoring system includes:
 
 ## 🚨 Alert Delivery & Runbooks
 
+### Архитектура после аудита (N+1 шаги)
+
+- **Prometheus / Alertmanager / Loki** — текущая топология односерверная. План
+  работ по HA/remote storage отслеживается задачами:
+  1. `19d577bc` — удалённое хранилище и кластер Alertmanager.
+  2. `e84d2098` — покрытие / synthetic checks.
+  3. `00130fda` — TLS и доставка логов (выполнено в коммите 6185b74).
+- **Инструкции по миграции**: см. новый раздел "🔐 Secure Logging Pipeline" и
+  `docs/monitoring-logging-audit-2025-11-14.md`.
+
+### Чек-лист готовности (обновлять перед релизами)
+
+1. [ ] Prometheus targets все `UP`.
+2. [ ] Alertmanager HA сконфигурирован (после выполнения `19d577bc`).
+3. [ ] Blackbox/Synthetic проверки (`e84d2098`) активны.
+4. [ ] TLS сертификаты обновлены (запустить
+       `scripts/security/prepare-logging-tls.sh`).
+5. [ ] Loki backups/retention (выполнить после включения object storage).
+
+### Runbook ссылок
+
+- **Audit notes**: `docs/monitoring-logging-audit-2025-11-14.md`.
+- **TLS refresh**: `scripts/security/prepare-logging-tls.sh`, далее
+  `docker compose restart fluent-bit loki`.
+- **Loki delivery errors**: см. алерт `FluentBitLokiDeliveryErrors` и runbook по
+  ссылке в Alertmanager.
+
 ## 📐 SLO Dashboards
 
 - **Grafana: `ERNI-KI System SLOs`** — главный борд в

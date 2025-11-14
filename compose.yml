@@ -6,73 +6,39 @@
 # УРОВЕНЬ 1 - Критически важные сервисы (OpenWebUI, Ollama, PostgreSQL, Nginx)
 # Dual logging: fluentd + json-file backup, максимальная надежность
 x-critical-logging: &critical-logging
-  driver: "fluentd"
+  driver: "json-file"
   options:
-    fluentd-address: "127.0.0.1:24224"
-    fluentd-async: "true"
-    fluentd-retry-wait: "1s"
-    fluentd-max-retries: "10"
-    fluentd-buffer-limit: "16777216"
-    fluentd-sub-second-precision: "true"
-    tag: "critical.{{.Name}}"
+    max-size: "10m"
+    max-file: "5"
     labels: "service,version,environment,level=critical"
-    # JSON fallback обеспечивается tail-инпутом Fluent Bit
-    fluentd-ssl: "true"
-    fluentd-ssl-verify: "true"
-    fluentd-ssl-ca-cert: "${PWD}/conf/fluent-bit/certs/logging-ca.crt"
-    fluentd-ssl-cert: "${PWD}/conf/fluent-bit/certs/logging-client.crt"
-    fluentd-ssl-key: "${PWD}/conf/fluent-bit/certs/logging-client.key"
+    tag: "critical.{{.Name}}"
 
 # УРОВЕНЬ 2 - Важные сервисы (SearXNG, Redis, Backrest, Auth, Cloudflared)
 # Fluentd с буферизацией, стандартная надежность
 x-important-logging: &important-logging
-  driver: "fluentd"
+  driver: "json-file"
   options:
-    fluentd-address: "127.0.0.1:24224"
-    fluentd-async: "true"
-    fluentd-retry-wait: "2s"
-    fluentd-max-retries: "5"
-    tag: "important.{{.Name}}"
+    max-size: "10m"
+    max-file: "5"
     labels: "service,version,environment,level=important"
-    fluentd-ssl: "true"
-    fluentd-ssl-verify: "true"
-    fluentd-ssl-ca-cert: "${PWD}/conf/fluent-bit/certs/logging-ca.crt"
-    fluentd-ssl-cert: "${PWD}/conf/fluent-bit/certs/logging-client.crt"
-    fluentd-ssl-key: "${PWD}/conf/fluent-bit/certs/logging-client.key"
 
 # УРОВЕНЬ 3 - Вспомогательные сервисы (Docling, EdgeTTS, Tika, MCP)
 # Fluentd с отдельными тэгами + tail fallback
 x-auxiliary-logging: &auxiliary-logging
-  driver: "fluentd"
+  driver: "json-file"
   options:
-    fluentd-address: "127.0.0.1:24224"
-    fluentd-async: "true"
-    fluentd-retry-wait: "2s"
-    fluentd-max-retries: "5"
-    tag: "auxiliary.{{.Name}}"
+    max-size: "10m"
+    max-file: "5"
     labels: "service,version,level=auxiliary"
-    fluentd-ssl: "true"
-    fluentd-ssl-verify: "true"
-    fluentd-ssl-ca-cert: "${PWD}/conf/fluent-bit/certs/logging-ca.crt"
-    fluentd-ssl-cert: "${PWD}/conf/fluent-bit/certs/logging-client.crt"
-    fluentd-ssl-key: "${PWD}/conf/fluent-bit/certs/logging-client.key"
 
 # УРОВЕНЬ 4 - Мониторинговые сервисы (Prometheus, Grafana, Exporters)
 # Минимальное Fluentd логгирование + агрессивная фильтрация
 x-monitoring-logging: &monitoring-logging
-  driver: "fluentd"
+  driver: "json-file"
   options:
-    fluentd-address: "127.0.0.1:24224"
-    fluentd-async: "true"
-    fluentd-retry-wait: "3s"
-    fluentd-max-retries: "3"
-    tag: "monitoring.{{.Name}}"
+    max-size: "10m"
+    max-file: "5"
     labels: "service,version,level=monitoring"
-    fluentd-ssl: "true"
-    fluentd-ssl-verify: "true"
-    fluentd-ssl-ca-cert: "${PWD}/conf/fluent-bit/certs/logging-ca.crt"
-    fluentd-ssl-cert: "${PWD}/conf/fluent-bit/certs/logging-client.crt"
-    fluentd-ssl-key: "${PWD}/conf/fluent-bit/certs/logging-client.key"
 
 # Обратная совместимость (deprecated, будет удалено в следующих версиях)
 x-logging: &default-logging
@@ -90,6 +56,7 @@ services:
     env_file: env/watchtower.env
     environment:
       WATCHTOWER_HTTP_API_TOKEN: /run/secrets/watchtower_api_token
+      DOCKER_API_VERSION: "1.44"
     healthcheck:
       test: ["CMD", "/watchtower", "--health-check"]
       interval: 60s
@@ -697,7 +664,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "wget --header='X-Scope-OrgID: erni-ki' --ca-certificate=/etc/loki/tls/logging-ca.crt --no-verbose --tries=1 --spider https://localhost:3100/ready || exit 1",
+          "wget --no-check-certificate --header='X-Scope-OrgID: erni-ki' --quiet --tries=1 --spider https://localhost:3100/ready || exit 1",
         ]
       interval: 30s
       timeout: 10s

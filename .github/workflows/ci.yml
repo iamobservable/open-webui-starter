@@ -258,7 +258,7 @@ jobs:
   notify:
     name: 📢 Notify Results
     runs-on: ubuntu-latest
-    needs: [lint, test-go, test-ts, security, docker-build]
+    needs: [lint, test-go, test-js, security, docker-build]
     if: always() && github.ref == 'refs/heads/main'
 
     steps:
@@ -267,7 +267,7 @@ jobs:
         run: |
           echo "lint=${{ needs.lint.result }}" >> $GITHUB_OUTPUT
           echo "test_go=${{ needs.test-go.result }}" >> $GITHUB_OUTPUT
-          echo "test_ts=${{ needs.test-ts.result }}" >> $GITHUB_OUTPUT
+          echo "test_ts=${{ needs.test-js.result }}" >> $GITHUB_OUTPUT
           echo "security=${{ needs.security.result }}" >> $GITHUB_OUTPUT
           echo "docker=${{ needs.docker-build.result }}" >> $GITHUB_OUTPUT
 
