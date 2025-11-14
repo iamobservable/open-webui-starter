@@ -32,7 +32,7 @@ jobs:
   lint:
     name: 🔍 Code Quality
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: 📥 Checkout code
@@ -44,22 +44,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: npm
 
-      - name: 📦 Install Prettier globally
-        run: npm install -g prettier
+      - name: 📦 Install dependencies
+        run: npm ci --prefer-offline
+
+      - name: 🧹 Run ESLint
+        run: npm run lint
 
       - name: 🎨 Check Prettier formatting
-        run: |
-          prettier --check \
-            "*.{js,ts,json,md,yml,yaml}" \
-            "docs/**/*.md" \
-            "tests/**/*.{js,ts}" \
-            ".github/**/*.yml" \
-            "auth/**/*.{go,mod,sum}" \
-            --ignore-unknown
-
-      - name: 🔍 Skip ESLint (no package.json in root)
-        run: echo "ESLint skipped - no package.json in root directory"
+        run: npm run format:check
 
       - name: 📝 Check EditorConfig
         uses: editorconfig-checker/action-editorconfig-checker@main
@@ -118,15 +112,11 @@ jobs:
             auth/coverage.html
           retention-days: 30
 
-  # Тестирование TypeScript (AI Diagnostics)
-  test-ts:
-    name: 🧪 Test AI Diagnostics
+  # JS/TS юнит и E2E тесты
+  test-js:
+    name: 🧪 Test JS/TS Stack
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    defaults:
-      run:
-        working-directory: ./tests
+    timeout-minutes: 25
 
     steps:
       - name: 📥 Checkout code
@@ -136,24 +126,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: tests/package-lock.json
+          cache: npm
 
       - name: 📦 Install dependencies
         run: npm ci --prefer-offline --no-audit
 
-      - name: 🧪 Run AI diagnostics tests (dry run)
-        run: |
-          echo "Running AI diagnostics in dry-run mode..."
-          # Тесты требуют запущенных сервисов, поэтому делаем dry-run
-          node -e "console.log('AI diagnostics tests configured successfully')"
+      - name: 🧪 Run Vitest suite
+        run: npm run test:unit
 
-      - name: 📋 Upload test artifacts
+      - name: 🧰 Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: 🎭 Run Playwright in mock mode
+        run: npm run test:e2e:mock
+
+      - name: 📋 Upload Playwright artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ai-diagnostics-config
-          path: tests/package.json
+          name: playwright-report
+          path: playwright-report
           retention-days: 7
 
   # Сканирование безопасности

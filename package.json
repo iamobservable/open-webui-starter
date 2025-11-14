@@ -41,9 +41,10 @@
   },
   "scripts": {
     "dev": "vitest",
-    "test": "npm run test:unit && npm run test:e2e",
+    "test": "npm run test:unit && npm run test:e2e:mock",
     "test:unit": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:mock": "./scripts/run-playwright-mock.sh",
     "e2e:headed": "PW_BASE_URL=https://localhost playwright test --headed --project=chromium",
     "e2e:report": "playwright show-report",
     "test:watch": "vitest --watch",

@@ -21,6 +21,7 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "types": ["vitest/globals", "node"],
     "resolveJsonModule": true,
     "isolatedModules": true,
     "declaration": true,
@@ -39,10 +40,11 @@
     "skipLibCheck": true,
     "allowJs": false,
     "checkJs": false,
-    "moduleDetection": "force"
+    "moduleDetection": "force",
+    "rootDir": "."
   },
 
-  "include": ["tests/**/*", "types/**/*", "*.config.ts", "vitest.config.ts"],
+  "include": ["tests/**/*.ts", "types/**/*.d.ts", "playwright.config.ts", "vitest.config.ts"],
   "exclude": [
     "node_modules",
     "dist",

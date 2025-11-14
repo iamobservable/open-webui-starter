@@ -12,9 +12,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       reportsDirectory: './coverage',
-      // Vitest 4.0: coverage.include определяет какие файлы включать в отчет
-      // Включаем покрытые и непокрытые файлы по этому паттерну
-      include: ['src/**/*.{js,ts}', 'tests/**/*.{js,ts}', '!tests/e2e/**'],
+      // Показываем реальный layout (unit/integration + shared setup)
+      include: ['tests/unit/**/*.{ts,js}', 'tests/integration/**/*.{ts,js}', 'tests/setup.ts'],
       exclude: [
         'node_modules/**',
         'dist/**',
@@ -26,8 +25,6 @@ export default defineConfig({
         'data/**',
         'logs/**',
         'docs/**',
-        '**/*.test.ts',
-        '**/*.spec.ts',
         'tests/e2e/**',
         'playwright-report/**',
         'playwright-artifacts/**',
@@ -50,11 +47,7 @@ export default defineConfig({
     teardownTimeout: 5000,
 
     // Паттерны для поиска тестов
-    include: [
-      'src/**/*.{test,spec}.{js,ts}',
-      'tests/**/*.{test,spec}.{js,ts}',
-      '__tests__/**/*.{test,spec}.{js,ts}',
-    ],
+    include: ['tests/unit/**/*.{test,spec}.{ts,js}', 'tests/integration/**/*.{test,spec}.{ts,js}'],
 
     // Исключаем E2E тесты (они запускаются через Playwright)
     exclude: [
