@@ -1,6 +1,7 @@
 // Глобальная настройка тестов для проекта erni-ki
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
-import type { MockRequest, MockResponse, WaitForPredicate } from '../types/global';
+
+import testUtils from './utils/test-utils';
 
 // Сохраняем оригинальные методы консоли
 const originalConsoleLog = console.log;
@@ -46,76 +47,7 @@ afterEach(() => {
 });
 
 // Глобальные утилиты для тестов
-declare global {
-  var testUtils: {
-    createMockRequest: <
-      TBody = Record<string, unknown>,
-      TQuery = Record<string, string | string[] | undefined>,
-      TParams = Record<string, string>,
-    >(
-      options?: Partial<MockRequest<TBody, TQuery, TParams>>
-    ) => MockRequest<TBody, TQuery, TParams>;
-    createMockResponse: <TBody = unknown>(
-      options?: Partial<MockResponse<TBody>>
-    ) => MockResponse<TBody>;
-    waitFor: (fn: WaitForPredicate, timeout?: number) => Promise<void>;
-    sleep: (ms: number) => Promise<void>;
-  };
-}
-
-// Утилиты для создания мок-объектов
-globalThis.testUtils = {
-  // Создание мок-запроса
-  createMockRequest: <
-    TBody = Record<string, unknown>,
-    TQuery = Record<string, string | string[] | undefined>,
-    TParams = Record<string, string>,
-  >(
-    options: Partial<MockRequest<TBody, TQuery, TParams>> = {}
-  ): MockRequest<TBody, TQuery, TParams> => ({
-    headers: {},
-    query: {} as TQuery,
-    params: {} as TParams,
-    body: {} as TBody,
-    cookies: {},
-    method: 'GET',
-    url: '/',
-    ...options,
-  }),
-
-  // Создание мок-ответа
-  createMockResponse: <TBody = unknown>(
-    options: Partial<MockResponse<TBody>> = {}
-  ): MockResponse<TBody> => {
-    const res = {} as MockResponse<TBody>;
-    res.statusCode = 200;
-    res.status = vi.fn().mockImplementation((code: number) => {
-      res.statusCode = code;
-      return res;
-    });
-    res.json = vi.fn().mockImplementation(() => res);
-    res.send = vi.fn().mockImplementation(() => res);
-    res.cookie = vi.fn().mockImplementation(() => res);
-    res.header = vi.fn().mockImplementation(() => res);
-    res.redirect = vi.fn().mockImplementation(() => res);
-    res.end = vi.fn().mockImplementation(() => res);
-
-    return Object.assign(res, options);
-  },
-
-  // Ожидание выполнения условия
-  waitFor: async (fn: WaitForPredicate, timeout = 5000) => {
-    const start = Date.now();
-    while (Date.now() - start < timeout) {
-      if (fn()) return;
-      await new Promise(resolve => setTimeout(resolve, 10));
-    }
-    throw new Error(`Timeout waiting for condition after ${timeout}ms`);
-  },
-
-  // Простая задержка
-  sleep: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
-};
+globalThis.testUtils = testUtils;
 
 // Настройка fetch для тестов (если нужно)
 global.fetch = vi.fn();
