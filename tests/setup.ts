@@ -1,5 +1,6 @@
 // Глобальная настройка тестов для проекта erni-ki
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
+import type { MockRequest, MockResponse, WaitForPredicate } from '../types/global';
 
 // Сохраняем оригинальные методы консоли
 const originalConsoleLog = console.log;
@@ -47,9 +48,17 @@ afterEach(() => {
 // Глобальные утилиты для тестов
 declare global {
   var testUtils: {
-    createMockRequest: (options?: any) => any;
-    createMockResponse: (options?: any) => any;
-    waitFor: (fn: () => boolean, timeout?: number) => Promise<void>;
+    createMockRequest: <
+      TBody = Record<string, unknown>,
+      TQuery = Record<string, string | string[] | undefined>,
+      TParams = Record<string, string>,
+    >(
+      options?: Partial<MockRequest<TBody, TQuery, TParams>>
+    ) => MockRequest<TBody, TQuery, TParams>;
+    createMockResponse: <TBody = unknown>(
+      options?: Partial<MockResponse<TBody>>
+    ) => MockResponse<TBody>;
+    waitFor: (fn: WaitForPredicate, timeout?: number) => Promise<void>;
     sleep: (ms: number) => Promise<void>;
   };
 }
@@ -57,11 +66,17 @@ declare global {
 // Утилиты для создания мок-объектов
 globalThis.testUtils = {
   // Создание мок-запроса
-  createMockRequest: (options = {}) => ({
+  createMockRequest: <
+    TBody = Record<string, unknown>,
+    TQuery = Record<string, string | string[] | undefined>,
+    TParams = Record<string, string>,
+  >(
+    options: Partial<MockRequest<TBody, TQuery, TParams>> = {}
+  ): MockRequest<TBody, TQuery, TParams> => ({
     headers: {},
-    query: {},
-    params: {},
-    body: {},
+    query: {} as TQuery,
+    params: {} as TParams,
+    body: {} as TBody,
     cookies: {},
     method: 'GET',
     url: '/',
@@ -69,23 +84,27 @@ globalThis.testUtils = {
   }),
 
   // Создание мок-ответа
-  createMockResponse: (options = {}) => {
-    const res = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis(),
-      send: vi.fn().mockReturnThis(),
-      cookie: vi.fn().mockReturnThis(),
-      header: vi.fn().mockReturnThis(),
-      redirect: vi.fn().mockReturnThis(),
-      end: vi.fn().mockReturnThis(),
-      statusCode: 200,
-      ...options,
-    };
-    return res;
+  createMockResponse: <TBody = unknown>(
+    options: Partial<MockResponse<TBody>> = {}
+  ): MockResponse<TBody> => {
+    const res = {} as MockResponse<TBody>;
+    res.statusCode = 200;
+    res.status = vi.fn().mockImplementation((code: number) => {
+      res.statusCode = code;
+      return res;
+    });
+    res.json = vi.fn().mockImplementation(() => res);
+    res.send = vi.fn().mockImplementation(() => res);
+    res.cookie = vi.fn().mockImplementation(() => res);
+    res.header = vi.fn().mockImplementation(() => res);
+    res.redirect = vi.fn().mockImplementation(() => res);
+    res.end = vi.fn().mockImplementation(() => res);
+
+    return Object.assign(res, options);
   },
 
   // Ожидание выполнения условия
-  waitFor: async (fn: () => boolean, timeout = 5000) => {
+  waitFor: async (fn: WaitForPredicate, timeout = 5000) => {
     const start = Date.now();
     while (Date.now() - start < timeout) {
       if (fn()) return;
