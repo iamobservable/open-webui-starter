@@ -1,6 +1,8 @@
 // Глобальная настройка тестов для проекта erni-ki
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 
+import testUtils from './utils/test-utils';
+
 // Сохраняем оригинальные методы консоли
 const originalConsoleLog = console.log;
 const originalConsoleWarn = console.warn;
@@ -45,58 +47,7 @@ afterEach(() => {
 });
 
 // Глобальные утилиты для тестов
-declare global {
-  var testUtils: {
-    createMockRequest: (options?: any) => any;
-    createMockResponse: (options?: any) => any;
-    waitFor: (fn: () => boolean, timeout?: number) => Promise<void>;
-    sleep: (ms: number) => Promise<void>;
-  };
-}
-
-// Утилиты для создания мок-объектов
-globalThis.testUtils = {
-  // Создание мок-запроса
-  createMockRequest: (options = {}) => ({
-    headers: {},
-    query: {},
-    params: {},
-    body: {},
-    cookies: {},
-    method: 'GET',
-    url: '/',
-    ...options,
-  }),
-
-  // Создание мок-ответа
-  createMockResponse: (options = {}) => {
-    const res = {
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis(),
-      send: vi.fn().mockReturnThis(),
-      cookie: vi.fn().mockReturnThis(),
-      header: vi.fn().mockReturnThis(),
-      redirect: vi.fn().mockReturnThis(),
-      end: vi.fn().mockReturnThis(),
-      statusCode: 200,
-      ...options,
-    };
-    return res;
-  },
-
-  // Ожидание выполнения условия
-  waitFor: async (fn: () => boolean, timeout = 5000) => {
-    const start = Date.now();
-    while (Date.now() - start < timeout) {
-      if (fn()) return;
-      await new Promise(resolve => setTimeout(resolve, 10));
-    }
-    throw new Error(`Timeout waiting for condition after ${timeout}ms`);
-  },
-
-  // Простая задержка
-  sleep: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
-};
+globalThis.testUtils = testUtils;
 
 // Настройка fetch для тестов (если нужно)
 global.fetch = vi.fn();

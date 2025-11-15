@@ -1,4 +1,6 @@
-// Глобальные типы для проекта erni-ki
+// Global types for the erni-ki project
+
+import type { TestUtils } from './testing';
 
 declare global {
   namespace NodeJS {
@@ -11,13 +13,7 @@ declare global {
     }
   }
 
-  // Тестовые утилиты
-  var testUtils: {
-    createMockRequest: (options?: any) => any;
-    createMockResponse: (options?: any) => any;
-    waitFor: (fn: () => boolean, timeout?: number) => Promise<void>;
-    sleep: (ms: number) => Promise<void>;
-  };
+  var testUtils: TestUtils;
 }
 
 export {};
