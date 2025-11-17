@@ -87,7 +87,7 @@ export default [
       'comma-dangle': ['error', 'always-multiline'],
       quotes: ['error', 'single', { avoidEscape: true }],
       semi: ['error', 'always'],
-      indent: 'off', // Prettier управляет отступами
+      indent: ['error', 2, { SwitchCase: 1 }],
       'max-len': ['warn', { code: 100, ignoreUrls: true }],
       'eol-last': 'error',
       'no-trailing-spaces': 'error',
