@@ -1,0 +1,7 @@
+# Global ownership defaults to the core maintainers.
+* @DIZ-admin
+
+# CI/CD and automation changes require explicit review.
+.github/workflows/* @DIZ-admin @Codex
+scripts/infrastructure/security/* @DIZ-admin @Codex
+docs/reference/github-environments-setup.md @DIZ-admin @Codex
