@@ -149,9 +149,20 @@ ERNI-KI monitoring system includes:
 2. Изучить метрику `alertmanager_cluster_messages_queued` в Grafana и посмотреть
    состояние `alertmanager` пода (`docker compose logs alertmanager`).
 3. Разгрузить очередь: временно снизить шумные алерты, проверить состояние
-   webhook receiver.
-4. Только после согласования с on-call выполнить
+   webhook receiver. При создании временных silences добавляйте в комментарий
+   тег `[auto-cleanup]`, чтобы их можно было снять автоматически.
+4. Для автоматической разборки используйте скрипт
+   `scripts/monitoring/alertmanager-queue-cleanup.sh` — он проверяет метрику,
+   снимает silences с тегом `[auto-cleanup]` и при необходимости перезапускает
+   Alertmanager. Скрипт подходит для cron/systemd timer.
+5. Только после согласования с on-call выполняйте ручной
    `docker compose restart alertmanager`.
+
+> **Важно:** скрипт cleanup работает только с silences, в комментариях которых
+> есть тег `[auto-cleanup]`. Для долгоживущих suppress записывайте уникальные
+> комментарии и снимайте их вручную командой
+> `docker compose exec alertmanager amtool silence expire <id>` после
+> стабилизации.
 
 ### Alert Response Cheat Sheet {#alert-response}
 

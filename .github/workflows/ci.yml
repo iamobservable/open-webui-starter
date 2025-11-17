@@ -266,10 +266,10 @@ jobs:
         id: results
         run: |
           echo "lint=${{ needs.lint.result }}" >> $GITHUB_OUTPUT
-          echo "test_go=${{ needs.test-go.result }}" >> $GITHUB_OUTPUT
-          echo "test_ts=${{ needs.test-js.result }}" >> $GITHUB_OUTPUT
+          echo "test_go=${{ needs['test-go'].result }}" >> $GITHUB_OUTPUT
+          echo "test_ts=${{ needs['test-js'].result }}" >> $GITHUB_OUTPUT
           echo "security=${{ needs.security.result }}" >> $GITHUB_OUTPUT
-          echo "docker=${{ needs.docker-build.result }}" >> $GITHUB_OUTPUT
+          echo "docker=${{ needs['docker-build'].result }}" >> $GITHUB_OUTPUT
 
       - name: 📢 Create summary
         run: |
